@@ -8,7 +8,12 @@ import cv2
 from igraph import *
 import matplotlib.pyplot as plt
 import numpy as np
+#import rospy
 
+import utils
+from utils import conv_to_hash, eucl_dist
+from communication import numObstaclesBetweenRobots
+import simulated_models
 
 WALL_DIST = 6 #in pixels
 
@@ -61,7 +66,7 @@ class Environment(object):
         if disc_method == 'grid':
             self.discretize_grid()
 
-        rospy.loginfo('Computing shortest path lengths...')
+        #rospy.loginfo('Computing shortest path lengths...')
         self.sps_lengths = self.G_E.shortest_paths_dijkstra()
         for i in xrange(len(self.sps_lengths)):
             for j in xrange(len(self.sps_lengths[i])):
@@ -317,43 +322,3 @@ class Environment(object):
         cv2.imshow("test", test_im)
         cv2.waitKey()
         return i, j
-
-
-#world_file = "/home/andrea/CommunicationMaps/envs/2_offices.world"
-
-
-
-if __name__ == '__main__':
-
-	map_filename = '/home/andrea/CommunicationMaps/envs/tutorial.yaml'
-	env_filename = '/home/andrea/CommunicationMaps/envs/office.dat'
-	
-	disc = 7
-	polling_signal_period = 3
-	disc_method = 'grid'
-	duration = 1800
-	resize_factor = 0.1
-	
-	f = open(env_filename, "wb")
-	self.env = Environment(map_filename, disc_method, disc, resize_factor, comm_range)
-	pickle.dump(self.env, f)
-	f.close()
-
-
-    # Parameter for communication model to filter locations.
-	"""
-    communication_model = rospy.get_param('/communication_model', "")
-    if communication_model is "":
-        env_filename = env_filename.replace(".dat", 
-            "_" + str(int(comm_range)) + ".dat")
-    else:
-        env_filename = env_filename.replace(".dat", 
-            "_" + str(int(comm_range)) + '_' + communication_model + ".dat")
-    print env_filename
-    teammates_id_temp = str(rospy.get_param('~teammates_id'))
-    is_leader = int(rospy.get_param('~is_leader'))
-    n_robots = int(rospy.get_param('/n_robots'))
-    
-    tiling = int(rospy.get_param('/tiling'))
-    log_folder = rospy.get_param('/log_folder')
-	"""
