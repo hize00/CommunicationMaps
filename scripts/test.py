@@ -30,7 +30,7 @@ for key in sorted(C0):
     print "%s: %s" % (key, C0[key])
 """    
 #################################################
-
+config_number = 0
 N_VERTEXES = 11
 #CONFIGURAZIONE INIZIALE -- DA FARE BENE con parsing ecc
 #I NOMI DEI VERTEXES VANNO DA 0 A N_VERTEXES-1
@@ -42,9 +42,12 @@ C0 = {1:vertexes[8],
 	  5:vertexes[9]
 	  }
 
+
+CONFIGURATIONS = []
+CONFIGURATIONS.append(C0)
 #list of timestamp and correlated configurations
 OUTPUT = []
-
+OUTPUT.append((config_number,C0,0))
 #distance matrix initialization
 distances = np.zeros((N_VERTEXES, N_VERTEXES))
 
@@ -70,17 +73,15 @@ def minRowDistance(row_index):
 			if distances[row_index][i] < minimum:
 				minimum = distances[row_index][i]
 	return minimum
-
+print minRowDistance(3)
 
 """torna la colonna della matrice in cui c'e' la minima distanza della riga row_index"""
 def minColIndex(row_index):
-	minimum = 999999999
 	for i in range(0,N_VERTEXES):
-		if i != row_index:
-			if distances[row_index][i] < minimum:
-				minimum = distances[row_index][i]
+		if distances[row_index][i] == minRowDistance(row_index):
 				minCol = i
 	return minCol
+print minColIndex(3)
 
 """ R(C): ritorna i robots presenti in configurazione C in ordine di ID """
 def robotsInConfiguration(configuration):
@@ -104,14 +105,18 @@ def adjacency(vertex1, vertex2):
 		return 0
 
 """ ritorna una lista di vertici che rappresentano lo SP da vertex1 a vertex2 """
+### sbagliato DA FARE
 def shortestPath(vertex1, vertex2):
-	SP_list = [vertex1]
+	SP_list = []
+	SP_list.append(vertex1)
 	j = vertex1
 	while(j!=vertex2):
 		newNode = minColIndex(j)
 		SP_list.append(newNode)
 		j = newNode
 	return SP_list
+
+print shortestPath(3,5)
 
 """ move robot in an adjacent vertex """
 def adjacentMove(robot,configuration,newVertex):
@@ -123,12 +128,14 @@ def adjacentMove(robot,configuration,newVertex):
 
 """ move robot from configuration (if exists) to newVertex in newConfiguration """
 def moveRobot(robot,configuration,newVertex):
+	global config_number
 	if robot not in configuration.keys():
 		print "Error: " + str(robot) + " not in configuration "+str(configuration)
 		return configuration
 
 	else:
 		path_vertexes = []
+		#temporary configurations needed when moving between non-adjacent vertexes	
 		temporaryConfigurations = []
 		start_time = time.time()
 		#if robot is in a vertex adjacent to newVertex it moves there directly
@@ -136,8 +143,7 @@ def moveRobot(robot,configuration,newVertex):
 			newConfiguration=adjacentMove(robot,configuration,newVertex)
 		else:
 			#compute SHORTEST PATH between the two vertexes. Return a list of vertexes
-			path_vertexes = shortestPath(robotVertex(robot,configuration), newVertex)
-			#temporary configurations needed when moving between non-adjacent vertexes		
+			path_vertexes = shortestPath(robotVertex(robot,configuration), newVertex)	
 			temporaryConfigurations.append(configuration)
 
 			#move robot in intermediate configurations (each step is an adjacent move)
@@ -146,17 +152,20 @@ def moveRobot(robot,configuration,newVertex):
 				temporaryConfigurations.append(adjacentMove(robot,robotVertex(robot,temporaryConfigurations[i-1]),path_vertexes[i]))
 		
 			newConfiguration = deepcopy(temporaryConfigurations[-1])
-
 		end_time = time.time()
 		TIME = end_time - start_time
-
-		OUTPUT.append((newConfiguration,TIME))
+		config_number = config_number+1
+		
+		#return newConfiguration & OUTPUT
+		CONFIGURATIONS.append(newConfiguration)
+		OUTPUT.append((config_number,newConfiguration,TIME))
 		return OUTPUT
 
 		###controllare funzione TIME
 		###nome CONFIGURAZIONE
 
 
-
-moveRobot(3,C0,5)
+##moveRobot(3,CONFIGURATIONS[config_number],5)
+print "OUTPUT \n"
 print OUTPUT
+print "\n"
