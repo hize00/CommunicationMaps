@@ -8,7 +8,7 @@ import cv2
 from igraph import *
 import matplotlib.pyplot as plt
 import numpy as np
-import rospy
+#import rospy
 
 import utils
 from utils import conv_to_hash, eucl_dist
@@ -66,7 +66,7 @@ class Environment(object):
         if disc_method == 'grid':
             self.discretize_grid()
 
-        rospy.loginfo('Computing shortest path lengths...')
+        #rospy.loginfo('Computing shortest path lengths...')
         self.sps_lengths = self.G_E.shortest_paths_dijkstra()
         for i in xrange(len(self.sps_lengths)):
             for j in xrange(len(self.sps_lengths[i])):
@@ -74,12 +74,12 @@ class Environment(object):
 
         self.longest_path_length = float(max(max(self.sps_lengths, key=lambda x: max(x))))
 
-        rospy.loginfo('Longest path length is ' + str(self.longest_path_length))
+        #rospy.loginfo('Longest path length is ' + str(self.longest_path_length))
 
         #print self.sps_lengths[10][11]
-        rospy.loginfo('Done.')
+        #rospy.loginfo('Done.')
 
-        rospy.loginfo('Computing safe graph...')
+        #rospy.loginfo('Computing safe graph...')
         comm_edge_list = []
         for v1 in self.G_C.vs:
             p1 = self.grid_map_cells[utils.conv_to_hash(*v1["coord"])]
@@ -90,7 +90,7 @@ class Environment(object):
 
                     comm_edge_list.append((v1.index, v2.index))
 
-        rospy.loginfo('Done.')
+        #rospy.loginfo('Done.')
     
         self.G_C.add_edges(comm_edge_list)
         
@@ -98,7 +98,7 @@ class Environment(object):
         # location in pixels, and the value is a list referring
         # to locations where it is worth to go. The list contains
         # locations x,y in pixels.
-        rospy.loginfo("A priori communication model is {}".format(
+        #rospy.loginfo("A priori communication model is {}".format(
             simulated_comm_model))
         if simulated_comm_model is not "":
             # TODO Only one place to properly define filenames!
@@ -238,7 +238,7 @@ class Environment(object):
 
         #plt.imshow(self.im_array_copy)
         #plt.show()
-        rospy.loginfo('Environment discretized in ' + str(len(self.free_positions)) + ' candidate cells, and ' + str(len(self.path_positions)) + ' for path planning.')
+        #rospy.loginfo('Environment discretized in ' + str(len(self.free_positions)) + ' candidate cells, and ' + str(len(self.path_positions)) + ' for path planning.')
 
         
         #add edges to obtain the grid
