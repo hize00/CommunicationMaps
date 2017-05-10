@@ -52,14 +52,13 @@ RSSI_MIN = 10
 # ITU constants for efficiency.
 L0 = 20*math.log10(2400)
 
-# Distance model constants. TODO (Useless right now)
-#WIFI_FREQUENCY = 2.4 * math.pow(10, 9) # Frequency of WiFi.
-#C_LIGHT = 3.0 * math.pow(10, 8) # Light constant.
-#WIFI_WAVELENGTH = C_LIGHT / WIFI_FREQUENCY
-#GL = math.sqrt(1)
-#PI = math.pi
-#CONSTANT_FOR_DISTANCE_MODEL = (GL*WIFI_WAVELENGTH) / PI
-
+# Distance model constants.
+WIFI_FREQUENCY = 2.4 * math.pow(10, 9) # Frequency of WiFi.
+C_LIGHT = 3.0 * math.pow(10, 8) # Light constant.
+WIFI_WAVELENGTH = C_LIGHT / WIFI_FREQUENCY
+GL = math.sqrt(1)
+PI = math.pi
+CONSTANT_FOR_DISTANCE_MODEL = (GL*WIFI_WAVELENGTH) / PI
 
 # Function for math operations for efficiency.
 cos = math.cos
