@@ -28,11 +28,34 @@ from strategy.msg import GoalWithBackup, SignalData, RobotInfo, AllInfo, SignalM
                                SignalMappingGoal, SignalMappingFeedback, SignalMappingResult
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
+TIME_STUCK = 3.0
+TIME_AGAINST_WALL = 5.0
+SPEED = 0.45 # TODO It should depend on the settings of the planner.
+TIME_TOL_PERC = 0.04 # TODO It should depend on the settings of the planner and velocity.
+REPLAN_RATE = 10 # Frequency rate at which the leader is checking again the plan
+
+#TURTLEBOT CUSTOM
+MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
+MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
+
+#first random, max_var offices had 2
+MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
+
+MAX_NUM_ERRORS = 40
+PATH_DISC = 1 #m
+
+#NOTE: RECOVERY IN TODO
+#NOTE: TIMEOUT IN TODO
+
+########################################################################################################################################################################
+
 class Configuration():
     def __init__(self, conf_id, robots):
         self.conf_id = conf_id
         self.robots = robots
 
+
+########################################################################################################################################################################
 
 #GenericRobot is a generic robot in a generic configuration
 class GenericRobot(object):
@@ -163,6 +186,408 @@ class GenericRobot(object):
 
     def handle_get_signal_data(self, req):
         return GetSignalDataResponse(filter(lambda x: x.timestep > req.timestep, self.robot_data_list[req.robot_id]))
+
+    def pub_all_info_callback(self, event):
+        #if(self.strategy != 'multi2' and self.my_path is not None and self.teammate_path is not None and not(self.path_inserted_in_info)):
+
+        self.robot_info_list[self.robot_id].path_leader = map(lambda x: Point(x.pose.position.x, x.pose.position.y, 0.0), self.my_path)
+        self.robot_info_list[self.robot_id].path_follower = map(lambda x: Point(x.pose.position.x, x.pose.position.y, 0.0), self.teammate_path)
+        self.robot_info_list[self.robot_id].timestep = int((rospy.Time.now() - self.mission_start_time).secs)
+        self.robot_info_list[self.robot_id].timestep_path = int((rospy.Time.now() - self.mission_start_time).secs)
+        rospy.loginfo(str(self.robot_id) + " inserting new paths in info to share")
+        self.path_inserted_in_info = True
+
+        all_info = AllInfo()
+        all_info.all_info = self.robot_info_list
+        all_info.sender = self.robot_id
+        self.pub_all_info.publish(all_info)
+
+    def fill_cur_destinations(self, dest_leader, dest_follower):
+        if (self.robot_info_list[self.robot_id].robot_id == -1):
+            self.robot_info_list[self.robot_id].robot_id = self.robot_id
+            if (self.strategy != 'multi2' and (self.my_path is None or self.teammate_path is None)):
+                # the follower will always have empty lists
+                self.robot_info_list[self.robot_id].path_leader = []
+                self.robot_info_list[self.robot_id].path_follower = []
+
+        self.robot_info_list[self.robot_id].timestep = int((rospy.Time.now() - self.mission_start_time).secs)
+        self.robot_info_list[self.robot_id].dest_leader = Point(dest_leader[0], dest_leader[1], 0)
+        self.robot_info_list[self.robot_id].dest_follower = Point(dest_follower[0], dest_follower[1], 0)
+
+    def fill_signal_data(self, datum):
+        self.robot_data_list[self.robot_id].append(datum)
+
+    def update_all_info_callback(self, msg):
+        if(self.sim and not(self.comm_module.can_communicate(msg.sender))):
+            #rospy.loginfo(str(self.robot_id) + " cannot be updated with info received by " + str(msg.sender))
+            return
+
+        self.lock_info.acquire()
+        for robot_info in msg.all_info:
+            if robot_info.robot_id == -1 or robot_info.robot_id == self.robot_id:
+                # -1 means invalid
+                continue
+
+            if (self.robot_info_list[robot_info.robot_id] is None or
+                        robot_info.timestep > self.robot_info_list[robot_info.robot_id].timestep or
+                        robot_info.timestep_path > self.robot_info_list[robot_info.robot_id].timestep_path):
+                self.robot_info_list[robot_info.robot_id] = robot_info
+
+            if (not (self.is_leader) and robot_info.robot_id in self.teammates_id and
+                    (robot_info.dest_follower.x < -99999 or self.robot_info_list[
+                        self.robot_id].dest_follower.x < -99999)):
+                # print "Setting planning in follower!"
+                self.robot_info_list[self.robot_id] = robot_info
+                self.robot_info_list[self.robot_id].robot_id = self.robot_id
+                self.robot_info_list[self.robot_id].path_leader = []
+                self.robot_info_list[self.robot_id].path_follower = []
+
+        self.lock_info.release()
+
+    def distance_logger_callback(self, event):
+        f = open(self.log_filename, "a")
+        f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
+        f.close()
+
+        if((rospy.Time.now() - self.mission_start_time) >= self.duration):
+            rospy.loginfo("Sending shutdown...")
+            os.system("pkill -f ros")
+
+    def monitor_stop_motion_callback(self, event):
+        if (not (self.iam_moving)): return
+        # If I am still moving towards first goal after 5 seconds (teammate path will be arrived meanwhile, otherwise
+        # no path is arrived because teammate was already at goal)
+        if (self.moving_nominal_dest and not (self.completed) and (rospy.Time.now() - self.time_start_path) >= rospy.Duration(3)):
+            if ((rospy.Time.now() - self.time_start_path) > rospy.Duration(max(self.my_time_to_dest, self.teammate_time_to_dest))):
+                self.path_timeout_elapsed = True
+                self.client_motion.cancel_goal()
+        elif ((self.stop_when_comm)):
+            if (self.comm_module.can_communicate(self.teammates_id[0], for_stopping=True)):
+                self.teammate_comm_regained = True
+                self.client_motion.cancel_goal()
+
+    def info_teammate_callback(self, event):
+        if(self.moving_nominal_dest):
+            self.pub_time_to_dest.publish(Float32(self.my_time_to_dest))
+
+        self.pub_state.publish(Bool(self.arrived_nominal_dest))
+
+    def reset_stuff(self):
+        self.last_feedback_pose = None
+        self.last_motion_time = None
+        self.stop_when_comm = False
+        self.teammate_comm_regained = False
+        self.iam_moving = False
+
+        #if(self.strategy != 'multi2'):
+        self.path_timeout_elapsed = False
+        self.my_path = None
+        self.teammate_path = None
+        self.my_time_to_dest = 0.0
+        self.teammate_time_to_dest = 0.0
+        self.time_start_path = None
+        self.first_estimate_time = False
+        self.first_estimate_teammate_path = False
+        self.path_inserted_in_info = False
+        self.moving_nominal_dest = False
+        self.arrived_nominal_dest = False
+        self.teammate_arrived_nominal_dest = False
+
+    def compute_dist(self, poses):
+        return sum(map(lambda x: utils.eucl_dist((x[0].pose.position.x, x[0].pose.position.y),(x[1].pose.position.x, x[1].pose.position.y)),
+                       zip(poses[:-1], poses[1:])))
+
+    def state_callback(self, msg):
+        self.teammate_arrived_nominal_dest = msg.data
+
+    def extrapolate_waypoints(self, poses):
+        meters = PATH_DISC
+        if(len(poses)==0): return []
+
+        waypoints = [poses[0]]
+        dist = 0.0
+        for i in xrange(1,len(poses)):
+            dist += utils.eucl_dist((poses[i].pose.position.x, poses[i].pose.position.y),
+                                    (poses[i-1].pose.position.x, poses[i-1].pose.position.y))
+            if(dist >= meters):
+                waypoints.append(poses[i])
+                meters += PATH_DISC
+
+        return waypoints
+
+    def teammate_path_callback(self, msg):
+        if(not(self.moving_nominal_dest)): return #not needed
+
+        if (self.first_estimate_teammate_path):
+            self.teammate_path = self.extrapolate_waypoints(msg.poses)
+
+            self.first_estimate_teammate_path = False
+
+    def path_callback(self, msg):
+        if(not(self.moving_nominal_dest)): return #not needed
+
+        #cannot update estimated time -
+        if (self.first_estimate_time):
+            self.my_path = self.extrapolate_waypoints(msg.poses)
+            self.my_time_to_dest = self.compute_dist(msg.poses)/SPEED
+            self.my_time_to_dest = self.my_time_to_dest + TIME_TOL_PERC*self.my_time_to_dest
+
+    def teammate_time_path_callback(self, msg):
+        if(not(self.moving_nominal_dest)): return
+        #callback means I can actually communicate
+        self.teammate_time_to_dest = float(msg.data)
+
+    def pose_callback(self, msg):
+        self.x = msg.pose.pose.position.x
+        self.y = msg.pose.pose.position.y
+
+        if(self.last_x is not None):
+            self.traveled_dist += utils.eucl_dist((self.x, self.y),(self.last_x, self.last_y))
+
+        self.last_x = self.x
+        self.last_y = self.y
+
+    def scan_callback(self, scan):
+        min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min)/scan.angle_increment))
+        max_index = int(math.floor((MAX_SCAN_ANGLE_RAD_FRONT - scan.angle_min)/scan.angle_increment))
+        self.front_range = min(scan.ranges[min_index: max_index])
+
+    def poll_signal(self):
+        # Add myself and then other robot.
+        # my_pos receiver.
+        # teammate_pos sender.
+
+        for other_robot_id in xrange(self.n_robots):
+            if other_robot_id == self.robot_id: continue
+
+            if (not (self.comm_module.can_communicate(other_robot_id))): continue
+
+            # consider to call a service on real robots that, if succeds, returns the current teammate pos.
+
+            # if both did not move do not make measurement
+            if self.last_robots_polling_pos[other_robot_id] is not None:
+                if (abs(self.x - self.last_robots_polling_pos[other_robot_id][0][0]) <= 1 and
+                            abs(self.y - self.last_robots_polling_pos[other_robot_id][0][1]) <= 1 and
+                            abs(self.other_robots_pos[other_robot_id][0] -
+                                    self.last_robots_polling_pos[other_robot_id][1][0]) <= 1 and
+                            abs(self.other_robots_pos[other_robot_id][1] -
+                                    self.last_robots_polling_pos[other_robot_id][1][1]) <= 1):
+                    continue
+
+                # Add for our specific scenarios, so we process data ONLY when x2,y2 of neighbor robot exists in selected_locations of x1,y1 pppph
+                # Reportedly, this is not a good place to start.. we should change at a different location
+                if hasattr(self.env, 'selected_locations'):
+                    # Finding free_positions for teammate and myself.
+                    teammate_x, teammate_y = self.env.get_closest_cell(
+                        (self.last_robots_polling_pos[other_robot_id][1][0],
+                         self.last_robots_polling_pos[other_robot_id][1][1]), True)
+                    my_x, my_y = self.env.get_closest_cell((self.x, self.y), True)
+
+                    # Finding candidate locations according to communication model.
+                    candidate_location_hash_of_teammate = conv_to_hash(teammate_x, teammate_y)
+                    candidate_location_hash_of_myself = conv_to_hash(my_x, my_y)
+                    teammate_as_source_candidate_locations = self.env.selected_locations.get(
+                        candidate_location_hash_of_teammate, 0)
+                    myself_as_source_candidate_locations = self.env.selected_locations.get(
+                        candidate_location_hash_of_myself, 0)
+
+                    # Update environment with new selected locations in case it is needed.
+                    if teammate_as_source_candidate_locations == 0:
+                        self.env.update_selected_locations((teammate_x, teammate_y))
+                        teammate_as_source_candidate_locations = self.env.selected_locations.get(
+                            candidate_location_hash_of_teammate, 0)
+                    if myself_as_source_candidate_locations == 0:
+                        self.env.update_selected_locations((my_x, my_y))
+                        myself_as_source_candidate_locations = self.env.selected_locations.get(
+                            candidate_location_hash_of_myself, 0)
+
+                    found_close_to_candidate_location = False
+
+                    # Checking if current pose of the robot (self) is close to a candidate location in a list, considering the teammate as source
+                    # or if the current pose of the teammate is close to a candidate location in a list, considering self as source.
+                    if (len(filter(lambda dest: eucl_dist(dest, (self.x, self.y)) <= 1.0,
+                                   teammate_as_source_candidate_locations)) > 0
+                        or len(filter(lambda dest: eucl_dist(dest, (teammate_x, teammate_y)) <= 1.0,
+                                      myself_as_source_candidate_locations)) > 0):  # TODO constant, maybe consistent with other constants in the project.
+                        found_close_to_candidate_location = True
+
+                    # If it is not close to a location that can be selected, then don't include measurement.
+                    if not found_close_to_candidate_location:
+                        continue
+
+            # if I am not interested because I know it is too far
+            if (utils.eucl_dist((self.x, self.y), self.other_robots_pos[other_robot_id]) > self.comm_range): continue
+
+            # maybe not enough to be sure on real robots
+            new_data = SignalData()
+            new_data.signal_strength = self.comm_module.get_signal_strength(other_robot_id, safe=False)
+            if new_data.signal_strength < self.comm_module.comm_model.CUTOFF:
+                return  # means communication was interrupted while retrieving signal strength - also with real robots!
+            new_data.my_pos.pose.position.x = self.x
+            new_data.my_pos.pose.position.y = self.y
+            new_data.teammate_pos.pose.position.x = self.other_robots_pos[other_robot_id][0]
+            new_data.teammate_pos.pose.position.y = self.other_robots_pos[other_robot_id][1]
+            self.last_robots_polling_pos[other_robot_id] = ((self.x, self.y),
+                                                            self.other_robots_pos[other_robot_id])
+            new_data.timestep = int((rospy.Time.now() - self.mission_start_time).secs)
+
+            self.fill_signal_data(new_data)
+
+            f = open(comm_dataset_filename, "a")
+            f.write(str(new_data.timestep) + ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(
+                new_data.my_pos.pose.position.y) +
+                    ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(
+                new_data.teammate_pos.pose.position.y) +
+                    ' ' + str(new_data.signal_strength) + '\n')
+
+            f.close()
+
+    def polling_signal_callback(self, event):
+        self.poll_signal()
+
+    def feedback_motion_cb(self, feedback):
+        if (self.last_feedback_pose is not None and abs(
+                    feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
+                    abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
+            if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
+                self.error_count += 1
+                if (self.error_count == MAX_NUM_ERRORS):
+                    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
+                    f = open(self.errors_filename, mode)
+                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" + str(
+                        self.n_robots) + "--->" + self.strategy_error_log + "\n")
+                    f.close()
+                    if self.sim:
+                        # sim too biased by nav errors!
+                        os.system("pkill -f ros")
+                    else:
+                        self.client_motion.cancel_goal()
+
+                self.stuck = True
+            else:
+                self.stuck = False
+        else:
+            self.last_motion_time = rospy.Time.now()
+            self.stuck = False
+
+        # rospy.loginfo('Stuck: ' + str(self.stuck))
+        if (self.stuck):
+            # rospy.loginfo('Sending cancel goal.')
+            self.client_motion.cancel_goal()
+
+        self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
+
+    def bump_fwd(self):
+        for i in range(10):
+            msg = Twist(Vector3(0.7,0,0), Vector3(0,0,0))
+            self.pub_motion_rec.publish(msg)
+            rospy.sleep(rospy.Duration(0.1))
+
+    def bump_bkw(self):
+        for i in range(10):
+            msg = Twist(Vector3(-0.7,0,0), Vector3(0,0,0))
+            self.pub_motion_rec.publish(msg)
+            rospy.sleep(rospy.Duration(0.1))
+
+    """ TODO RECOVERY
+        def motion_recovery(self):
+        if self.sim:
+            #simpy move forward the robot
+            #rospy.loginfo(str(self.robot_id) + ' in motion recovery.')
+            start = rospy.Time.now()
+            while(self.front_range < MIN_FRONT_RANGE_DIST):
+                #rospy.loginfo(str(self.robot_id) + ' rotating to avoid obstacle')
+                msg = Twist(Vector3(0,0,0), Vector3(0,0,1.0))
+                self.pub_motion_rec.publish(msg)
+                rospy.sleep(rospy.Duration(0.2))
+
+                if((rospy.Time.now() - start) > rospy.Duration(TIME_AGAINST_WALL)): #against wall
+                    self.bump_bkw()
+                    start = rospy.Time.now()
+            
+            #rospy.loginfo(str(self.robot_id) + ' now the space is free. Sending x speed.')
+            self.bump_fwd()
+        else:
+            msg = Twist(Vector3(0,0,0), Vector3(0,0,1.0))
+            self.pub_motion_rec.publish(msg)
+            rospy.sleep(rospy.Duration(0.2))
+            self.clear_costmap_service()
+    """
+
+    def send_to(self, target, timeout=0): #TODO TIMEOUT
+        rospy.loginfo(str(self.robot_id) + ' moving to ' + str(target))
+        success = False
+
+        while (not (success)):
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = '/map'
+            goal.target_pose.pose.position.x = target[0]
+            goal.target_pose.pose.position.y = target[1]
+            goal.target_pose.pose.orientation.w = 1
+            self.last_feedback_pose = None
+            self.last_motion_time = rospy.Time.now()
+            self.client_motion.send_goal(goal, feedback_cb=self.feedback_motion_cb)
+            self.iam_moving = True
+            self.client_motion.wait_for_result()
+            self.iam_moving = False
+            state = self.client_motion.get_state()
+            if state == GoalStatus.SUCCEEDED:
+                rospy.loginfo(str(self.robot_id) + " destination reached.")
+                success = True
+                if self.moving_nominal_dest:
+                    rospy.loginfo(str(self.robot_id) + " setting arrived nominal dest to true.")
+                    self.arrived_nominal_dest = True
+            else:
+                if (abs(self.x - target[0]) < self.tol_dist and abs(self.y - target[1]) < self.tol_dist):
+                    rospy.loginfo(str(self.robot_id) + " navigation failed, but waypoint was reached.")
+                    success = True
+                    if self.moving_nominal_dest:
+                        self.arrived_nominal_dest = True
+
+                else:
+                    if state == GoalStatus.PREEMPTED:
+                        # If not able to reach destination in time...
+                        if (self.moving_nominal_dest and self.path_timeout_elapsed):
+                            rospy.loginfo(str(self.robot_id) + " stopping motion as not able to reach dest in time.")
+                            success = True
+
+                        # If trying to reconnect with teammate through backup plan...
+                        elif (self.stop_when_comm and self.teammate_comm_regained):
+                            rospy.loginfo(str(self.robot_id) + " stopping motion as communication was re-established and signal is enough")
+                            success = True
+                        else:
+                            rospy.logerr(str(self.robot_id) + " navigation failed, using motion recovery")
+                            self.clear_costmap_service()
+                            self.motion_recovery()
+                            self.clear_costmap_service()
+                            success = False
+
+                    elif state == GoalStatus.ABORTED:
+                        if (self.path_timeout_elapsed and self.moving_nominal_dest):
+                            rospy.loginfo(str(self.robot_id) + " stopping motion AFTER ABORTED as not able to reach dest in time.")
+                            success = True
+
+                        else:
+                            # in multi2, when trying to reach the backup assume that will always succeed
+                            rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! Trying moving backward.")
+                            if self.sim:
+                                self.bump_bkw()
+                            else:
+                                self.clear_costmap_service()
+                                self.motion_recovery()
+                                self.clear_costmap_service()
+                            success = False
+                            # else:
+                            #    return False
+                            # Aborted: It cancelled
+
+        if (self.n_robots > 4):
+            self.poll_signal()
+
+        return True
+
+######################################################################################################################################################################
+
 
 
 
