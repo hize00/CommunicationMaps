@@ -52,3 +52,6 @@ fabric.properties
 */documentation/*.idx
 */documentation/*.synctex.gz
 */documentation/.texpadtmp/
+
+# Compiled Python files
+*.pyc
