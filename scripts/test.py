@@ -165,7 +165,8 @@ def moveRobot(robot,configuration,newVertex):
 		###nome CONFIGURAZIONE
 
 
-##moveRobot(3,CONFIGURATIONS[config_number],5)
+moveRobot(3,CONFIGURATIONS[config_number],5)
+moveRobot(5,CONFIGURATIONS[config_number],2)
 print "OUTPUT \n"
 print OUTPUT
 print "\n"
