@@ -24,18 +24,18 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import cv2
 
-#import rospkg # To get ROS paths.
-#import rospy
+import rospkg # To get ROS paths.
+import rospy
 from nav_msgs.msg import Odometry
 
-#from wifi_node.msg import WifiStrength
+from wifi_node.msg import WifiStrength
 import utils
 
 TIMEOUT = 1.0 # Timeout (sec) before stopping waiting for the signal strength message.
 PIXELS_PER_WALL = 4 # TODO parameter.
 TH_STOP = 5
 
-#rospack = rospkg.RosPack()
+rospack = rospkg.RosPack()
 
 # Path to file containing MAC addresses associated to robots.
 MAC_TABLE_PATH = os.path.join(rospack.get_path('strategy'), 'data/mac_table_tplink.csv') # TODO parameter.
@@ -163,7 +163,7 @@ class CommunicationModule(object):
         self.ref_dist = ref_dist
         self.resize_factor = resize_factor
 
-        #self.comm_model = CommModel(rospy.get_param('/comm_model_filename'))
+        self.comm_model = CommModel(rospy.get_param('/comm_model_filename'))
 
         if(map_filename is not None):
             im = cv2.imread(map_filename)    
@@ -182,7 +182,7 @@ class CommunicationModule(object):
                 s = "def a_" + str(i) + "(self, msg): self.positions[" + str(i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
                 exec(s)
                 exec("setattr(CommunicationModule, 'callback_pos_" + str(i) + "', a_" + str(i) +")")
-                #exec("rospy.Subscriber('/robot_" + str(i) + "/base_pose_ground_truth', Odometry, self.callback_pos_" + str(i) + ", queue_size = 100)")
+                exec("rospy.Subscriber('/robot_" + str(i) + "/base_pose_ground_truth', Odometry, self.callback_pos_" + str(i) + ", queue_size = 100)")
 
         else:
             self.mac_table = mac_table(MAC_TABLE_PATH)
@@ -211,19 +211,19 @@ class CommunicationModule(object):
 
     def get_real_signal_strength(self, teammate_id, safe=True): #safe here is not relevant
         message_from_teammate = False
-        #start_time = rospy.Time.now() # Timer for checking the elapsed time.
+        start_time = rospy.Time.now() # Timer for checking the elapsed time.
 
         while not message_from_teammate:
             try:
 								
-                #wifi_strength_msg = rospy.wait_for_message('wifi_chatter', WifiStrength, TIMEOUT)
+                wifi_strength_msg = rospy.wait_for_message('wifi_chatter', WifiStrength, TIMEOUT)
                 if self.mac_table[wifi_strength_msg.src] == teammate_id:
                     message_from_teammate = True
             except:
-                #rospy.logerr("Wifi message not received.")
+                rospy.logerr("Wifi message not received.")
             
-            #if rospy.Time.now() - start_time > rospy.Duration(TIMEOUT):
-            #    break
+            if rospy.Time.now() - start_time > rospy.Duration(TIMEOUT):
+                break
 
         if message_from_teammate:    
             return wifi_strength_msg.signal
