@@ -1,6 +1,12 @@
 import math
 import numpy as np
 
+
+"""
+IMPLEMENTATION OF KUMAR ALGORITHM - 2 ROBOT CASE
+
+"""
+
 POINTS_TO_EXPLORE = [(1,5),(2,6),(2,3),(3,4)]
 N_ROBOT = 2
 N_VERTEXES = 6
@@ -32,8 +38,9 @@ for i in range (0,N_VERTEXES):
 	for j in range (0,N_VERTEXES):
 		if (j+1 in radiomap_graph[i+1]):
 			adjacency_radio[i][j] = 1
-
+print "Roadmap adjacency MATRIX"
 print adjacency_road
+print"\n Radiomap MATRIX - Pairs to be measured"
 print adjacency_radio
 
 def find_shortest_path(graph, start, end, path=[]):
@@ -54,22 +61,26 @@ def find_shortest_path(graph, start, end, path=[]):
 def number_of_moves(graph, vertex1, vertex2):
 	if find_shortest_path(graph, vertex1, vertex2) == None:
 		count = 9999999
-	else : count = len(find_shortest_path(graph, vertex1, vertex2))
+	else : count = len(find_shortest_path(graph, vertex1, vertex2))-1 #subtract 1 otherwise for the movements of 1-2-4 we would have a cost of 3 instead of 2
 	return count
-
+print "\nEX: moves from 1 to 4"
 print number_of_moves(roadmap_graph,1,4)
 
+
 """OPTIMAL PLAN FOR 2 ROBOTS"""
-def optimal_plan2(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio):
+def cost_graph(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio):
 	V2 = []
 	z=0
 	for i in range (0,int(math.ceil(N_VERTEXES/2))):
-		for j in range (0,N_VERTEXES):
+		for j in range (i,N_VERTEXES):
 			if adjacency_radio[i][j] == 1:
 				z=z+1
-				V2.append((z,(i+1,j+1)))
-	print "\n V2"
+				V2.append((z,[i+1,j+1]))
+	print "\n V2: each v represents the links between two points"
 	print V2
+	#valori: indice lista / acesso a id_vertice o coppia / quale tra i due punti
+	#print V2[1][1][1] #stampa 3
+
 	length = len(V2)
 	A2 = np.zeros((length, length))
 	C2 = np.zeros((length, length))
@@ -77,9 +88,18 @@ def optimal_plan2(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio
 		for j in range (0,length):
 			if V2[i][0]!=V2[j][0]:
 				A2[i][j]=1
-				C2[i][j]=number_of_moves(roadmap_graph,i+1,j+1)
+				#il costo e' il minimo tra somma di (i-i',j-j') OR (i-j',j-i')
+				C2[i][j]=min((number_of_moves(roadmap_graph,V2[i][1][0],V2[j][1][0])+number_of_moves(roadmap_graph,V2[i][1][1],V2[j][1][1])) , (number_of_moves(roadmap_graph,V2[i][1][0],V2[j][1][1])+number_of_moves(roadmap_graph,V2[i][1][1],V2[j][1][0])))
 	print "\n COST MATRIX"
+	#it's symetric wrt diagonal
 	print C2
-	#TODO compute minimum cost open path on G2 s.t. each node in V2 is traversed only once
+	return C2
 
-optimal_plan2(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio)
+C = cost_graph(roadmap_graph,adjacency_road,radiomap_graph,adjacency_radio)
+
+#TODO: G2
+"""
+il grafo G2 sara' un grafo completamente connesso con tanti vertici quanto la dimensione della matrice C (4 in questo caso)
+I pesi degli archi sono i valori contenuti nella matrice C
+per trovare il piano ottimo bisogna risolvere il TSP su G2
+"""
