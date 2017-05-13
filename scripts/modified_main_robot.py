@@ -489,8 +489,8 @@ class GenericRobot(object):
             self.pub_motion_rec.publish(msg)
             rospy.sleep(rospy.Duration(0.1))
 
-    """ TODO RECOVERY
-        def motion_recovery(self):
+    #TODO RECOVERY
+    def motion_recovery(self):
         if self.sim:
             #simpy move forward the robot
             #rospy.loginfo(str(self.robot_id) + ' in motion recovery.')
@@ -504,7 +504,7 @@ class GenericRobot(object):
                 if((rospy.Time.now() - start) > rospy.Duration(TIME_AGAINST_WALL)): #against wall
                     self.bump_bkw()
                     start = rospy.Time.now()
-            
+
             #rospy.loginfo(str(self.robot_id) + ' now the space is free. Sending x speed.')
             self.bump_fwd()
         else:
@@ -512,7 +512,7 @@ class GenericRobot(object):
             self.pub_motion_rec.publish(msg)
             rospy.sleep(rospy.Duration(0.2))
             self.clear_costmap_service()
-    """
+
 
     def send_to(self, target, timeout=0): #TODO TIMEOUT
         rospy.loginfo(str(self.robot_id) + ' moving to ' + str(target))
@@ -588,6 +588,68 @@ class GenericRobot(object):
 
 ######################################################################################################################################################################
 
+#How to move a robot randomly
+class Random(GenericRobot):
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration,
+                 disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
+                 comm_dataset_filename, strategy, resize_factor, tiling, errors_filename):
+        rospy.loginfo(str(robot_id) + ' - Random - starting!')
+
+        if (not (os.path.exists(env_filename))):
+            f = open(env_filename, "wb")
+            self.env = Environment(map_filename, disc_method, disc, resize_factor, comm_range)
+            pickle.dump(self.env, f)
+            f.close()
+        else:
+            f = open(env_filename, "rb")
+            self.env = pickle.load(f)
+            f.close()
+
+        super(Random, self).__init__(seed, robot_id, True, sim, comm_range, map_filename, polling_signal_period,
+                                     duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
+                                     ref_dist, strategy, resize_factor, errors_filename)
+
+        self.replan_rate = REPLAN_RATE
+        self.arrived_to_random_pos = True
+
+    def explore_comm_maps(self):
+        r = rospy.Rate(self.replan_rate)
+        while not rospy.is_shutdown():
+            if (self.arrived_to_random_pos):
+                self.arrived_to_random_pos = False
+                new_dest = random.choice(self.env.free_positions)
+                rospy.loginfo(str(self.robot_id) + ' chosen new dest: ' + str(new_dest))
+                t = threading.Thread(target=self.send_to_light, args=(new_dest,))
+                t.start()
+
+            r.sleep()
+
+    def send_to_light(self, target):
+        rospy.loginfo(str(self.robot_id) + ' moving to ' + str(target))
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = '/map'
+        goal.target_pose.pose.position.x = target[0]
+        goal.target_pose.pose.position.y = target[1]
+        goal.target_pose.pose.orientation.w = 1
+        self.client_motion.send_goal(goal, feedback_cb=self.feedback_motion_cb)
+        self.client_motion.wait_for_result()
+        state = self.client_motion.get_state()
+        rospy.loginfo(str(self.robot_id) + ' stopped motion with state ' + str(state))
+        if (state == GoalStatus.PREEMPTED):
+            self.clear_costmap_service()
+            self.motion_recovery()
+            self.clear_costmap_service()
+        elif (state == GoalStatus.ABORTED):
+            if self.sim:
+                self.bump_bkw()
+            else:
+                self.clear_costmap_service()
+                self.motion_recovery()
+                self.clear_costmap_service()
+
+        self.arrived_to_random_pos = True
+
+######################################################################################################################################################################
 
 
 
