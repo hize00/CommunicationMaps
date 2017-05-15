@@ -46,6 +46,7 @@ PATH_DISC = 1 #m
 
 #NOTE: RECOVERY IN TODO
 #NOTE: TIMEOUT IN TODO
+#NOTE: MYSTRATEGY IN TODO
 
 ########################################################################################################################################################################
 
@@ -651,5 +652,261 @@ class Random(GenericRobot):
 
 ######################################################################################################################################################################
 
+#How the leader manages the strategy and the followers
+class Leader(GenericRobot):
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period,
+                 duration, disc_method, disc, log_filename, teammates_id, n_robots, ref_dist,
+                 env_filename, comm_dataset_filename, strategy, strategyParams, resize_factor, tiling, errors_filename,
+                 communication_model):
+        rospy.loginfo(str(robot_id) + ' - Leader - starting!')
+        if communication_model is "":
+            self.filter_locations = False
+        else:
+            self.filter_locations = True
+        if (not (os.path.exists(env_filename))):
+            print "Creating new environment."
+            f = open(env_filename, "wb")
+            self.env = Environment(map_filename, disc_method, disc, resize_factor, comm_range,
+                                   communication_model)
+            pickle.dump(self.env, f)
+            f.close()
+        else:
+            f = open(env_filename, "rb")
+            self.env = pickle.load(f)
+            f.close()
+
+        super(Leader, self).__init__(seed, robot_id, True, sim, comm_range, map_filename, polling_signal_period,
+                                     duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
+                                     ref_dist, strategy, resize_factor, errors_filename)
+
+        print 'created environment variable'
+        rospy.loginfo(str(robot_id) + ' - Created environment variable')
+
+        self.comm_map = GPmodel(self.env.dimX, self.env.dimY, comm_range, tiling, self.comm_module.comm_model,
+                                self.log_filename)
+        self.comm_maps = []  # for logging
+
+        # for sending commands to the follower
+        # the name of the server is the name of the robot itself
+        self.clients_signal = {}
+        for teammate_id in teammates_id:
+            self.clients_signal[teammate_id] = actionlib.SimpleActionClient(
+                '/robot_' + str(teammate_id) + '/main_robot', SignalMappingAction)
+            rospy.loginfo(str(self.robot_id) + ' - Leader - waiting for follower server ' + str(teammate_id))
+            self.clients_signal[teammate_id].wait_for_server()
+            rospy.loginfo(str(self.robot_id) + ' - Done.')
+
+        self.strategyParams = strategyParams
+
+        # old
+        # self.all_signal_data = []
+        # self.signal_data_follower = []
+
+        #TODO EXPLORATION STRATEGY
+        """
+        if (self.strategy == 'max_variance'):
+            self.exploration_strategy = exploration_strategies.max_variance_strategy
+        elif (self.strategy == 'multi2'):
+            self.exploration_strategy = exploration_strategies.multi2_strategy
+        """
+
+        self.backup_strategy = exploration_strategies.backup_safe
+
+        self.connect_first_attempt = False
+        # dest = random.choice(self.env.free_positions)
+        # self.send_follower_to((17.0,10.0), (self.x, self.y-2))
+
+        self.replan_rate = REPLAN_RATE
+
+        # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached, 3: all reached. - for pair
+        # -1: plan, 0: plan_set, 1-2 leaders/followers reached safe, 3: all paths sent, 4: completed - for multi2
+        self.explore_comm_maps_state = -1
+
+    def extract_signal_data(self):
+        all_signal_data = []
+        for data in self.robot_data_list:
+            all_signal_data += data
+
+        return all_signal_data
 
 
+
+    #TODO def explore_comm_maps_MYSTRATEGY(self): guarda main_robot 805
+
+    #TODO def send_myself_to_MYSTRATEGY(self, dest_leader): guarda main_robot 872
+
+    #TODO def send_followers_to_MYSTRATEGY(self, plans, dest_leader): guarda main_robot 877
+
+
+    def send_and_wait_goal(self, teammate_id, goal):
+        rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
+        self.clients_signal[teammate_id].send_goal(goal)
+
+        self.clients_signal[teammate_id].wait_for_result()
+        rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+
+        if (self.explore_comm_maps_state == 0):
+            self.already_arrived[teammate_id] = True
+
+    def log_plan(self):
+        f = open(self.log_filename, 'a')
+        f.write('P ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.connect_first_attempt) + '\n')
+
+    def aggregate_data(self):
+        #add all the data.
+        rospy.loginfo('Aggregating ' + str(len(self.signal_data)) + ' data of mine and ' + str(len(self.signal_data_follower)) + ' follower data.' )
+        self.all_signal_data += self.signal_data
+        self.all_signal_data += self.signal_data_follower
+
+        rospy.loginfo('Having now ' + str(len(self.all_signal_data)) + '.')
+
+    def feedback_signal_follower_cb(self, feedback):
+        self.signal_data_follower = feedback.data
+
+######################################################################################################################################################################
+
+#How the follower behaves
+class Follower(GenericRobot):
+    # Feedback and result used to inform the leader about the gathered data
+    _feedback = SignalMappingFeedback()
+    _result = SignalMappingResult()
+
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration,
+                 log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename, strategy,
+                 resize_factor, errors_filename):
+        rospy.loginfo(str(robot_id) + ' - Follower - starting!')
+        # Load Environment for follower to filter readings.
+        environment_not_loaded = True
+        while environment_not_loaded:
+            try:
+                f = open(env_filename, "rb")
+                self.env = pickle.load(f)
+                f.close()
+                environment_not_loaded = False
+            except:  # TODO specific exception.
+                rospy.logerr(str(robot_id) + " - Follower - Environment not loaded yet.")
+                rospy.sleep(1)
+
+        super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename, polling_signal_period,
+                                       duration, log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist,
+                                       strategy, resize_factor, errors_filename)
+
+        # for SignalMapping action commanded by the Leader
+        self._action_name = rospy.get_name()
+
+        #TODO TO MODIFY FOR MYSTRATEGY
+        """ 
+        if (self.strategy != 'multi2'):
+            self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction,
+                                                    execute_cb=self.execute_cb_pair, auto_start=False)
+        else:
+            self.first_safe_pos_add = False
+            self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, execute_cb=self.execute_cb_multi2, auto_start=False)
+        """
+
+
+        print 'created environment variable'
+
+        rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
+
+        self._as.start()
+
+    #TODO  def execute_cb_MYSTRATEGY(self, goal): guarda main_robot 1182
+
+if __name__ == '__main__':
+    rospy.init_node('robot')
+
+    robot_id  = int(rospy.get_param('~id'))
+    sim = int(rospy.get_param('/sim'))
+    seed = int(rospy.get_param('/seed'))
+    ref_dist = int(rospy.get_param('/ref_dist'))
+    map_filename = rospy.get_param('/map_filename')
+    disc = float(rospy.get_param('/disc'))
+    comm_range = float(rospy.get_param('/range'))
+    polling_signal_period = float(rospy.get_param('/polling_signal_period'))
+    disc_method = rospy.get_param('/disc_method')
+    duration = float(rospy.get_param('/duration'))
+    env_filename = rospy.get_param('/env_filename')
+    # Parameter for communication model to filter locations.
+    communication_model = rospy.get_param('/communication_model', "")
+    if communication_model is "":
+        env_filename = env_filename.replace(".dat",
+            "_" + str(int(comm_range)) + ".dat")
+    else:
+        env_filename = env_filename.replace(".dat",
+            "_" + str(int(comm_range)) + '_' + communication_model + ".dat")
+    print env_filename
+    teammates_id_temp = str(rospy.get_param('~teammates_id'))
+    is_leader = int(rospy.get_param('~is_leader'))
+    n_robots = int(rospy.get_param('/n_robots'))
+    resize_factor = float(rospy.get_param('/resize_factor'))
+    tiling = int(rospy.get_param('/tiling'))
+    log_folder = rospy.get_param('/log_folder')
+
+
+    #TODO MYSTRATEGY PARAMS
+    # strategies params
+    strategy = rospy.get_param('/strategy')
+
+    """
+    if (strategy == 'max_variance'):
+        samples_pairs_greedy = int(rospy.get_param('/samples_pairs_greedy'))
+        mindist_vertices_maxvar = int(rospy.get_param('/mindist_vertices_maxvar'))
+        strategyParams = StrategyParams(samples_pairs_greedy=samples_pairs_greedy,
+                                        mindist_vertices_maxvar=mindist_vertices_maxvar)
+    else:
+        print "Strategy unknown! Exiting..."
+        exit(1)
+    """
+
+    temmates_id_temp = teammates_id_temp.split('-')
+    teammates_id = map(lambda x: int(x), temmates_id_temp)
+
+    env = (map_filename.split('/')[-1]).split('.')[0]
+    if communication_model is "":
+        log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + \
+                       str(n_robots) + '_' + strategy + '_' + str(int(comm_range)) + '.log'
+    else:
+        log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + \
+                       str(n_robots) + '_' + strategy + '_' + str(int(comm_range)) + '_' + communication_model + '.log'
+    if communication_model is "":
+        comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + \
+                                '_' + str(n_robots) + '_' + strategy + '_' + str(int(comm_range)) + '.dat'
+    else:
+        comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + \
+                                '_' + str(n_robots) + '_' + strategy + '_' + str(
+            int(comm_range)) + '_' + communication_model + '.dat'
+
+    errors_filename = log_folder + 'errors.log'
+    print "Loggin possible errors to: " + errors_filename
+
+    #TODO MYSTRATEGY PARAMS
+
+    """
+        if strategy != "random":
+
+        if((len(teammates_id) > 1) and not(is_leader)):
+            print "Error! Only leader can have more than one teammate."
+            exit(1)
+
+        elif(len(teammates_id) > 1 and 'multi2' not in strategy):
+            print "Error! Only strategy multi2 supports more than 1 teammate."
+            exit(1)    
+
+        if is_leader:
+            l = Leader(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration, 
+                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename, 
+                       comm_dataset_filename, strategy, strategyParams, resize_factor, tiling, errors_filename,
+                       communication_model)
+            l.explore_comm_maps()
+        else:
+            f = Follower(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration, 
+                         log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
+                         strategy, resize_factor, errors_filename)
+            rospy.spin()
+    else:
+        r = Random(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration, 
+                   disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename, 
+                   comm_dataset_filename, strategy, resize_factor, tiling, errors_filename)
+        r.explore_comm_maps()
+    """
