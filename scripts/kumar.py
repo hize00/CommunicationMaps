@@ -6,7 +6,7 @@ import numpy as np
 IMPLEMENTATION OF KUMAR ALGORITHM - 2 ROBOT CASE
 
 """
-
+#start
 POINTS_TO_EXPLORE = [(1,5),(2,6),(2,3),(3,4)]
 N_ROBOT = 2
 N_VERTEXES = 6
