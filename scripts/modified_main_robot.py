@@ -77,6 +77,7 @@ class GenericRobot(object):
         self.error_count = 0
         self.sim = sim
 
+
         # for communication
         self.comm_range = comm_range
         self.comm_module = communication.CommunicationModule(sim, seed, robot_id, n_robots, comm_range, ref_dist, map_filename, resize_factor)
