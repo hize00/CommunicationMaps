@@ -713,6 +713,8 @@ class Leader(GenericRobot):
             self.exploration_strategy = exploration_strategies.multi2_strategy
         """
 
+        self.exploration_strategy = exploration_strategies.mintime
+
         self.backup_strategy = exploration_strategies.backup_safe
 
         self.connect_first_attempt = False
@@ -733,12 +735,89 @@ class Leader(GenericRobot):
         return all_signal_data
 
 
+    def explore_comm_maps_mintime(self):
+        r = rospy.Rate(self.replan_rate)
+        while not rospy.is_shutdown():
+            if self.explore_comm_maps_state == -1:
+                self.reset_stuff()
 
-    #TODO def explore_comm_maps_MYSTRATEGY(self): guarda main_robot 805
+                if (self.first_plan and self.robot_id > 0):
+                    self.first_plan = False
+                    # TODO custom for > 4 here: 10 and 20
+                    rospy.sleep(rospy.Duration(8))
 
-    #TODO def send_myself_to_MYSTRATEGY(self, dest_leader): guarda main_robot 872
+                rospy.loginfo(str(self.robot_id) + ' planning')
+
+                dest_leader = None
+
+                while(dest_leader is None):
+                    if (len(filter(lambda x: x.robot_id > -1 and x.robot_id != self.robot_id and self.comm_module.can_communicate(
+                            x.robot_id) and x.dest_follower.x < -99999.0 and x.dest_follower.y < -99999.0, self.robot_info_list)) > 0):
+                        rospy.loginfo(str(self.robot_id) + ' - waiting - other leader is planning')
+                    else:
+                        self.lock_info.acquire()
+                        robot_info_list_copy = deepcopy(self.robot_info_list)
+                        self.lock_info.release()
+                        self.fill_cur_destinations((self.x, self.y), ( -999999.0, -999999.0))  # this value tells the other leaders to wait planning.
+                        dest_leader, dest_followers_start, paths_followers = self.exploration_strategy((self.x, self.y), self.other_robots_pos,
+                                                                                                       self.env,self.comm_map,robot_info_list_copy,
+                                                                                                       self.robot_id,self.teammates_id,self.strategyParams,
+                                                                                                       self.filter_locations)
+
+                    rospy.sleep(rospy.Duration(8))
+
+                rospy.loginfo(str(self.robot_id) + ' - Leader - has decided its dest:')
+                rospy.loginfo(dest_leader)
+
+                rospy.loginfo(str(self.robot_id) + ' - Leader - has decided followers start vertices:')
+                rospy.loginfo(dest_followers_start)
+
+                rospy.loginfo(str(self.robot_id) + ' - Leader - has decided followers paths:')
+                rospy.loginfo(paths_followers)
+
+                self.fill_cur_destinations(dest_leader, (-1.0, -1.0))  # followers are not considered in this strategy
+                rospy.sleep(rospy.Duration(2.0))
+                self.explore_comm_maps_state = 0
+                t1 = threading.Thread(target=self.send_myself_to_mintime, args=(dest_leader,))
+                t1.start()
+                t2 = threading.Thread(target=self.send_followers_to_mintime, args=(dest_followers_start, dest_leader))
+                t2.start()
+
+            elif self.explore_comm_maps_state == 2:
+            # all are arrived, can now send paths
+            self.explore_comm_maps_state = 3
+            t3 = threading.Thread(target=self.send_followers_to_multi2, args=(paths_followers, dest_leader))
+            t3.start()
+
+            elif self.explore_comm_maps_state == 4:
+            # be sure to receive the reconnection signal data (in case of disconnection)
+            rospy.sleep(rospy.Duration(2))
+
+            all_signal_data = self.extract_signal_data()
+            print str(self.robot_id) + ' - creating new model with a total of ' + str(len(all_signal_data))
+            self.comm_map.update_model(all_signal_data)
+
+            self.log_plan()
+
+            self.explore_comm_maps_state = -1
+
+
+            r.sleep()
+
+    #TODO
+
+    def send_myself_to_mintime(self,dest_leader):
+
 
     #TODO def send_followers_to_MYSTRATEGY(self, plans, dest_leader): guarda main_robot 877
+
+    def send_followers_to_mintime(self,plans,dest_leader):
+
+
+
+
+
+
 
 
     def send_and_wait_goal(self, teammate_id, goal):

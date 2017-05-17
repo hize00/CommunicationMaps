@@ -831,6 +831,8 @@ class Leader(GenericRobot):
                     
                     rospy.sleep(rospy.Duration(8))
 
+
+
                 rospy.loginfo(str(self.robot_id) + ' - Leader - has decided its dest:')
                 rospy.loginfo(dest_leader)
 
