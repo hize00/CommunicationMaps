@@ -50,10 +50,12 @@ PATH_DISC = 1 #m
 
 ########################################################################################################################################################################
 
+#A configuration is a set Ci = <r1 = vertex1, r2 = vertex2, ..., rN = vertexN, timestampI>
 class Configuration():
-    def __init__(self, conf_id, robots):
+    def __init__(self, conf_id, robots, timestamp):
         self.conf_id = conf_id
         self.robots = robots
+        self.timestamp = timestamp
 
 
 ########################################################################################################################################################################
@@ -206,7 +208,7 @@ class GenericRobot(object):
     def fill_cur_destinations(self, dest_leader, dest_follower):
         if (self.robot_info_list[self.robot_id].robot_id == -1):
             self.robot_info_list[self.robot_id].robot_id = self.robot_id
-            if (self.strategy != 'multi2' and (self.my_path is None or self.teammate_path is None)):
+            if (self.my_path is None or self.teammate_path is None):
                 # the follower will always have empty lists
                 self.robot_info_list[self.robot_id].path_leader = []
                 self.robot_info_list[self.robot_id].path_follower = []
@@ -490,7 +492,7 @@ class GenericRobot(object):
             self.pub_motion_rec.publish(msg)
             rospy.sleep(rospy.Duration(0.1))
 
-    #TODO RECOVERY
+
     def motion_recovery(self):
         if self.sim:
             #simpy move forward the robot
@@ -702,7 +704,7 @@ class Leader(GenericRobot):
         # self.all_signal_data = []
         # self.signal_data_follower = []
 
-        #TODO EXPLORATION STRATEGY
+        #TODO EXPLORATION STRATEGY (DA METTERE self.exploration_strategy = exploration_strategies.my_strategy)
         """
         if (self.strategy == 'max_variance'):
             self.exploration_strategy = exploration_strategies.max_variance_strategy
