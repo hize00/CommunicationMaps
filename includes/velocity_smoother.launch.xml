@@ -1,0 +1,16 @@
+<launch>
+	<arg name="nodelet_name" default="navigation_velocity_smoother"/>
+	<arg name="velocity_out" default="cmd_vel_mux/input/navi"/>
+
+	<node pkg="nodelet" type="nodelet" name="$(arg nodelet_name)" args="load yocs_velocity_smoother/VelocitySmootherNodelet mobile_base_nodelet_manager">
+
+		<rosparam file="$(find turtlebot_bringup)/param/defaults/smoother.yaml" command="load"/>
+
+
+		<remap from="$(arg nodelet_name)/smooth_cmd_vel" to="$(arg velocity_out)"/>
+
+		<!-- Robot velocity feedbacks; use the default base configuration -->
+		<remap from="$(arg nodelet_name)/odometry" to="odom"/>
+		<remap from="$(arg nodelet_name)/robot_cmd_vel" to="mobile_base/commands/velocity"/>
+	</node>
+</launch>

@@ -1,0 +1,4 @@
+int32 timestep
+int8 robot_id
+---
+SignalData[] data

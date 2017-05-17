@@ -1,0 +1,59 @@
+<!-- 
+  Turtlebot navigation simulation:
+  - stage
+  - map_server
+  - move_base
+  - static map
+  - amcl
+  - rviz view
+ -->
+<launch>
+
+  <arg name="map_file"       default="$(find strategy)/envs/amoco_hall.yaml"/> 
+  <arg name="world_file"     default="$(find strategy)/envs/amoco_hall.world"/>
+  <arg name="robotName" default="$(env ROS_NAMESPACE)" />
+  
+  <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file)" respawn="false" >
+    <param name="frame_id" value="/map" />
+  </node>
+
+  <param name="/use_sim_time" value="false"/>
+
+  <!-- robots' common params -->
+  <param name="/sim" value="0"/>
+  <param name="/seed" value="0"/>
+  <param name="/ref_dist" value="1"/>
+  <param name="/range" value="50"/>
+  <param name="/disc" value="7"/>
+  <param name="/map_filename" value="$(find strategy)/envs/amoco_hall.png"/>
+  <param name="/polling_signal_period" value="1"/> <!--in sec -->   
+  <param name="/disc_method" value="grid"/>
+  <param name="/duration" value="3600"/>
+  <param name="/env_filename" value="$(find strategy)/envs/amoco_hall.dat"/>
+  <param name="/strategy" value="max_variance"/>
+  <param name="/n_robots" value="2"/>
+  <param name="/resize_factor" value="0.05"/> <!-- the size of a map pixel in meters-->
+  <param name="/tiling" value="0" />
+  <param name="/log_folder" value="$(find strategy)/log/"/>
+
+  <!-- BEGIN ROBOT -->
+  
+  <param name="tf_prefix" value="$(arg robotName)" />
+  <include file="$(find strategy)/launch/main_robot_real.launch">
+      <arg name="id" value="0" />
+      <arg name="log_file" value="$(find strategy)/log/0amoco_hall_0.log" />
+      <arg name="dataset_file" value="$(find strategy)/log/0amoco_hall_dataset_0.dat" />
+      <arg name="teammates_id" value="1" />
+      <arg name="is_leader" value="1" />
+  </include>
+  <include file="$(find strategy)/includes/single_robot_real.launch">
+  
+  	<arg name="namespace" value="$(arg robotName)"/>
+  	<arg name="initial_pose_x" value="10.0"/>
+  	<arg name="initial_pose_y" value="10.0"/>
+  	<arg name="initial_pose_a" value="0.0"/>
+  </include>
+
+  <!-- END ROBOT -->
+
+</launch>

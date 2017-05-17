@@ -1,0 +1,14 @@
+<launch>
+    <arg name="id" /> 
+    <arg name="teammates_id" />
+    <arg name="is_leader" />
+
+    <node pkg="strategy" type="timed_roslaunch.sh" args="5 strategy main_robot_inner.launch id:=$(arg id) teammates_id:=$(arg teammates_id) is_leader:=$(arg is_leader)" name="timed_roslaunch" required="true" respawn="false" output="screen">
+    </node>
+
+	<!--<node pkg="strategy" type="main_robot.py" name="main_robot"  output="screen" respawn="false" required="true">   
+    <param name="id" value="$(arg id)" />
+    <param name="teammates_id" value="$(arg teammates_id)"/>
+    <param name="is_leader" value="$(arg is_leader)"/>
+    </node>-->
+</launch>

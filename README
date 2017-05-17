@@ -1,0 +1,99 @@
+# Installation. 
+
+## Installation of ROS. 
+`sudo apt-get install ros-indigo-desktop-full
+sudo apt-get install ros-indigo-navigation
+sudo apt-get install ros-indigo-opencv3
+sudo apt-get install ros-indigo-actionlib`
+
+## Installation of third-party libraries.
+`sudo apt-get install python-igraph`
+
+### Install gurobipy from the website
+`tar xvf gurobi6.5.2_linux64.tar.gz`
+
+Modify .bashrc with
+`export GUROBI_HOME="/opt/gurobi/gurobi652/linux64"
+export PATH="${PATH}:${GUROBI_HOME}/bin"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${GUROBI_HOME}/lib"`
+
+Get the key
+`grbgetkey <key>`
+Install library.
+`sudo python setup.py install`
+
+### Install GPy
+sudo apt-get install gfortran
+sudo pip install GPy
+
+## Installation of the package.
+`mkdir catkin_ws
+mkdir catkin_ws/src
+cd catkin_ws/src
+catkin_init_workspace
+git clone https://<username>@bitbucket.org/jaco_ban/expl_comm_maps.git
+cd ..
+catkin_make`
+
+Modify .bashrc with
+`source /opt/ros/indigo/setup.bash
+source ~/catkin_ws/devel/setup.bash`
+
+Load in the current terminal
+`source ~/.bashrc`
+
+# Run 
+To run it, remember that the log directory specified in the launch file should exists, e.g., 
+`mkdir expl_comm_maps/strategy/log`
+- Remember that log files are overwritten if same filename is specified.
+- Remember that whatever parameter passed to environment, if pickle exists, is not going through. Delete the file.
+
+To run an example in simulation
+`roslaunch strategy 2_turtlebot_in_stage_offices.launch`
+
+NOTE: Remember to first launch the two robots to create in a consistent way the pickle.
+
+# Evaluation
+
+## Distance.
+
+Change
+
+`
+ENVIRONMENT = 'swearingen_3_floor_A_comm'
+NROBOTS = 4
+NUM_RUNS = 1
+strategies = ["random", "max_variance"]
+plt.errorbar(x_vals, y['random'], yerr=yerr['random'], fmt='r:o', label='PMR', markersize=10, elinewidth=2)
+plt.errorbar(x_vals, y['max_variance'], yerr=yerr['max_variance'], fmt='b-^', label='PM', markersize=10, elinewidth=2)
+"""plt.errorbar(x_vals, y['multi2-3'], yerr=yerr['multi2-6'], fmt='g--s', label='RM-3', markersize=10, elinewidth=2)
+plt.errorbar(x_vals, y['multi2-6'], yerr=yerr['multi2-6'], fmt='k-.*', label='RM-6', markersize=10, elinewidth=2)"""
+`
+
+Be in the directory of `strategy`.
+
+Logs should be in `strategy/log`.
+
+Run 
+`python scripts/distance_plotter.py`
+
+
+## MSE and Variance
+Change
+`
+ENVIRONMENT = 'open'
+NROBOTS = 4
+strategies = ["random", "max_variance", "multi2-2", "multi2-4"]
+NUM_RUNS = 1
+
+# TEST_SET PARAMETERS
+STRATEGY_FOR_TEST_SET = 'random'
+NUM_TEST_SET_RUNS = 1
+GRANULARITY = 300 #secs- TOADJUST
+MISSION_DURATION = 1801 #secs- TOADJUST
+
+
+    """"plt.errorbar(x_vals, y['multi2-2'], yerr=yerr['multi2-2'], fmt='g--s', label='RM-2', markersize=10, elinewidth=2)
+    plt.errorbar(x_vals, y['multi2-4'], yerr=yerr['multi2-4'], fmt='k-.*', label='RM-4', markersize=10, elinewidth=2)"""
+`
+
