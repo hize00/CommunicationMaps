@@ -49,27 +49,26 @@ PATH_DISC = 1 #m
 #NOTE: MYSTRATEGY IN TODO
 
 ########################################################################################################################################################################
-
+"""
 #A configuration is a set Ci = <r1 = vertex1, r2 = vertex2, ..., rN = vertexN, timestampI>
 class Configuration():
     def __init__(self, conf_id, robots, timestamp):
         self.conf_id = conf_id
         self.robots = robots
         self.timestamp = timestamp
-
-
+"""
 ########################################################################################################################################################################
 
 #GenericRobot is a generic robot in a generic configuration
 class GenericRobot(object):
     def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, polling_signal_period, duration,
-                 log_filename, comm_dataset_filename, teammates_id, n_robots, configuration, ref_dist, strategy, resize_factor, errors_filename, client_topic='move_base'):
+                 log_filename, comm_dataset_filename, teammates_id, n_robots, """configuration""", ref_dist, strategy, resize_factor, errors_filename, client_topic='move_base'):
         self.robot_id = robot_id
         self.is_leader = is_leader
         self.map_filename = map_filename
         self.polling_signal_period = polling_signal_period
         self.teammates_id = teammates_id
-        self.configuration = configuration
+        #self.configuration = configuration
         self.n_robots = n_robots
         self.strategy = strategy #STRATEGY = RANDOM
 
@@ -116,7 +115,7 @@ class GenericRobot(object):
 
         self.lock_info = threading.Lock()
 
-        """ TODO RECOVERY
+        """TODO RECOVERY
         #recovery
         self.last_feedback_pose = None
         self.stuck = False
@@ -713,7 +712,7 @@ class Leader(GenericRobot):
             self.exploration_strategy = exploration_strategies.multi2_strategy
         """
 
-        self.exploration_strategy = exploration_strategies.mintime
+        self.exploration_strategy = exploration_strategies.mintime_strategy
 
         self.backup_strategy = exploration_strategies.backup_safe
 
