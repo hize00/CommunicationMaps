@@ -44,7 +44,6 @@ MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planne
 MAX_NUM_ERRORS = 40
 PATH_DISC = 1 #m
 
-#NOTE: RECOVERY IN TODO
 #NOTE: TIMEOUT IN TODO
 #NOTE: MYSTRATEGY IN TODO
 
@@ -57,25 +56,40 @@ class Configuration():
         self.robots = robots
         self.timestamp = timestamp
 """
+
 ########################################################################################################################################################################
+
+class StrategyParams(object):
+    def __init__(self, samples_pairs_greedy=None, samples_leader_multi2=None, samples_follower_multi2_single=None,
+                 mindist_vertices_multi2=None, mindist_vertices_maxvar=None):
+        self.samples_pairs_greedy = samples_pairs_greedy
+        self.samples_leader_multi2 = samples_leader_multi2
+        self.samples_follower_multi2_single = samples_follower_multi2_single
+        self.mindist_vertices_multi2 = mindist_vertices_multi2
+        self.mindist_vertices_maxvar = mindist_vertices_maxvar
+
+###############################################################################################################################
 
 #GenericRobot is a generic robot in a generic configuration
 class GenericRobot(object):
     def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, polling_signal_period, duration,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, """configuration""", ref_dist, strategy, resize_factor, errors_filename, client_topic='move_base'):
+        #self.configuration = configuration
+        self.seed = seed
+        random.seed(seed + robot_id)
         self.robot_id = robot_id
         self.is_leader = is_leader
-        self.map_filename = map_filename
-        self.polling_signal_period = polling_signal_period
         self.teammates_id = teammates_id
-        #self.configuration = configuration
         self.n_robots = n_robots
-        self.strategy = strategy #STRATEGY = RANDOM
-
-        self.errors_filename = errors_filename
-        self.error_count = 0
+        self.polling_signal_period = polling_signal_period
+        self.strategy_error_log = strategy
+        self.map_filename = map_filename
+        self.strategy = strategy
         self.sim = sim
 
+        self.tol_dist = 2.5
+        self.errors_filename = errors_filename
+        self.error_count = 0
 
         # for communication
         self.comm_range = comm_range
@@ -115,7 +129,7 @@ class GenericRobot(object):
 
         self.lock_info = threading.Lock()
 
-        """TODO RECOVERY
+
         #recovery
         self.last_feedback_pose = None
         self.stuck = False
@@ -123,7 +137,18 @@ class GenericRobot(object):
         self.pub_motion_rec = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
-        """
+
+        #TODO MYSTRATEGY (main_robot 130)
+
+        # for polling signal strength
+        # each time a new target is available, reset the list and start polling by setting polling signal to true
+        # old
+        # self.signal_data = []
+        rospy.Timer(rospy.Duration(polling_signal_period), self.polling_signal_callback)
+        self.iam_moving = False
+        # from 4th max variance of grass, 4 robots, before was 0.09
+        rospy.Timer(rospy.Duration(0.05), self.monitor_stop_motion_callback)
+
 
         # for maintaining and publishing all the info known by the robot w.r.t the other robots (destination and path)
         self.robot_info_list = []
@@ -264,6 +289,7 @@ class GenericRobot(object):
             if ((rospy.Time.now() - self.time_start_path) > rospy.Duration(max(self.my_time_to_dest, self.teammate_time_to_dest))):
                 self.path_timeout_elapsed = True
                 self.client_motion.cancel_goal()
+        #First part is also used in the first and final step of multi2 by followers - stop when comm always false for leaders
         elif ((self.stop_when_comm)):
             if (self.comm_module.can_communicate(self.teammates_id[0], for_stopping=True)):
                 self.teammate_comm_regained = True
@@ -282,7 +308,6 @@ class GenericRobot(object):
         self.teammate_comm_regained = False
         self.iam_moving = False
 
-        #if(self.strategy != 'multi2'):
         self.path_timeout_elapsed = False
         self.my_path = None
         self.teammate_path = None
@@ -335,6 +360,9 @@ class GenericRobot(object):
             self.my_time_to_dest = self.compute_dist(msg.poses)/SPEED
             self.my_time_to_dest = self.my_time_to_dest + TIME_TOL_PERC*self.my_time_to_dest
 
+            self.first_estimate_time = False
+            rospy.loginfo('Time to dest robot ' + str(self.robot_id) + ' = ' + str(self.my_time_to_dest))
+
     def teammate_time_path_callback(self, msg):
         if(not(self.moving_nominal_dest)): return
         #callback means I can actually communicate
@@ -369,12 +397,9 @@ class GenericRobot(object):
 
             # if both did not move do not make measurement
             if self.last_robots_polling_pos[other_robot_id] is not None:
-                if (abs(self.x - self.last_robots_polling_pos[other_robot_id][0][0]) <= 1 and
-                            abs(self.y - self.last_robots_polling_pos[other_robot_id][0][1]) <= 1 and
-                            abs(self.other_robots_pos[other_robot_id][0] -
-                                    self.last_robots_polling_pos[other_robot_id][1][0]) <= 1 and
-                            abs(self.other_robots_pos[other_robot_id][1] -
-                                    self.last_robots_polling_pos[other_robot_id][1][1]) <= 1):
+                if (abs(self.x - self.last_robots_polling_pos[other_robot_id][0][0]) <= 1 and abs(self.y - self.last_robots_polling_pos[other_robot_id][0][1]) <= 1 and
+                            abs(self.other_robots_pos[other_robot_id][0] - self.last_robots_polling_pos[other_robot_id][1][0]) <= 1 and
+                            abs(self.other_robots_pos[other_robot_id][1] - self.last_robots_polling_pos[other_robot_id][1][1]) <= 1):
                     continue
 
                 # Add for our specific scenarios, so we process data ONLY when x2,y2 of neighbor robot exists in selected_locations of x1,y1 pppph
@@ -389,29 +414,23 @@ class GenericRobot(object):
                     # Finding candidate locations according to communication model.
                     candidate_location_hash_of_teammate = conv_to_hash(teammate_x, teammate_y)
                     candidate_location_hash_of_myself = conv_to_hash(my_x, my_y)
-                    teammate_as_source_candidate_locations = self.env.selected_locations.get(
-                        candidate_location_hash_of_teammate, 0)
-                    myself_as_source_candidate_locations = self.env.selected_locations.get(
-                        candidate_location_hash_of_myself, 0)
+                    teammate_as_source_candidate_locations = self.env.selected_locations.get(candidate_location_hash_of_teammate, 0)
+                    myself_as_source_candidate_locations = self.env.selected_locations.get(candidate_location_hash_of_myself, 0)
 
                     # Update environment with new selected locations in case it is needed.
                     if teammate_as_source_candidate_locations == 0:
                         self.env.update_selected_locations((teammate_x, teammate_y))
-                        teammate_as_source_candidate_locations = self.env.selected_locations.get(
-                            candidate_location_hash_of_teammate, 0)
+                        teammate_as_source_candidate_locations = self.env.selected_locations.get(candidate_location_hash_of_teammate, 0)
                     if myself_as_source_candidate_locations == 0:
                         self.env.update_selected_locations((my_x, my_y))
-                        myself_as_source_candidate_locations = self.env.selected_locations.get(
-                            candidate_location_hash_of_myself, 0)
+                        myself_as_source_candidate_locations = self.env.selected_locations.get(candidate_location_hash_of_myself, 0)
 
                     found_close_to_candidate_location = False
 
                     # Checking if current pose of the robot (self) is close to a candidate location in a list, considering the teammate as source
                     # or if the current pose of the teammate is close to a candidate location in a list, considering self as source.
-                    if (len(filter(lambda dest: eucl_dist(dest, (self.x, self.y)) <= 1.0,
-                                   teammate_as_source_candidate_locations)) > 0
-                        or len(filter(lambda dest: eucl_dist(dest, (teammate_x, teammate_y)) <= 1.0,
-                                      myself_as_source_candidate_locations)) > 0):  # TODO constant, maybe consistent with other constants in the project.
+                    if (len(filter(lambda dest: eucl_dist(dest, (self.x, self.y)) <= 1.0,teammate_as_source_candidate_locations)) > 0
+                        or len(filter(lambda dest: eucl_dist(dest, (teammate_x, teammate_y)) <= 1.0,myself_as_source_candidate_locations)) > 0):  # TODO constant, maybe consistent with other constants in the project.
                         found_close_to_candidate_location = True
 
                     # If it is not close to a location that can be selected, then don't include measurement.
@@ -430,17 +449,14 @@ class GenericRobot(object):
             new_data.my_pos.pose.position.y = self.y
             new_data.teammate_pos.pose.position.x = self.other_robots_pos[other_robot_id][0]
             new_data.teammate_pos.pose.position.y = self.other_robots_pos[other_robot_id][1]
-            self.last_robots_polling_pos[other_robot_id] = ((self.x, self.y),
-                                                            self.other_robots_pos[other_robot_id])
+            self.last_robots_polling_pos[other_robot_id] = ((self.x, self.y), self.other_robots_pos[other_robot_id])
             new_data.timestep = int((rospy.Time.now() - self.mission_start_time).secs)
 
             self.fill_signal_data(new_data)
 
             f = open(comm_dataset_filename, "a")
-            f.write(str(new_data.timestep) + ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(
-                new_data.my_pos.pose.position.y) +
-                    ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(
-                new_data.teammate_pos.pose.position.y) +
+            f.write(str(new_data.timestep) + ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
+                    ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
                     ' ' + str(new_data.signal_strength) + '\n')
 
             f.close()
@@ -449,16 +465,14 @@ class GenericRobot(object):
         self.poll_signal()
 
     def feedback_motion_cb(self, feedback):
-        if (self.last_feedback_pose is not None and abs(
-                    feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
-                    abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
+        if (self.last_feedback_pose is not None and abs(feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
+            abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
             if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
                 self.error_count += 1
                 if (self.error_count == MAX_NUM_ERRORS):
                     mode = 'a' if os.path.exists(self.errors_filename) else 'w'
                     f = open(self.errors_filename, mode)
-                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" + str(
-                        self.n_robots) + "--->" + self.strategy_error_log + "\n")
+                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" + str(self.n_robots) + "--->" + self.strategy_error_log + "\n")
                     f.close()
                     if self.sim:
                         # sim too biased by nav errors!
@@ -684,8 +698,7 @@ class Leader(GenericRobot):
         print 'created environment variable'
         rospy.loginfo(str(robot_id) + ' - Created environment variable')
 
-        self.comm_map = GPmodel(self.env.dimX, self.env.dimY, comm_range, tiling, self.comm_module.comm_model,
-                                self.log_filename)
+        self.comm_map = GPmodel(self.env.dimX, self.env.dimY, comm_range, tiling, self.comm_module.comm_model,self.log_filename)
         self.comm_maps = []  # for logging
 
         # for sending commands to the follower
@@ -733,7 +746,7 @@ class Leader(GenericRobot):
 
         return all_signal_data
 
-
+    #TODO MYSTRATEGY = mintime_strategy
     def explore_comm_maps_mintime(self):
         r = rospy.Rate(self.replan_rate)
         while not rospy.is_shutdown():
@@ -888,9 +901,8 @@ class Follower(GenericRobot):
     _feedback = SignalMappingFeedback()
     _result = SignalMappingResult()
 
-    def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration,
-                 log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename, strategy,
-                 resize_factor, errors_filename):
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration, log_filename, comm_dataset_filename,
+                 teammates_id, n_robots, ref_dist, env_filename, strategy, resize_factor, errors_filename):
         rospy.loginfo(str(robot_id) + ' - Follower - starting!')
         # Load Environment for follower to filter readings.
         environment_not_loaded = True
@@ -947,11 +959,8 @@ class Follower(GenericRobot):
 
         for destination in goal.double_goals:
             # each destination also includes the one of the leader - will be always the same in this strategy
-            self.fill_cur_destinations(
-                (destination.target_leader.pose.position.x, destination.target_leader.pose.position.y),
-                (-1.0, -1.0))
-            success = self.send_to(
-                (destination.target_follower.pose.position.x, destination.target_follower.pose.position.y))
+            self.fill_cur_destinations((destination.target_leader.pose.position.x, destination.target_leader.pose.position.y),(-1.0, -1.0))
+            success = self.send_to((destination.target_follower.pose.position.x, destination.target_follower.pose.position.y))
             # meanwhile, it will poll
 
         if (not (success)):
@@ -968,8 +977,7 @@ class Follower(GenericRobot):
 
                 # once it gets there, it will surely communicate - this is just to be safe
                 if (not (self.comm_module.can_communicate(self.teammates_id[0]))):
-                    backup_dest = (goal.double_goals[-1].target_leader.pose.position.x,
-                                   goal.double_goals[-1].target_leader.pose.position.y)
+                    backup_dest = (goal.double_goals[-1].target_leader.pose.position.x,goal.double_goals[-1].target_leader.pose.position.y)
                     self.send_to(backup_dest)
 
             elif (first_safe_pos_norm):
@@ -1029,6 +1037,10 @@ if __name__ == '__main__':
         mindist_vertices_maxvar = int(rospy.get_param('/mindist_vertices_maxvar'))
         strategyParams = StrategyParams(samples_pairs_greedy=samples_pairs_greedy,
                                         mindist_vertices_maxvar=mindist_vertices_maxvar)
+    elif('mintime' in strategy):
+        #TODO IMPLEMENTARE COSA FARE MYSTRATEGY
+    elif(strategy==random):
+        pass
     else:
         print "Strategy unknown! Exiting..."
         exit(1)
@@ -1055,8 +1067,7 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Loggin possible errors to: " + errors_filename
 
-
-        if strategy != "random":
+    if strategy != "random":
 
         if((len(teammates_id) > 1) and not(is_leader)):
             print "Error! Only leader can have more than one teammate."
@@ -1064,16 +1075,16 @@ if __name__ == '__main__':
 
         elif(len(teammates_id) > 1 and 'multi2' not in strategy):
             print "Error! Only strategy multi2 supports more than 1 teammate."
-            exit(1)    
+            exit(1)
 
         if is_leader:
-            l = Leader(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration, 
-                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename, 
+            l = Leader(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration,
+                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                        comm_dataset_filename, strategy, strategyParams, resize_factor, tiling, errors_filename,
                        communication_model)
             l.explore_comm_maps()
         else:
-            f = Follower(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration, 
+            f = Follower(seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration,
                          log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                          strategy, resize_factor, errors_filename)
             rospy.spin()
