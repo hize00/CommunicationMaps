@@ -7,7 +7,7 @@ import numpy as np
 POINTS_TO_EXPLORE = [(1,5),(3,5),(3,4),(1,3),(1,4)]
 N_ROBOT = 2
 N_VERTEXES = 5
-
+ROBOT_VELOCITY = 2.3
 #GRAPH BUILT BY ME
 #robot velocity = 2.3 m/s
 
@@ -29,7 +29,7 @@ distance_matrix[2][1] = 17
 distance_matrix[2][2] = 0
 distance_matrix[2][3] = 21
 distance_matrix[2][4] = 38
-distance_matrix[3][0] = 27
+distance_matrix[3][0] = 35
 distance_matrix[3][1] = 24
 distance_matrix[3][2] = 21
 distance_matrix[3][3] = 0
@@ -44,7 +44,7 @@ distance_matrix[4][4] = 0
 time_matrix =  np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0,N_VERTEXES):
 	for j in range(0,N_VERTEXES):
-		time_matrix[i][j] = distance_matrix[i][j] / 2.3
+		time_matrix[i][j] = distance_matrix[i][j] / ROBOT_VELOCITY
 
 print "DISTANCE Matrix"
 print distance_matrix
