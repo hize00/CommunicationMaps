@@ -123,8 +123,8 @@ def time_cost(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio):
 		for j in range (0,length):
 			if V2[i][0]!=V2[j][0]:
 				A2[i][j]=1
-				#il costo e' il minimo tra somma di (i-i',j-j') OR (i-j',j-i')
-				T2[i][j]=min( (time_matrix[V2[i][1][0]-1][V2[j][1][0]-1] + time_matrix[V2[i][1][1]-1][V2[j][1][1]-1]) , (time_matrix[V2[i][1][0]-1][V2[j][1][1]-1]+time_matrix[V2[i][1][1]-1][V2[j][1][0]-1]))
+				#il costo e' il minimo tra i max di (i-i',j-j') OR (i-j',j-i')
+				T2[i][j]=min(max(time_matrix[V2[i][1][0]-1][V2[j][1][0]-1], time_matrix[V2[i][1][1]-1][V2[j][1][1]-1]) , max(time_matrix[V2[i][1][0]-1][V2[j][1][1]-1],time_matrix[V2[i][1][1]-1][V2[j][1][0]-1]))
 	#symmetric wrt diagonal				
 	print "\nCOST MATRIX for TIME"
 	print T2
@@ -137,8 +137,8 @@ T = time_cost(roadmap_graph,adjacency_road,radiomap_graph,adjacency_radio)
 
 #TODO: G2
 """
-il grafo G2 sara' un grafo completamente connesso con tanti vertici quanto la dimensione della matrice C (4 in questo caso)
-I pesi degli archi sono i valori contenuti nella matrice C
+il grafo G2 sara' un grafo completamente connesso con tanti vertici quanto la dimensione della matrice D o T (5 in questo caso)
+I pesi degli archi sono i valori contenuti nella matrice D o T
 per trovare il piano ottimo bisogna risolvere il TSP su G2
 """
 
