@@ -7,7 +7,7 @@ import numpy as np
 POINTS_TO_EXPLORE = [(1,5),(3,5),(3,4),(1,3),(1,4)]
 N_ROBOT = 2
 N_VERTEXES = 5
-ROBOT_VELOCITY = 2.3
+ROBOT_VELOCITY = 1
 #GRAPH BUILT BY ME
 #robot velocity = 2.3 m/s
 
