@@ -1,6 +1,8 @@
 import math
 import numpy as np
-
+import sys
+import itertools
+from gurobipy import *
 
 
 
@@ -8,9 +10,8 @@ POINTS_TO_EXPLORE = [(1,5),(3,5),(3,4),(1,3),(1,4)]
 N_ROBOT = 2
 N_VERTEXES = 5
 ROBOT_VELOCITY = 1
-#GRAPH BUILT BY ME
-#robot velocity = 2.3 m/s
 
+#GRAPH BUILT BY ME
 
 #popolamento manuale matrice distanze
 distance_matrix =  np.zeros((N_VERTEXES, N_VERTEXES))
@@ -50,7 +51,6 @@ print "DISTANCE Matrix"
 print distance_matrix
 print "\nTIME Matrix"
 print time_matrix
-
 
 
 #GRAFO DELLA MAPPA. Grafo completamente connesso
@@ -98,7 +98,7 @@ print V2
 	#print V2[1][1][1] #stampa 4
 length = len(V2)
 
-"""OPTIMAL PLAN FOR 2 ROBOTS"""
+"""DISTANCE COST MATRIX"""
 def distance_cost(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio):
 	
 	A2 = np.zeros((length, length))
@@ -115,7 +115,7 @@ def distance_cost(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio
 	print D2
 	return D2
 
-
+"""TIME COST MATRIC"""
 def time_cost(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio):
 	A2 = np.zeros((length, length))
 	T2 = np.zeros((length, length))
@@ -132,15 +132,90 @@ def time_cost(roadmap_graph, adjacency_road, radiomap_graph, adjacency_radio):
 
 
 
+""" GUROBI TSP"""
+
+# Callback - use lazy constraints to eliminate sub-tours
+def subtourelim(model, where):
+    if where == GRB.Callback.MIPSOL:
+        # make a list of edges selected in the solution
+        vals = model.cbGetSolution(model._vars)
+        selected = tuplelist((i,j) for i,j in model._vars.keys() if vals[i,j] > 0.5)
+        # find the shortest cycle in the selected edge list
+        tour = subtour(selected)
+        if len(tour) < n:
+            # add subtour elimination constraint for every pair of cities in tour
+            model.cbLazy(quicksum(model._vars[i,j]
+                                  for i,j in itertools.combinations(tour, 2))
+                         <= len(tour)-1)
+
+
+# Given a tuplelist of edges, find the shortest subtour
+def subtour(edges):
+    unvisited = list(range(n))
+    cycle = range(n+1) # initial length has 1 more city
+    while unvisited: # true if list is non-empty
+        thiscycle = []
+        neighbors = unvisited
+        while neighbors:
+            current = neighbors[0]
+            thiscycle.append(current)
+            unvisited.remove(current)
+            neighbors = [j for i,j in edges.select(current,'*') if j in unvisited]
+        if len(cycle) > len(thiscycle):
+            cycle = thiscycle
+    return cycle
+
+
+# Parse argument
+if len(sys.argv) < 3:
+    print("Usage: filename.py npoints obj_fun('time' or 'distance')")
+    exit(1)
+n = int(sys.argv[1])
+obj_fun = str(sys.argv[2])
+
+# Cost matrixes (distance/time) between each pair of points
 D = distance_cost(roadmap_graph,adjacency_road,radiomap_graph,adjacency_radio)
 T = time_cost(roadmap_graph,adjacency_road,radiomap_graph,adjacency_radio)
 
-#TODO: G2
-"""
-il grafo G2 sara' un grafo completamente connesso con tanti vertici quanto la dimensione della matrice D o T (5 in questo caso)
-I pesi degli archi sono i valori contenuti nella matrice D o T
-per trovare il piano ottimo bisogna risolvere il TSP su G2
-"""
+#Dictionaries (distance/time)
+dict_dist = {}
+dict_time = {}
 
+dict_time = {(i,j) : T[i][j] 
+    for i in range(n) for j in range(i)}
+dict_dist = {(i,j) : D[i][j] 
+    for i in range(n) for j in range(i)}
 
+m = Model()
+
+if obj_fun == "time":
+	vars = m.addVars(dict_time.keys(), obj=dict_time, vtype=GRB.BINARY, name='e')
+	for i,j in vars.keys():
+		vars[j,i] = vars[i,j] # edge in opposite direction
+elif obj_fun == "distance":
+	vars = m.addVars(dict_dist.keys(), obj=dict_dist, vtype=GRB.BINARY, name='e')
+	for i,j in vars.keys():
+		vars[j,i] = vars[i,j] # edge in opposite direction
+else: 
+	print "Error in calling the file. Usage: file.py npoints obj_fun('time' or 'distance')"
+	sys.exit()
+
+# Add degree-2 constraint
+m.addConstrs(vars.sum(i,'*') == 2 for i in range(n))
+
+# Optimize model
+m._vars = vars
+m.Params.lazyConstraints = 1
+m.optimize(subtourelim)
+
+vals = m.getAttr('x', vars)
+selected = tuplelist((i,j) for i,j in vals.keys() if vals[i,j] > 0.5)
+
+tour = subtour(selected)
+assert len(tour) == n
+
+print('')
+print('Optimal tour: %s' % str(tour))
+print('Optimal cost: %g' % m.objVal)
+print('')
 
