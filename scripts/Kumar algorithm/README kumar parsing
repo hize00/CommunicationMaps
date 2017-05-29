@@ -12,7 +12,7 @@ See file "5nodes.dat" for a good example.
 
 HOW TO RUN:
 
-1. Open the terminal and go to the directory where the file is
+1. Open the terminal and go to the directory where the file py and the file dat are. (They need to be in the same directory)
 2. TYPE: python filename.py filedat.dat obj_fun
 
 obj_fun: distance OR time
