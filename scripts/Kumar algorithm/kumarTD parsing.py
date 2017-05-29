@@ -15,7 +15,7 @@ file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
 
 
-#RITORNA N_VERTEX, ROBOT_VELOCITY, POINTS_TO_EXPLORE e DISTANCE_MATRIX
+#returns N_VERTEX, ROBOT_VELOCITY, POINTS_TO_EXPLORE and DISTANCE_MATRIX
 def parsing_file(datfile):
 	P_EXPLORE = []
 	readingpoints=0
@@ -69,7 +69,7 @@ print "\n---> POINTS TO EXPLORE "
 print POINTS_TO_EXPLORE
 print "\n"
 
-#popolamento matrice tempo
+#time matrix initialization
 time_matrix =  np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0,N_VERTEXES):
 	for j in range(0,N_VERTEXES):
@@ -81,7 +81,7 @@ print "\nTIME Matrix"
 print time_matrix
 
 
-#MATRICE ROAD DI ADIACENZA. Essendo un grafo completamente connesso gli unici 0 sono sulla diagonale
+#ROAD MATRIX. Being a completely connected graph, the 0 are only on the diagonal
 adjacency_road = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range (0,N_VERTEXES):
 	for j in range (0,N_VERTEXES):
@@ -90,7 +90,7 @@ for i in range (0,N_VERTEXES):
 		
 
 n_to_explore = len(POINTS_TO_EXPLORE)
-#MATRICE RADIO DEI PUNTI IN CUI MISURARE CONNESSIONE. 1 SE BISOGNA MISURARE
+#RADIO MATRIX. Values are 1 for points where we need to measure connection
 adjacency_radio = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0,n_to_explore):
 	adjacency_radio[POINTS_TO_EXPLORE[i][0]][POINTS_TO_EXPLORE[i][1]] = 1
@@ -119,8 +119,9 @@ for i in range (0,N_VERTEXES):
 			z=z+1
 print "\n V2: each v represents the links between two points"
 print V2
-	#valori: indice lista / accesso a id_vertice o coppia / quale tra i due punti
-	#print V2[1][1][1] #stampa 4
+	#accessing values of V2: [list index] | [vertex_id or pair] | [if pair, selects if first or second point]
+	#example1: V2[1][1][1] accesses 2nd element of list, pair of point, second point of the pair
+	#example2: V2[2][0] accesses 3rd element of list and vertex_id.
 length = len(V2)
 
 """DISTANCE COST MATRIX"""
@@ -132,7 +133,7 @@ def distance_cost(adjacency_road, adjacency_radio):
 		for j in range (0,length):
 			if V2[i][0]!=V2[j][0]:
 				A2[i][j]=1
-				#il costo e' il minimo tra somma di (i-i',j-j') OR (i-j',j-i')
+				#the cost is the MIN between d(ii')+d(jj') OR d(ij')+d(ji')
 				D2[i][j]=min( (distance_matrix[V2[i][1][0]][V2[j][1][0]] + distance_matrix[V2[i][1][1]][V2[j][1][1]]) , (distance_matrix[V2[i][1][0]][V2[j][1][1]]+distance_matrix[V2[i][1][1]][V2[j][1][0]]))
 	
 	#symmetric wrt diagonal				
@@ -148,7 +149,7 @@ def time_cost(adjacency_road, adjacency_radio):
 		for j in range (0,length):
 			if V2[i][0]!=V2[j][0]:
 				A2[i][j]=1
-				#il costo e' il minimo tra i max di (i-i',j-j') OR (i-j',j-i')
+				#the cost is the MIN between the MAX of t(ii')+t(jj') OR t(ij')+t(ji')
 				T2[i][j]=min(max(time_matrix[V2[i][1][0]][V2[j][1][0]], time_matrix[V2[i][1][1]][V2[j][1][1]]) , max(time_matrix[V2[i][1][0]][V2[j][1][1]],time_matrix[V2[i][1][1]][V2[j][1][0]]))
 	#symmetric wrt diagonal				
 	print "\nCOST MATRIX for TIME"
