@@ -230,17 +230,7 @@ class GenericRobot(object):
         all_info.sender = self.robot_id
         self.pub_all_info.publish(all_info)
 
-    def fill_cur_destinations(self, dest_leader, dest_follower):
-        if (self.robot_info_list[self.robot_id].robot_id == -1):
-            self.robot_info_list[self.robot_id].robot_id = self.robot_id
-            if (self.my_path is None or self.teammate_path is None):
-                # the follower will always have empty lists
-                self.robot_info_list[self.robot_id].path_leader = []
-                self.robot_info_list[self.robot_id].path_follower = []
-
-        self.robot_info_list[self.robot_id].timestep = int((rospy.Time.now() - self.mission_start_time).secs)
-        self.robot_info_list[self.robot_id].dest_leader = Point(dest_leader[0], dest_leader[1], 0)
-        self.robot_info_list[self.robot_id].dest_follower = Point(dest_follower[0], dest_follower[1], 0)
+#TODO cancellato fill_current_destinations
 
     def fill_signal_data(self, datum):
         self.robot_data_list[self.robot_id].append(datum)
@@ -668,6 +658,21 @@ class Random(GenericRobot):
 
 ######################################################################################################################################################################
 
+#TODO PARSING SUL FILE PER LEGGERE LE CONFIGURAZIONI E DESTINAZIONI: IL PRIMO NUMERO DI OGNI COPPIA È IL PRIMO ROBOT, IL SECONDO
+#TODO IL SECONDO IL SECONDO ROBOT
+
+configurations_time = [[0,4],[3,5],[2,1],[2,3],[4,2],[0,5]]
+
+configurations_distance = [[0,4],[4,2],[3,2],[1,2],[3,5],[5,0]]
+
+dest_leader = []
+dest_followers = []
+
+for i in range(0, len(configurations_time)):
+    dest_leader.append(configurations_time[i][0])
+    dest_followers.append(configurations_time[i][1])
+
+
 #How the leader manages the strategy and the followers
 class Leader(GenericRobot):
     def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period,
@@ -717,14 +722,6 @@ class Leader(GenericRobot):
         # self.all_signal_data = []
         # self.signal_data_follower = []
 
-        #TODO EXPLORATION STRATEGY (DA METTERE self.exploration_strategy = exploration_strategies.my_strategy)
-        """
-        if (self.strategy == 'max_variance'):
-            self.exploration_strategy = exploration_strategies.max_variance_strategy
-        elif (self.strategy == 'multi2'):
-            self.exploration_strategy = exploration_strategies.multi2_strategy
-        """
-
         self.exploration_strategy = exploration_strategies.dora_strategy
 
         self.backup_strategy = exploration_strategies.backup_safe
@@ -748,27 +745,143 @@ class Leader(GenericRobot):
 
     #TODO MYSTRATEGY = dora_strategy
     def explore_comm_maps_dora(self):
+        r = rospy.Rate(self.replan_rate)
+
+        i = 0
+
+        while not rospy.is_shutdown():
+            if self.explore_comm_maps_state == -1:
+                self.reset_stuff()
+
+                if (self.first_plan and self.robot_id > 0):
+                    self.first_plan = False
+                    # TODO custom for > 4 here: 10 and 20
+                    rospy.sleep(rospy.Duration(8))
+
+                rospy.loginfo(str(self.robot_id) + ' planning')
 
 
+                rospy.loginfo(str(self.robot_id) + ' - Leader - has decided its dest:')
+                rospy.loginfo(dest_leader[i])
+
+                rospy.loginfo(str(self.robot_id) + ' - Leader - has decided followers start vertices:')
+                rospy.loginfo(dest_followers[i])
+
+                rospy.loginfo(str(self.robot_id) + ' - Leader - has decided followers paths:')
+
+                rospy.sleep(rospy.Duration(2.0))
+                self.explore_comm_maps_state = 0
+
+                t1 = threading.Thread(target=self.send_myself_to_dora, args=(i, ))
+                t1.start()
+
+                i = i+1
+
+            elif self.explore_comm_maps_state == 4:
+                # be sure to receive the reconnection signal data (in case of disconnection)
+                rospy.sleep(rospy.Duration(2))
+
+                all_signal_data = self.extract_signal_data()
+                print str(self.robot_id) + ' - creating new model with a total of ' + str(len(all_signal_data))
+                self.comm_map.update_model(all_signal_data)
+
+                self.log_plan()
+
+                self.explore_comm_maps_state = -1
 
 
-
-
-
-
+            r.sleep()
 
 
     #TODO send_myself_to_dora(self,dest_leader)
 
-    def send_myself_to_dora(self,dest_leader):
+    def send_myself_to_dora(self,index):
+        rospy.loginfo('New goal for the leader')
+        self.completed = False
+        self.time_start_path = rospy.Time.now()
+        self.first_estimate_time = True
+        self.first_estimate_teammate_path = True
+
+        self.moving_nominal_dest = True
+
+        self.send_to(dest_leader[index])
+
+        r = rospy.Rate(10)
+
+"""
+ if (self.arrived_nominal_dest and self.teammate_arrived_nominal_dest and self.comm_module.can_communicate(self.teammates_id[0])):
+            rospy.loginfo(str(self.robot_id) + ' - Leader - both arrived and communicating.')
+            self.connect_first_attempt = True
+            # NOT NEEDED, the other thread will handle it. r.sleep() #wait for the follower to send signal data...
+
+        else:
+            if (self.path_timeout_elapsed):
+                communicated = False
+                if (self.comm_module.can_communicate(self.teammates_id[0])):
+                    rospy.loginfo(str(self.robot_id) + ' - Leader - timeout elapsed but communicating.')
+                    communicated = True
+            else:
+                communicated = False
+                # sure to establish comm channel if exists - if Not arrived in time, time_to_wait should be always negative (0)
+                time_to_wait = rospy.Duration(max(self.my_time_to_dest, self.teammate_time_to_dest)) - (
+                rospy.Time.now() - self.time_start_path)
+                rospy.loginfo(str(self.robot_id) + ' Leader - must wait for ' + str(time_to_wait.secs))
+                start = rospy.Time.now()
+                while ((rospy.Time.now() - start) <= time_to_wait):
+                    if (self.teammate_arrived_nominal_dest and self.comm_module.can_communicate(self.teammates_id[0])):
+                        # can also happen while follower is returning to backup, but its ok
+                        rospy.loginfo(str(self.robot_id) + ' - Leader - has communicated while waiting.')
+                        self.connect_first_attempt = True
+                        communicated = True
+                        break
+                    r.sleep()
+
+                if (not (communicated) and self.comm_module.can_communicate(self.teammates_id[0])):
+                    rospy.loginfo(
+                        str(self.robot_id) + ' - Follower - waited for arrival nominal dest, now communicating.')
+                    communicated = True
+
+            if (not (communicated)):  # cannot communicate
+                rospy.loginfo(str(
+                    self.robot_id) + ' - Leader - has reached its destination, but cannot safely communicate with the follower.')
+                self.moving_nominal_dest = False
+                self.stop_when_comm = True
+
+            else:
+                pass
+"""
+
+
+        self.completed = True
+        self.explore_comm_maps_state += 1
 
 
     #TODO def send_followers_to_MYSTRATEGY(self, plans, dest_leader): guarda main_robot 877
 
-    def send_followers_to_dora(self,plans,dest_leader):
+    def send_followers_to_dora(self, index):
+
+
+    
+
+
+
+
 
 
     def send_and_wait_goal(self, teammate_id, goal):
+        rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
+        self.clients_signal[teammate_id].send_goal(goal)
+
+        self.clients_signal[teammate_id].wait_for_result()
+        rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+
+        if (self.explore_comm_maps_state == 0):
+            self.already_arrived[teammate_id] = True
+
+
+
+
+
 
 
 ######################################################################################################################################################################
@@ -801,16 +914,6 @@ class Follower(GenericRobot):
         # for SignalMapping action commanded by the Leader
         self._action_name = rospy.get_name()
 
-        #TODO TO MODIFY FOR MYSTRATEGY ###################  FATTO (riga sotto)
-        """ 
-        if (self.strategy != 'multi2'):
-            self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction,
-                                                    execute_cb=self.execute_cb_pair, auto_start=False)
-        else:
-            self.first_safe_pos_add = False
-            self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, execute_cb=self.execute_cb_multi2, auto_start=False)
-        """
-
         self.as = actionlib.SimpleActionClient(self._action_name, SignalMappingAction, execute_cb = self.execute_cb_dora, auto_start=FALSE)
 
         print 'created environment variable'
@@ -822,57 +925,21 @@ class Follower(GenericRobot):
     #TODO  def execute_cb_MYSTRATEGY(self, goal): guarda main_robot 1182
 
     def execute_cb_dora(self,goal):
-        rospy.loginfo(str(self.robot_id) + ' - Follower - has received a new goal.')
-        self.reset_stuff()
 
-        # use this trick to discriminate between first safe position and the final one
-        self.first_safe_pos_add = (goal.double_goals[0].backup_leader.pose.position.x > 1.5)
-        first_safe_pos_norm = (goal.double_goals[0].backup_leader.pose.position.x > 0.0 and
-                               goal.double_goals[0].backup_leader.pose.position.x < 1.5)
-        path_action = (goal.double_goals[0].backup_leader.pose.position.x < 0.0)
 
-        rospy.loginfo(str(self.robot_id) + ' - Follower first safe_pos_add' + str(self.first_safe_pos_add))
-        rospy.loginfo(str(self.robot_id) + ' - Follower first safe_pos_norm' + str(first_safe_pos_norm))
-        rospy.loginfo(str(self.robot_id) + ' - Follower path action' + str(path_action))
 
-        for destination in goal.double_goals:
-            # each destination also includes the one of the leader - will be always the same in this strategy
-            self.fill_cur_destinations((destination.target_leader.pose.position.x, destination.target_leader.pose.position.y),(-1.0, -1.0))
-            success = self.send_to((destination.target_follower.pose.position.x, destination.target_follower.pose.position.y))
-            # meanwhile, it will poll
 
-        if (not (success)):
-            rospy.loginfo(str(self.robot_id) + ' - Follower failed last point.')
 
-        if (not (self.comm_module.can_communicate(self.teammates_id[0]))):
-            if (path_action):
-                rospy.loginfo(str(self.robot_id) + ' - Follower executing backup.')
-                backup_dest = (goal.double_goals[-1].backup_follower.pose.position.x,
-                               goal.double_goals[-1].backup_follower.pose.position.y)
-                self.stop_when_comm = True
-                self.send_to(backup_dest)
-                # no need to fill cur destinations as follower destinations are ignored by leaders in this strategy
 
-                # once it gets there, it will surely communicate - this is just to be safe
-                if (not (self.comm_module.can_communicate(self.teammates_id[0]))):
-                    backup_dest = (goal.double_goals[-1].target_leader.pose.position.x,goal.double_goals[-1].target_leader.pose.position.y)
-                    self.send_to(backup_dest)
 
-            elif (first_safe_pos_norm):
-                while (not (self.comm_module.can_communicate(self.teammates_id[0]))):
-                    rospy.loginfo(str(self.robot_id) + ' - Follower NORM waiting for the leader to communicate')
-                    rospy.sleep(1)
 
-            else:  # first_safe_pos_add -> should arrive here only when leader is also arrived!
-                print "safe add has arrived, teammate_arrived_ value = " + str(self.teammate_arrived_nominal_dest)
-                while (not (self.comm_module.can_communicate(self.teammates_id[0]))):
-                    rospy.loginfo(str(self.robot_id) + ' - Follower ADD waiting for the leader to communicate')
-                    rospy.sleep(1)
 
-        self._result.data = []  # old self._feedback.data
-        rospy.loginfo(str(self.robot_id) + ' - Follower - action succeded')
 
-        self._as.set_succeeded(self._result)
+
+
+
+
+
 
 
 if __name__ == '__main__':
