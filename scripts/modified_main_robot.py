@@ -673,6 +673,7 @@ for i in range(0, len(configurations_time)):
     dest_followers.append(configurations_time[i][1])
 
 
+
 #How the leader manages the strategy and the followers
 class Leader(GenericRobot):
     def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period,
@@ -735,6 +736,8 @@ class Leader(GenericRobot):
         # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached, 3: all reached. - for pair
         # -1: plan, 0: plan_set, 1-2 leaders/followers reached safe, 3: all paths sent, 4: completed - for multi2
         self.explore_comm_maps_state = -1
+
+
 
     def extract_signal_data(self):
         all_signal_data = []
@@ -859,9 +862,13 @@ class Leader(GenericRobot):
     #TODO def send_followers_to_MYSTRATEGY(self, plans, dest_leader): guarda main_robot 877
 
     def send_followers_to_dora(self, index):
+        double_goal = GoalWithBackup()
+
+        double_goal.target_follower = PoseStamped()
+        double_goal.target_follower.pose.position.x = dest_follower[i][0]
+        double_goal.target_follower.pose.position.y = dest_follower[1]
 
 
-    
 
 
 
