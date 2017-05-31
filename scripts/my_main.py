@@ -45,7 +45,6 @@ MAX_NUM_ERRORS = 40
 PATH_DISC = 1 #m
 
 #NOTE: TIMEOUT IN TODO
-#NOTE: MYSTRATEGY IN TODO
 
 ###############################################################################################################################
 
@@ -116,11 +115,17 @@ class GenericRobot(object):
         rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
 
-        #TODO MYSTRATEGY (main_robot 130)
 
-        if (self.is_leader):
-            rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/move_base_node/NavfnROS/plan', Path,self.teammate_path_callback)
 
+        self.moving_nominal_dest = False
+        self.arrived_nominal_dest = False
+        self.teammate_arrived_nominal_dest = False
+        self.path_timeout_elapsed = False
+        self.completed = False
+
+        # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
+        self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
         # for polling signal strength
         # each time a new target is available, reset the list and start polling by setting polling signal to true
@@ -153,8 +158,7 @@ class GenericRobot(object):
         for r in xrange(n_robots):
             self.robot_data_list.append([])
 
-        rospy.Service('/robot_' + str(self.robot_id) + '/get_signal_data', GetSignalData,
-                      self.handle_get_signal_data)
+        rospy.Service('/robot_' + str(self.robot_id) + '/get_signal_data', GetSignalData,self.handle_get_signal_data)
         # subscribe to all the other robots - will never call mine
         self.get_signal_data_service_proxies = []
         for r in xrange(n_robots):
@@ -654,8 +658,6 @@ class Leader(GenericRobot):
         # old
         # self.all_signal_data = []
         # self.signal_data_follower = []
-
-        self.exploration_strategy = exploration_strategies.dora_strategy
 
         self.backup_strategy = exploration_strategies.backup_safe
 
