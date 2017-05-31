@@ -47,34 +47,12 @@ PATH_DISC = 1 #m
 #NOTE: TIMEOUT IN TODO
 #NOTE: MYSTRATEGY IN TODO
 
-########################################################################################################################################################################
-"""
-#A configuration is a set Ci = <r1 = vertex1, r2 = vertex2, ..., rN = vertexN, timestampI>
-class Configuration():
-    def __init__(self, conf_id, robots, timestamp):
-        self.conf_id = conf_id
-        self.robots = robots
-        self.timestamp = timestamp
-"""
-
-########################################################################################################################################################################
-
-class StrategyParams(object):
-    def __init__(self, samples_pairs_greedy=None, samples_leader_multi2=None, samples_follower_multi2_single=None,
-                 mindist_vertices_multi2=None, mindist_vertices_maxvar=None):
-        self.samples_pairs_greedy = samples_pairs_greedy
-        self.samples_leader_multi2 = samples_leader_multi2
-        self.samples_follower_multi2_single = samples_follower_multi2_single
-        self.mindist_vertices_multi2 = mindist_vertices_multi2
-        self.mindist_vertices_maxvar = mindist_vertices_maxvar
-
 ###############################################################################################################################
 
 #GenericRobot is a generic robot in a generic configuration
 class GenericRobot(object):
     def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, polling_signal_period, duration,
-                 log_filename, comm_dataset_filename, teammates_id, n_robots, """configuration""", ref_dist, strategy, resize_factor, errors_filename, client_topic='move_base'):
-        #self.configuration = configuration
+                 log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, strategy, resize_factor, errors_filename, client_topic='move_base'):
         self.seed = seed
         random.seed(seed + robot_id)
         self.robot_id = robot_id
@@ -139,6 +117,10 @@ class GenericRobot(object):
         self.front_range = 0.0
 
         #TODO MYSTRATEGY (main_robot 130)
+
+        if (self.is_leader):
+            rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/move_base_node/NavfnROS/plan', Path,self.teammate_path_callback)
+
 
         # for polling signal strength
         # each time a new target is available, reset the list and start polling by setting polling signal to true
@@ -592,69 +574,6 @@ class GenericRobot(object):
             self.poll_signal()
 
         return True
-
-######################################################################################################################################################################
-
-#How to move a robot randomly
-class Random(GenericRobot):
-    def __init__(self, seed, robot_id, sim, comm_range, map_filename, polling_signal_period, duration,
-                 disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
-                 comm_dataset_filename, strategy, resize_factor, tiling, errors_filename):
-        rospy.loginfo(str(robot_id) + ' - Random - starting!')
-
-        if (not (os.path.exists(env_filename))):
-            f = open(env_filename, "wb")
-            self.env = Environment(map_filename, disc_method, disc, resize_factor, comm_range)
-            pickle.dump(self.env, f)
-            f.close()
-        else:
-            f = open(env_filename, "rb")
-            self.env = pickle.load(f)
-            f.close()
-
-        super(Random, self).__init__(seed, robot_id, True, sim, comm_range, map_filename, polling_signal_period,
-                                     duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
-                                     ref_dist, strategy, resize_factor, errors_filename)
-
-        self.replan_rate = REPLAN_RATE
-        self.arrived_to_random_pos = True
-
-    def explore_comm_maps(self):
-        r = rospy.Rate(self.replan_rate)
-        while not rospy.is_shutdown():
-            if (self.arrived_to_random_pos):
-                self.arrived_to_random_pos = False
-                new_dest = random.choice(self.env.free_positions)
-                rospy.loginfo(str(self.robot_id) + ' chosen new dest: ' + str(new_dest))
-                t = threading.Thread(target=self.send_to_light, args=(new_dest,))
-                t.start()
-
-            r.sleep()
-
-    def send_to_light(self, target):
-        rospy.loginfo(str(self.robot_id) + ' moving to ' + str(target))
-        goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = '/map'
-        goal.target_pose.pose.position.x = target[0]
-        goal.target_pose.pose.position.y = target[1]
-        goal.target_pose.pose.orientation.w = 1
-        self.client_motion.send_goal(goal, feedback_cb=self.feedback_motion_cb)
-        self.client_motion.wait_for_result()
-        state = self.client_motion.get_state()
-        rospy.loginfo(str(self.robot_id) + ' stopped motion with state ' + str(state))
-        if (state == GoalStatus.PREEMPTED):
-            self.clear_costmap_service()
-            self.motion_recovery()
-            self.clear_costmap_service()
-        elif (state == GoalStatus.ABORTED):
-            if self.sim:
-                self.bump_bkw()
-            else:
-                self.clear_costmap_service()
-                self.motion_recovery()
-                self.clear_costmap_service()
-
-        self.arrived_to_random_pos = True
 
 ######################################################################################################################################################################
 
