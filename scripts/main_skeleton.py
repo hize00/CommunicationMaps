@@ -877,7 +877,7 @@ class Follower(GenericRobot):
 
         
     def execute_cb_pair(self, goal):
-        
+
 
 if __name__ == '__main__':
     rospy.init_node('robot')
