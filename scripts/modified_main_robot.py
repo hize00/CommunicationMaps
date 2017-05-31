@@ -665,14 +665,27 @@ configurations_time = [[0,4],[3,5],[2,1],[2,3],[4,2],[0,5]]
 
 configurations_distance = [[0,4],[4,2],[3,2],[1,2],[3,5],[5,0]]
 
+
 dest_leader = []
-dest_followers = []
+dest_follower = []
 
-for i in range(0, len(configurations_time)):
-    dest_leader.append(configurations_time[i][0])
-    dest_followers.append(configurations_time[i][1])
+dest_leader.append([10,10])
+dest_leader.append([25,30])
 
+dest_follower.append([15,15])
+dest_follower.append([30,35])
 
+"""
+path_leader = [] #lista di dest leader
+path_followers = [] #lista di dest_follower
+
+for i in range(0, len(dest_leader)):
+    path_leader.append(dest_leader)
+    
+for i in range(0,len(dest_follower)):
+    path_followers.append(dest_follower)
+
+"""
 
 #How the leader manages the strategy and the followers
 class Leader(GenericRobot):
@@ -768,7 +781,7 @@ class Leader(GenericRobot):
                 rospy.loginfo(dest_leader[i])
 
                 rospy.loginfo(str(self.robot_id) + ' - Leader - has decided followers start vertices:')
-                rospy.loginfo(dest_followers[i])
+                rospy.loginfo(dest_follower[i])
 
                 rospy.loginfo(str(self.robot_id) + ' - Leader - has decided followers paths:')
 
@@ -777,7 +790,8 @@ class Leader(GenericRobot):
 
                 t1 = threading.Thread(target=self.send_myself_to_dora, args=(i, ))
                 t1.start()
-
+                t2 = threading.Thread(target=self.send_followers_to_dora, args= (i,))
+                t2.start()
                 i = i+1
 
             elif self.explore_comm_maps_state == 4:
@@ -861,21 +875,35 @@ class Leader(GenericRobot):
 
     #TODO def send_followers_to_MYSTRATEGY(self, plans, dest_leader): guarda main_robot 877
 
-    def send_followers_to_dora(self, index):
-        double_goal = GoalWithBackup()
+    def send_followers_to_dora(self,index):
+        clients_messages = []
+        for i in range (0,len(dest_follower)):
+            double_goal = GoalWithBackup()
+            double_goal.target_follower = PoseStamped()
+            double_goal.target_follower.pose.position.x = dest_follower[index][0]
+            double_goal.target_follower.pose.position.y = dest_follower[index][1]
 
-        double_goal.target_follower = PoseStamped()
-        double_goal.target_follower.pose.position.x = dest_follower[i][0]
-        double_goal.target_follower.pose.position.y = dest_follower[1]
+            double_goal.target_leader = PoseStamped()
+            double_goal.target_leader.pose.position.x = dest_leader[index][0]
+            double_goal.target_leader.pose.position.y = dest_leader[index][1]
+
+            goal = SignalMappingGoal(double_goals=double_goals)
+            clients_messages.append((teammate_id, goal))
+
+        goal_threads = []
+
+        for (teammate_id, goal) in clients_messages:
+            t = threading.Thread(target=self.send_and_wait_goal, args=(teammate_id, goal))
+            t.start()
+            goal_threads.append(t)
+
+        for t in goal_threads:
+            t.join()
+
+        self.explore_comm_maps_state += 1
 
 
-
-
-
-
-
-
-    def send_and_wait_goal(self, teammate_id, goal):
+def send_and_wait_goal(self, teammate_id, goal):
         rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
         self.clients_signal[teammate_id].send_goal(goal)
 
@@ -884,11 +912,6 @@ class Leader(GenericRobot):
 
         if (self.explore_comm_maps_state == 0):
             self.already_arrived[teammate_id] = True
-
-
-
-
-
 
 
 ######################################################################################################################################################################
@@ -932,7 +955,25 @@ class Follower(GenericRobot):
     #TODO  def execute_cb_MYSTRATEGY(self, goal): guarda main_robot 1182
 
     def execute_cb_dora(self,goal):
+        rospy.loginfo(str(self.robot_id) + ' - Follower - has received a new goal.')
+        self.reset_stuff()
 
+        # use this trick to discriminate between first safe position and the final one
+        self.first_safe_pos_add = (goal.double_goals[0].backup_leader.pose.position.x > 1.5)
+        first_safe_pos_norm = (goal.double_goals[0].backup_leader.pose.position.x > 0.0 and
+                               goal.double_goals[0].backup_leader.pose.position.x < 1.5)
+        path_action = (goal.double_goals[0].backup_leader.pose.position.x < 0.0)
+
+        for destination in goal.double_goals:
+           success = self.send_to((destination.target_follower.pose.position.x, destination.target_follower.pose.position.y))
+
+        if (not (success)):
+            rospy.loginfo(str(self.robot_id) + ' - Follower failed last point.')
+
+        self._result.data = []  # old self._feedback.data
+        rospy.loginfo(str(self.robot_id) + ' - Follower - action succeded')
+
+        self._as.set_succeeded(self._result)
 
 
 
@@ -984,14 +1025,19 @@ if __name__ == '__main__':
     strategy = rospy.get_param('/strategy')
 
 
-    if (strategy == 'max_variance'):
+    if(strategy == 'max_variance'):
         samples_pairs_greedy = int(rospy.get_param('/samples_pairs_greedy'))
         mindist_vertices_maxvar = int(rospy.get_param('/mindist_vertices_maxvar'))
         strategyParams = StrategyParams(samples_pairs_greedy=samples_pairs_greedy,
                                         mindist_vertices_maxvar=mindist_vertices_maxvar)
-    elif('dora' in strategy):
-        #TODO IMPLEMENTARE COSA FARE MYSTRATEGY
-    elif(strategy==random):
+    elif('multi2' in strategy):
+        samples_leader_multi2 = int(rospy.get_param('/samples_leader_multi2'))
+        samples_follower_multi2_single = int(rospy.get_param('/samples_follower_multi2_single'))
+        mindist_vertices_multi2 = int(rospy.get_param('/mindist_vertices_multi2'))
+        strategyParams = StrategyParams(samples_leader_multi2=samples_leader_multi2,
+                                        samples_follower_multi2_single=samples_follower_multi2_single,
+                                        mindist_vertices_multi2=mindist_vertices_multi2)
+    elif(strategy == 'random' or strategy == 'dora'):
         pass
     else:
         print "Strategy unknown! Exiting..."
