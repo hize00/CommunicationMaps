@@ -50,36 +50,6 @@ PATH_DISC = 1 #m
 
 #################################################################################################################
 
-# TODO PARSING SUL FILE PER LEGGERE LE CONFIGURAZIONI E DESTINAZIONI: IL PRIMO NUMERO DI OGNI COPPIA È IL PRIMO ROBOT, IL SECONDO È IL SECONDO ROBOT
-
-configurations_time = [[0, 4], [3, 5], [2, 1], [2, 3], [4, 2], [0, 5]]
-
-configurations_distance = [[0, 4], [4, 2], [3, 2], [1, 2], [3, 5], [5, 0]]
-
-dest_leader = []
-dest_follower = []
-
-dest_leader.append([10, 10])
-dest_leader.append([25, 30])
-
-dest_follower.append([15, 15])
-dest_follower.append([30, 35])
-
-"""
-path_leader = [] #lista di dest leader
-path_followers = [] #lista di dest_follower
-
-for i in range(0, len(dest_leader)):
-    path_leader.append(dest_leader)
-
-for i in range(0,len(dest_follower)):
-    path_followers.append(dest_follower)
-
-"""
-
-
-#################################################################################################################
-
 class StrategyParams(object):
     def __init__(self, dora = None, min_time = None):
         self.dora = dora
