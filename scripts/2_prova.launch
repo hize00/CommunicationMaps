@@ -35,7 +35,6 @@
   <param name="range" value="50" />
   <param name="disc" value="7"/>
   <param name="map_filename" value="$(find strategy)/envs/offices.png"/>
-  <param name="polling_signal_period" value="3"/> <!--in sec -->   
   <param name="disc_method" value="grid"/>
   <param name="duration" value="1800"/>
   <param name="env_filename" value="$(find strategy)/envs/offices.dat"/>
