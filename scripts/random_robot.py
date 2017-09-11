@@ -8,6 +8,11 @@ class GenericRobot(object):
         self.isLeader = isLeader
         self.idRobot = idRobot
 
+
+#GenericRobot: self, seed, robot_id, is_leader, sim, comm_range, map_filename, polling_signal_period, duration,
+#              errors_filename, client_topic='move_base'
+
+
 class Leader(GenericRobot):
 
 
@@ -17,7 +22,7 @@ class Follower(GenericRobot):
 if __name__ == '__main__':
 
     isLeader = 0
-    idRobot = [1,2,3,4,5,6,7,8,9,10]
+    idRobot = [1,2,3,4]
 
     robot_set = []
 

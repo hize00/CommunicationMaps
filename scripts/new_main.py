@@ -882,10 +882,7 @@ if __name__ == '__main__':
 
     # <editor-fold desc="TODO STRATEGY DORA/TIME">
     if (strategy == 'dora'):
-        samples_pairs_greedy = int(rospy.get_param('/samples_pairs_greedy'))
-        mindist_vertices_maxvar = int(rospy.get_param('/mindist_vertices_maxvar'))
-        strategyParams = StrategyParams(samples_pairs_greedy=samples_pairs_greedy,
-                                        mindist_vertices_maxvar=mindist_vertices_maxvar)
+        
     elif (strategy == 'min_time'):
 
     else:
