@@ -216,8 +216,7 @@ class GenericRobot(object):
                 if (not (self.comm_module.can_communicate(other_robot_id))): break
 
     def handle_get_signal_data(self, req):
-        return GetSignalDataResponse(
-            filter(lambda x: x.timestep > req.timestep, self.robot_data_list[req.robot_id]))
+        return GetSignalDataResponse(filter(lambda x: x.timestep > req.timestep, self.robot_data_list[req.robot_id]))
 
     def pub_all_info_callback(self, event):
         if (self.my_path is not None and self.teammate_path is not None and not (self.path_inserted_in_info)):
@@ -944,3 +943,5 @@ if __name__ == '__main__':
                    disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                    comm_dataset_filename, strategy, resize_factor, tiling, errors_filename)
         r.explore_comm_maps()
+
+
