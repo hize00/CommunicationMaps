@@ -57,18 +57,23 @@ class GenericRobot(object):
         self.seed = seed
         random.seed(seed + robot_id)
         self.map_filename = map_filename
+        self.teammates_id = teammates_id
+        self.is_leader = is_leader
+        self.n_robots = n_robots
+        self.tol_dist = 2.5
+        self.errors_filename = errors_filename
+        self.error_count = 0
 
         #for ending the mission
         self.duration = rospy.Duration(duration)
         self.mission_start_time = rospy.Time.now()
 
-        self.teammates_id = teammates_id
-        self.is_leader = is_leader
-        self.n_robots = n_robots
-
-        self.tol_dist = 2.5
-        self.errors_filename = errors_filename
-        self.error_count = 0
+        # for handling motion
+        self.client_topic = client_topic
+        self.client_motion = actionlib.SimpleActionClient(self.client_topic, MoveBaseAction)
+        self.client_motion.wait_for_server()
+        rospy.logdebug('initialized action exec')
+        self.clear_costmap_service = rospy.ServiceProxy('move_base_node/clear_costmaps', Empty)
 
         # for logging
         self.log_filename = log_filename
@@ -80,14 +85,6 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-        # for handling motion
-        self.client_topic = client_topic
-        self.client_motion = actionlib.SimpleActionClient(self.client_topic, MoveBaseAction)
-        self.client_motion.wait_for_server()
-        rospy.logdebug('initialized action exec')
-        self.clear_costmap_service = rospy.ServiceProxy('move_base_node/clear_costmaps', Empty)
-
-
 '''
  # estimated position
         rospy.Subscriber('/%s/pose' % robot_id, geometry_msgs.msg.PoseStamped, handle_robot_pose, robot_id)
@@ -97,8 +94,6 @@ class GenericRobot(object):
         self.last_y = None
         self.traveled_dist = 0.0
 '''
-
-
 
 
 if __name__ == '__main__':
@@ -121,7 +116,8 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + error_filename
 
-    #for handling tf listener
+    '''
+     #for handling tf listener
     listener = tf.TransformListener()
     rate = rospy.Rate(10.0)
     while not rospy.is_shutdown():
@@ -133,6 +129,8 @@ if __name__ == '__main__':
             cout << "Current position: (" << x << "," << y << ")" << endl;
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             continue
+    '''
+
 
 
 
