@@ -1,2 +1,0 @@
-roslaunch two_turtlebot_in_stage_offices.launch map_file:="/home/banfi/catkin_ws/src/turtlebot_stage_tutorial/tutorial.yaml" world_file:="/home/banfi/catkin_ws/src/turtlebot_stage_tutorial/tutorial.world"
-

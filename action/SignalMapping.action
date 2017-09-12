@@ -1,8 +1,0 @@
-# Define the goal
-GoalWithBackup[] double_goals
----
-# Define the result
-SignalData[] data
----
-# Define a feedback message
-SignalData[] data

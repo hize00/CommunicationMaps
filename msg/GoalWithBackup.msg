@@ -1,4 +1,0 @@
-geometry_msgs/PoseStamped target_follower
-geometry_msgs/PoseStamped target_leader
-geometry_msgs/PoseStamped backup_follower
-geometry_msgs/PoseStamped backup_leader
