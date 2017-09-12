@@ -46,7 +46,7 @@ MAX_NUM_ERRORS = 40
 
 PATH_DISC = 1 #m
 
-#TODO NON C'È LA COMMUNICATION, PER ORA (i robot non comunicano tra loro, non ci sono errori o problemi di comunicazione)
+#TODO NON C'e LA COMMUNICATION, PER ORA (i robot non comunicano tra loro, non ci sono errori o problemi di comunicazione)
 
 class GenericRobot(object):
     def __init__(self, robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,
@@ -97,7 +97,7 @@ class GenericRobot(object):
 
 
 if __name__ == '__main__':
-    rospy.init('robot')
+    rospy.init_node('robot')
 
     #attributi del robot
     robot_id = int(rospy.get_param('~id'))
@@ -114,7 +114,7 @@ if __name__ == '__main__':
     tiling = int(rospy.get_param('/tiling'))
     log_folder = rospy.get_param('/log_folder')
     errors_filename = log_folder + 'errors.log'
-    print "Logging possible errors to: " + error_filename
+    print "Logging possible errors to: " + errors_filename
 
     '''
      #for handling tf listener
