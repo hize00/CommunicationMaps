@@ -9,6 +9,7 @@ import sys
 import threading
 
 import rospy
+import tf
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from actionlib_msgs.msg import *
@@ -87,6 +88,19 @@ class GenericRobot(object):
         self.clear_costmap_service = rospy.ServiceProxy('move_base_node/clear_costmaps', Empty)
 
 
+'''
+ # estimated position
+        rospy.Subscriber('/%s/pose' % robot_id, geometry_msgs.msg.PoseStamped, handle_robot_pose, robot_id)
+        self.x = 0.0
+        self.y = 0.0
+        self.last_x = None
+        self.last_y = None
+        self.traveled_dist = 0.0
+'''
+
+
+
+
 if __name__ == '__main__':
     rospy.init('robot')
 
@@ -106,6 +120,19 @@ if __name__ == '__main__':
     log_folder = rospy.get_param('/log_folder')
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + error_filename
+
+    #for handling tf listener
+    listener = tf.TransformListener()
+    rate = rospy.Rate(10.0)
+    while not rospy.is_shutdown():
+        try:
+            transform = tf.StampedTransform()
+            listener.lookupTransform('/base_footprint', '/odom', rospy.Time(0), transform)
+            x = transform.getOrigin().x()
+            y = transform.getOrigin().y();
+            cout << "Current position: (" << x << "," << y << ")" << endl;
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            continue
 
 
 
