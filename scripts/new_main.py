@@ -116,6 +116,9 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
+    r = GenericRobot(robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,
+                 n_robots, errors_filename, log_filename, comm_dataset_filename)
+
     '''
      #for handling tf listener
     listener = tf.TransformListener()
