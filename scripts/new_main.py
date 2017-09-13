@@ -85,15 +85,63 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-'''
- # estimated position
-        rospy.Subscriber('/%s/pose' % robot_id, geometry_msgs.msg.PoseStamped, handle_robot_pose, robot_id)
+        # estimated position TODO in TF e non in acml
+        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
         self.x = 0.0
         self.y = 0.0
         self.last_x = None
         self.last_y = None
         self.traveled_dist = 0.0
+
+        # other robots' estimated position - cur robot position remains 0.0 here
+        self.other_robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
+        self.last_robots_polling_pos = [None for _ in xrange(n_robots)]
+
+        for i in xrange(n_robots):
+            if i == robot_id: continue
+            s = "def a_" + str(i) + "(self, msg): self.other_robots_pos[" + str(i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
+            exec (s)
+            exec ("setattr(GenericRobot, 'callback_pos_teammate" + str(i) + "', a_" + str(i) + ")")
+            exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.callback_pos_teammate" + str(i) + ", queue_size = 100)")
+
+        self.lock_info = threading.Lock()
+
+        # recovery
+        self.last_feedback_pose = None
+        self.stuck = False
+        self.last_motion_time = None
+        self.pub_motion_rec = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
+        self.front_range = 0.0
+
+''' 
+        # for maintaining and selectively publishing signal data
+        self.robot_data_list = []
+        for r in xrange(n_robots):
+            self.robot_data_list.append([])
+
+        rospy.Service('/robot_' + str(self.robot_id) + '/get_signal_data', GetSignalData, self.handle_get_signal_data)
+
+        # subscribe to all the other robots - will never call mine
+        self.get_signal_data_service_proxies = []
+        for r in xrange(n_robots):
+            service_name = '/robot_' + str(r) + '/get_signal_data'
+            rospy.wait_for_service(service_name)
+            self.get_signal_data_service_proxies.append(rospy.ServiceProxy(service_name, GetSignalData))
 '''
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
@@ -108,32 +156,25 @@ if __name__ == '__main__':
     disc_method = rospy.get_param('/disc_method')
     duration = float(rospy.get_param('/duration'))
     env_filename = rospy.get_param('/env_filename')
-    teammates_id = str(rospy.get_param('~teammates_id'))
+    env_filename = env_filename.replace(".dat","_")
+    teammates_id_temp = str(rospy.get_param('~teammates_id'))
     is_leader = int(rospy.get_param('~is_leader'))
     n_robots = int(rospy.get_param('/n_robots'))
     tiling = int(rospy.get_param('/tiling'))
     log_folder = rospy.get_param('/log_folder')
+
+    temmates_id_temp = teammates_id_temp.split('-')
+    teammates_id = map(lambda x: int(x), temmates_id_temp)
+
+    env = (map_filename.split('/')[-1]).split('.')[0]
+    log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + str(n_robots) + '.log'
+    comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + str(n_robots) + '.dat'
+
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-
-
-    '''
-     #for handling tf listener
-    listener = tf.TransformListener()
-    rate = rospy.Rate(10.0)
-    while not rospy.is_shutdown():
-        try:
-            transform = tf.StampedTransform()
-            listener.lookupTransform('/base_footprint', '/odom', rospy.Time(0), transform)
-            x = transform.getOrigin().x()
-            y = transform.getOrigin().y();
-            cout << "Current position: (" << x << "," << y << ")" << endl;
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            continue
-    '''
-
-
+    r = GenericRobot(robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,
+                     n_robots, errors_filename, log_filename, comm_dataset_filename)
 
 
 
