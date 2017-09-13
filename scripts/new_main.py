@@ -79,14 +79,13 @@ class GenericRobot(object):
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
         log_file.close()
-        rospy.Timer(rospy.Duration(10), self.distance_logger_callback)
 
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
         # estimated position TODO in TF e non in acml
-        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
+        #rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
         self.x = 0.0
         self.y = 0.0
         self.last_x = None
@@ -111,7 +110,7 @@ class GenericRobot(object):
         self.stuck = False
         self.last_motion_time = None
         self.pub_motion_rec = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-        rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
+        #rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
 
 ''' 
@@ -173,8 +172,7 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    r = GenericRobot(robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,
-                     n_robots, errors_filename, log_filename, comm_dataset_filename)
+    #r = GenericRobot(robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,n_robots, errors_filename, log_filename, comm_dataset_filename)
 
 
 
