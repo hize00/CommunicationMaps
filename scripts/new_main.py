@@ -84,6 +84,8 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
+
+'''
         # estimated position TODO in TF e non in acml
         #rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
         self.x = 0.0
@@ -113,7 +115,7 @@ class GenericRobot(object):
         #rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
 
-''' 
+
         # for maintaining and selectively publishing signal data
         self.robot_data_list = []
         for r in xrange(n_robots):
@@ -132,14 +134,30 @@ class GenericRobot(object):
 
 
 
+class Leader(GenericRobot):
+    def __init__(self, robot_id, sim, seed, map_filename, disc, disc_method, duration, env_filename, teammates_id,
+                 n_robots, tiling, error_filename, log_filename, comm_dataset_filename):
 
+        rospy.loginfo(str(robot_id) + ' - Leader - starting!')
+        if (not (os.path.exists(env_filename))):
+            print "Creating new environment."
+            f = open(env_filename, "wb")
+            self.env = Environment(map_filename, disc_method, disc)
+            pickle.dump(self.env, f)
+            f.close()
+        else:
+            f = open(env_filename, "rb")
+            self.env = pickle.load(f)
+            f.close()
 
+        super(Leader, self).__init__(seed, robot_id, True, sim, map_filename, duration, log_filename,
+                                     comm_dataset_filename, teammates_id, n_robots, errors_filename)
 
+        print 'created environment variable'
+        rospy.loginfo(str(robot_id) + ' - Created environment variable')
 
-
-
-
-
+        self.comm_map = GPmodel(self.env.dimX, self.env.dimY, tiling,self.log_filename)
+        self.comm_maps = []  # for logging
 
 
 
@@ -172,8 +190,6 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    #r = GenericRobot(robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,n_robots, errors_filename, log_filename, comm_dataset_filename)
-
-
-
-
+    lead = Leader(seed, robot_id, sim, map_filename, duration,
+                  disc_method, disc, log_filename, teammates_id, n_robots,  env_filename,
+                  comm_dataset_filename, tiling, errors_filename)
