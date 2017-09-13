@@ -203,8 +203,4 @@ if __name__ == '__main__':
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename, comm_dataset_filename,
                         teammates_id, n_robots, env_filename, resize_factor, errors_filename)
-        rospy.spin()
-
-    lead = Leader(robot_id, sim, seed, map_filename, disc, disc_method, duration, env_filename, teammates_id,
-                  n_robots, tiling, errors_filename, log_filename, comm_dataset_filename,
-                  resize_factor,comm_range, communication_model)
+        #rospy.spin()
