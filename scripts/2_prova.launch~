@@ -9,8 +9,7 @@
  -->
 <launch>
 
-  <param name="comm_model_filename" value="$(find strategy)/data/comm_model_50.xml" />    
-   
+  <param name="comm_model_filename" value="$(find strategy)/data/comm_model_50.xml" />  
   <arg name="map_file"       default="$(find strategy)/envs/tutorial.yaml"/> 
   <arg name="world_file"     default="$(find strategy)/envs/2_offices.world"/>
   <arg name="robotName1" default="robot_0" />
@@ -29,14 +28,12 @@
   <!-- robots' common params -->
   <param name="sim" value="1"/>
   <param name="seed" value="0"/>
-  <param name="range" value="50" />
   <param name="disc" value="7"/>
   <param name="map_filename" value="$(find strategy)/envs/offices.png"/>
   <param name="disc_method" value="grid"/>
   <param name="duration" value="1800"/>
   <param name="env_filename" value="$(find strategy)/envs/offices.dat"/>
   <param name="n_robots" value="2"/>
-  <param name="resize_factor" value="0.1"/>
   <param name="tiling" value="0"/>
   <param name="log_folder" value="$(find strategy)/log/"/>
 
