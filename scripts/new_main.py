@@ -169,6 +169,47 @@ class Leader(GenericRobot):
 
 
 
+
+
+
+
+
+
+
+
+
+
+class Follower(GenericRobot):
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration, log_filename, comm_dataset_filename,
+                 teammates_id, n_robots, env_filename, resize_factor, errors_filename):
+        rospy.loginfo(str(robot_id) + ' - Follower - starting!')
+        # Load Environment for follower to filter readings.
+        environment_not_loaded = True
+        while environment_not_loaded:
+            try:
+                f = open(env_filename, "rb")
+                self.env = pickle.load(f)
+                f.close()
+                environment_not_loaded = False
+            except:  # TODO specific exception.
+                rospy.logerr(str(robot_id) + " - Follower - Environment not loaded yet.")
+                rospy.sleep(1)
+
+        super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename , duration, log_filename,
+                                       comm_dataset_filename, teammates_id, n_robots, resize_factor, errors_filename)
+
+#TODO PEZZO DA AGGIUNGERE
+
+        print 'created environment variable'
+
+        rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
+
+        self._as.start()
+
+
+
+
+
 if __name__ == '__main__':
     rospy.init_node('robot')
 
@@ -203,5 +244,5 @@ if __name__ == '__main__':
     print "Logging possible errors to: " + errors_filename
 
     lead = Leader(robot_id, sim, seed, map_filename, disc, disc_method, duration, env_filename, teammates_id,
-                 n_robots, tiling, errors_filename, log_filename, comm_dataset_filename,
-                 resize_factor,comm_range, communication_model)
+                  n_robots, tiling, errors_filename, log_filename, comm_dataset_filename,
+                  resize_factor,comm_range, communication_model)
