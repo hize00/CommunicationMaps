@@ -118,13 +118,43 @@ class Leader(GenericRobot):
 
         super(Leader, self).__init__(seed, robot_id, True, sim, comm_range, map_filename,
                                      duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
-                                     ref_dist, strategy, resize_factor, errors_filename)
+                                     ref_dist, resize_factor, errors_filename)
 
         print 'created environment variable'
         rospy.loginfo(str(robot_id) + ' - Created environment variable')
 
-        self.comm_map = GPmodel(self.env.dimX, self.env.dimY, tiling,self.log_filename)
-        self.comm_maps = []  # for logging
+
+class Follower(GenericRobot):
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration,
+                 log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
+                 resize_factor, errors_filename):
+
+        rospy.loginfo(str(robot_id) + ' - Follower - starting!')
+        # Load Environment for follower to filter readings.
+        environment_not_loaded = True
+
+        while environment_not_loaded:
+            try:
+                f = open(env_filename, "rb")
+                self.env = pickle.load(f)
+                f.close()
+                environment_not_loaded = False
+            except:  # TODO specific exception.
+                rospy.logerr(str(robot_id) + " - Follower - Environment not loaded yet.")
+                rospy.sleep(1)
+
+        super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename, duration,
+                                       log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist,
+                                       resize_factor, errors_filename)
+
+        print 'created environment variable'
+
+        rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
+
+
+
+
+
 
 
 if __name__ == '__main__':
