@@ -50,7 +50,7 @@ PATH_DISC = 1 #m
 
 class GenericRobot(object):
     def __init__(self, robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,
-                 comm_range, resize_factor,
+                 comm_range, resize_factor, ref_dist,
                  n_robots, errors_filename, log_filename, comm_dataset_filename, client_topic = 'move_base'):
 
         self.robot_id = robot_id
@@ -61,6 +61,7 @@ class GenericRobot(object):
         self.teammates_id = teammates_id
         self.is_leader = is_leader
         self.n_robots = n_robots
+
         self.tol_dist = 2.5
         self.errors_filename = errors_filename
         self.error_count = 0
@@ -85,20 +86,35 @@ class GenericRobot(object):
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
         log_file.close()
+        rospy.Timer(rospy.Duration(10), self.distance_logger_callback)
 
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
 
+    def distance_logger_callback(self, event):
+        f = open(self.log_filename, "a")
+        f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
+        f.close()
+
+        if((rospy.Time.now() - self.mission_start_time) >= self.duration):
+            rospy.loginfo("Sending shutdown...")
+            os.system("pkill -f ros")
+
+
 
 class Leader(GenericRobot):
     def __init__(self, robot_id, sim, seed, map_filename, disc, disc_method, duration, env_filename, teammates_id,
                  n_robots, tiling, error_filename, log_filename, comm_dataset_filename,
-                 resize_factor,comm_range, communication_model):
+                 resize_factor,comm_range, communication_model, ref_dist):
 
         rospy.loginfo(str(robot_id) + ' - Leader - starting!')
-        if (not (os.path.exists(env_filename))):
+        if communication_model is "":
+            self.filter_locations = False
+        else:
+            self.filter_locations = True
+        if not (os.path.exists(env_filename)):
             print "Creating new environment."
             f = open(env_filename, "wb")
             self.env = Environment(map_filename, disc_method, disc, resize_factor, comm_range,communication_model)
@@ -111,7 +127,7 @@ class Leader(GenericRobot):
 
         super(Leader, self).__init__(seed, robot_id, True, sim, map_filename, duration, log_filename,
                                      comm_dataset_filename, teammates_id, n_robots, errors_filename,
-                                     resize_factor,comm_range)
+                                     resize_factor,comm_range, ref_dist)
 
         print 'created environment variable'
         rospy.loginfo(str(robot_id) + ' - Created environment variable')
@@ -120,87 +136,55 @@ class Leader(GenericRobot):
         self.comm_maps = []  # for logging
 
 
-
-
-
-
-
-
-
-
-
-
-
-class Follower(GenericRobot):
-    def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration, log_filename, comm_dataset_filename,
-                 teammates_id, n_robots, env_filename, resize_factor, errors_filename):
-        rospy.loginfo(str(robot_id) + ' - Follower - starting!')
-        # Load Environment for follower to filter readings.
-        environment_not_loaded = True
-        while environment_not_loaded:
-            try:
-                f = open(env_filename, "rb")
-                self.env = pickle.load(f)
-                f.close()
-                environment_not_loaded = False
-            except:  # TODO specific exception.
-                rospy.logerr(str(robot_id) + " - Follower - Environment not loaded yet.")
-                rospy.sleep(1)
-
-        super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename , duration, log_filename,
-                                       comm_dataset_filename, teammates_id, n_robots, resize_factor, errors_filename)
-
-#TODO PEZZO DA AGGIUNGERE
-
-        print 'created environment variable'
-
-        rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
-
-        self._as.start()
-
-
-
-
-
 if __name__ == '__main__':
     rospy.init_node('robot')
 
-    #attributi del robot
     robot_id = int(rospy.get_param('~id'))
     sim = int(rospy.get_param('/sim'))
     seed = int(rospy.get_param('/seed'))
     map_filename = rospy.get_param('/map_filename')
+    ref_dist = int(rospy.get_param('/ref_dist'))
     disc = float(rospy.get_param('/disc'))
+    comm_range = float(rospy.get_param('/range'))
     disc_method = rospy.get_param('/disc_method')
     duration = float(rospy.get_param('/duration'))
     env_filename = rospy.get_param('/env_filename')
-    env_filename = env_filename.replace(".dat","_")
+
+    communication_model = rospy.get_param('/communication_model', "")
+    if communication_model is "":
+        env_filename = env_filename.replace(".dat","_" + str(int(comm_range)) + ".dat")
+    else:
+        env_filename = env_filename.replace(".dat","_" + str(int(comm_range)) + '_' + communication_model + ".dat")
+    print env_filename
+
     teammates_id_temp = str(rospy.get_param('~teammates_id'))
     is_leader = int(rospy.get_param('~is_leader'))
     n_robots = int(rospy.get_param('/n_robots'))
+    resize_factor = float(rospy.get_param('/resize_factor'))
     tiling = int(rospy.get_param('/tiling'))
     log_folder = rospy.get_param('/log_folder')
 
-    comm_range = float(rospy.get_param('/range'))
-    communication_model = rospy.get_param('/communication_model', "")
-    resize_factor = float(rospy.get_param('/resize_factor'))
-
-    teammates_id_temp = teammates_id_temp.split('-')
-    teammates_id = map(lambda x: int(x), teammates_id_temp)
+    temmates_id_temp = teammates_id_temp.split('-')
+    teammates_id = map(lambda x: int(x), temmates_id_temp)
 
     env = (map_filename.split('/')[-1]).split('.')[0]
-    log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + str(n_robots) + '.log'
-    comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + str(n_robots) + '.dat'
+    if communication_model is "":
+        log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + \
+                       str(n_robots) + '_' + str(int(comm_range)) + '.log'
+    else:
+        log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + \
+                       str(n_robots) + '_' + str(int(comm_range)) + '_' + communication_model + '.log'
+    if communication_model is "":
+        comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + \
+                                '_' + str(n_robots) + '_' + str(int(comm_range)) + '.dat'
+    else:
+        comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + \
+                                '_' + str(n_robots) + '_' + str(int(comm_range)) + '_' + communication_model + '.dat'
 
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    if is_leader:
-        lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration, disc_method, disc, log_filename,
-                      teammates_id, n_robots, env_filename, comm_dataset_filename, resize_factor, tiling,
-                      errors_filename, communication_model)
-
-    else:
-        foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename, comm_dataset_filename,
-                        teammates_id, n_robots, env_filename, resize_factor, errors_filename)
-        #rospy.spin()
+    lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
+               disc_method, disc, log_filename, teammates_id, n_robots, env_filename,
+               comm_dataset_filename, resize_factor, tiling, errors_filename,
+               communication_model, ref_dist)
