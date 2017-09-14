@@ -49,9 +49,9 @@ PATH_DISC = 1 #m
 #TODO NON C'e LA COMMUNICATION, PER ORA (i robot non comunicano tra loro, non ci sono errori o problemi di comunicazione)
 
 class GenericRobot(object):
-    def __init__(self, robot_id, sim, seed, map_filename, duration, teammates_id, is_leader,
-                 comm_range, resize_factor, ref_dist,
-                 n_robots, errors_filename, log_filename, comm_dataset_filename, client_topic = 'move_base'):
+    def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, duration,
+                 log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, resize_factor,
+                 errors_filename, client_topic='move_base'):
 
         self.robot_id = robot_id
         self.sim = sim
@@ -66,21 +66,11 @@ class GenericRobot(object):
         self.errors_filename = errors_filename
         self.error_count = 0
 
+        self.comm_range = comm_range
+
         #for ending the mission
         self.duration = rospy.Duration(duration)
         self.mission_start_time = rospy.Time.now()
-
-        # for handling motion
-        self.client_topic = client_topic
-        self.client_motion = actionlib.SimpleActionClient(self.client_topic, MoveBaseAction)
-        self.client_motion.wait_for_server()
-        rospy.logdebug('initialized action exec')
-        self.clear_costmap_service = rospy.ServiceProxy('move_base_node/clear_costmaps', Empty)
-
-        # for communication
-        self.comm_range = comm_range
-        self.comm_module = communication.CommunicationModule(sim, seed, robot_id, n_robots, comm_range, ref_dist,
-                                                             map_filename, resize_factor)
 
         # for logging
         self.log_filename = log_filename
@@ -92,22 +82,23 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-
     def distance_logger_callback(self, event):
         f = open(self.log_filename, "a")
-        f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
+        f.write(
+            'D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
         f.close()
 
-        if((rospy.Time.now() - self.mission_start_time) >= self.duration):
+        if ((rospy.Time.now() - self.mission_start_time) >= self.duration):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
 
 
 class Leader(GenericRobot):
-    def __init__(self, robot_id, sim, seed, map_filename, disc, disc_method, duration, env_filename, teammates_id,
-                 n_robots, tiling, error_filename, log_filename, comm_dataset_filename,
-                 resize_factor,comm_range, communication_model, ref_dist):
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename,
+                 duration, disc_method, disc, log_filename, teammates_id, n_robots, ref_dist,
+                 env_filename, comm_dataset_filename, resize_factor, tiling, errors_filename,
+                 communication_model):
 
         rospy.loginfo(str(robot_id) + ' - Leader - starting!')
         if communication_model is "":
@@ -125,9 +116,9 @@ class Leader(GenericRobot):
             self.env = pickle.load(f)
             f.close()
 
-        super(Leader, self).__init__(seed, robot_id, True, sim, map_filename, duration, log_filename,
-                                     comm_dataset_filename, teammates_id, n_robots, errors_filename,
-                                     resize_factor,comm_range, ref_dist)
+        super(Leader, self).__init__(seed, robot_id, True, sim, comm_range, map_filename,
+                                     duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
+                                     ref_dist, strategy, resize_factor, errors_filename)
 
         print 'created environment variable'
         rospy.loginfo(str(robot_id) + ' - Created environment variable')
@@ -142,8 +133,8 @@ if __name__ == '__main__':
     robot_id = int(rospy.get_param('~id'))
     sim = int(rospy.get_param('/sim'))
     seed = int(rospy.get_param('/seed'))
-    map_filename = rospy.get_param('/map_filename')
     ref_dist = int(rospy.get_param('/ref_dist'))
+    map_filename = rospy.get_param('/map_filename')
     disc = float(rospy.get_param('/disc'))
     comm_range = float(rospy.get_param('/range'))
     disc_method = rospy.get_param('/disc_method')
@@ -185,6 +176,6 @@ if __name__ == '__main__':
     print "Logging possible errors to: " + errors_filename
 
     lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
-               disc_method, disc, log_filename, teammates_id, n_robots, env_filename,
+               disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                comm_dataset_filename, resize_factor, tiling, errors_filename,
-               communication_model, ref_dist)
+               communication_model)
