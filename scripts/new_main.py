@@ -85,7 +85,7 @@ class GenericRobot(object):
                                                              map_filename, resize_factor)
 
         # estimated position
-        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
+        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_robots)
         self.x = 0.0
         self.y = 0.0
         self.last_x = None
@@ -115,6 +115,16 @@ class GenericRobot(object):
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
+
+    def pose_robots(self, msg):
+        self.x = msg.pose.pose.position.x
+        self.y = msg.pose.pose.position.y
+
+        if (self.last_x is not None):
+            self.traveled_dist += utils.eucl_dist((self.x, self.y), (self.last_x, self.last_y))
+
+        self.last_x = self.x
+        self.last_y = self.y
 
     def distance_logger(self, event):
         f = open(self.log_filename, "a")
@@ -239,7 +249,11 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
-               disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
-               comm_dataset_filename, resize_factor, tiling, errors_filename,
-               communication_model)
+    if is_leader:
+        lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
+                      disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
+                      comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
+    else:
+        foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
+                        comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
+                        resize_factor, errors_filename)
