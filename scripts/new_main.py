@@ -97,7 +97,7 @@ class GenericRobot(object):
             s = "def a_" + str(i) + "(self, msg): self.other_robots_pos[" + str(
                 i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
             exec (s)
-            exec ("setattr(GenericRobot, 'callback_pos_teammate" + str(i) + "', a_" + str(i) + ")")
+            exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.pos_teammate" + str(i) + ", queue_size = 100)")
 
         self.lock_info = threading.Lock()
@@ -280,7 +280,7 @@ if __name__ == '__main__':
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
         position = {'x': 11.22, 'y': 12.56}
-        quaternion = {'r1': 10.000, 'r2': 10.000, 'r3': 10.000, 'r4': 11.000}
+        quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
         rospy.loginfo("Go to (%s, %s) pose", position['x'], position['y'])
         lead.go_to_pose(position,quaternion)
     else:
