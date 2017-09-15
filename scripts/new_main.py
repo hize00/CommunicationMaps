@@ -13,7 +13,7 @@ import tf
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped
+from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped, Pose, Quaternion
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path
 from std_srvs.srv import Empty
@@ -69,9 +69,8 @@ class GenericRobot(object):
 
         # for handling motion
         self.client_topic = client_topic
+        self.goal_sent = False
         self.client_motion = actionlib.SimpleActionClient(self.client_topic, MoveBaseAction)
-        self.stop_when_comm = False  # for stopping the robot when in comm with teammate
-        self.teammate_comm_regained = False
         self.client_motion.wait_for_server()
         rospy.logdebug('initialized action exec')
         self.clear_costmap_service = rospy.ServiceProxy('move_base_node/clear_costmaps', Empty)
@@ -99,7 +98,7 @@ class GenericRobot(object):
                 i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
             exec (s)
             exec ("setattr(GenericRobot, 'callback_pos_teammate" + str(i) + "', a_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.callback_pos_teammate" + str(i) + ", queue_size = 100)")
+            exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.pos_teammate" + str(i) + ", queue_size = 100)")
 
         self.lock_info = threading.Lock()
 
@@ -133,6 +132,31 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
+    def go_to_pose(self, pos, quat):
+        self.goal_sent = True
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = 'map'
+        goal.target_pose.header.stamp = rospy.Time.now()
+        goal.target_pose.pose = Pose(Point(pos['x'], pos['y'], 0.000),
+                                     Quaternion(quat['r1'], quat['r2'], quat['r3'], quat['r4']))
+
+        # Start moving
+        self.client_motion.send_goal(goal)
+
+        # Allow TurtleBot up to 60 seconds to complete task
+        success = self.client_motion.wait_for_result(rospy.Duration(60))
+
+        state = self.client_motion.get_state()
+        result = False
+
+        if success:
+            # We made it!
+            result = True
+        else:
+            self.client_motion.cancel_goal()
+
+        self.goal_sent = False
+        return result
 
 
 class Leader(GenericRobot):
@@ -246,11 +270,25 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
+    position = {'x': 1.22, 'y': 2.56}
+    quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
+
+
+
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
+        position = {'x': 11.22, 'y': 12.56}
+        quaternion = {'r1': 10.000, 'r2': 10.000, 'r3': 10.000, 'r4': 11.000}
+        rospy.loginfo("Go to (%s, %s) pose", position['x'], position['y'])
+        lead.go_to_pose(position,quaternion)
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
+        position = {'x': 1.22, 'y': 2.56}
+        quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
+        rospy.loginfo("Go to (%s, %s) pose", position['x'], position['y'])
+        foll.go_to_pose(position,quaternion)
+
