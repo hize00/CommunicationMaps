@@ -66,23 +66,57 @@ class GenericRobot(object):
         self.errors_filename = errors_filename
         self.error_count = 0
 
-        self.comm_range = comm_range
-
         #for ending the mission
         self.duration = rospy.Duration(duration)
         self.mission_start_time = rospy.Time.now()
+
+        # for handling motion
+        self.client_topic = client_topic
+        self.client_motion = actionlib.SimpleActionClient(self.client_topic, MoveBaseAction)
+        self.stop_when_comm = False  # for stopping the robot when in comm with teammate
+        self.teammate_comm_regained = False
+        self.client_motion.wait_for_server()
+        rospy.logdebug('initialized action exec')
+        self.clear_costmap_service = rospy.ServiceProxy('move_base_node/clear_costmaps', Empty)
+
+        # for communication
+        self.comm_range = comm_range
+        self.comm_module = communication.CommunicationModule(sim, seed, robot_id, n_robots, comm_range, ref_dist,
+                                                             map_filename, resize_factor)
+
+        # estimated position
+        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_callback)
+        self.x = 0.0
+        self.y = 0.0
+        self.last_x = None
+        self.last_y = None
+        self.traveled_dist = 0.0
+
+        # other robots' estimated position - cur robot position remains 0.0 here
+        self.other_robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
+        self.last_robots_polling_pos = [None for _ in xrange(n_robots)]
+
+        for i in xrange(n_robots):
+            if i == robot_id: continue
+            s = "def a_" + str(i) + "(self, msg): self.other_robots_pos[" + str(
+                i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
+            exec (s)
+            exec ("setattr(GenericRobot, 'callback_pos_teammate" + str(i) + "', a_" + str(i) + ")")
+            exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.callback_pos_teammate" + str(i) + ", queue_size = 100)")
+
+        self.lock_info = threading.Lock()
 
         # for logging
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
         log_file.close()
-        rospy.Timer(rospy.Duration(10), self.distance_logger_callback)
+        rospy.Timer(rospy.Duration(10), self.distance_logger)
 
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-    def distance_logger_callback(self, event):
+    def distance_logger(self, event):
         f = open(self.log_filename, "a")
         f.write(
             'D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
