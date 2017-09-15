@@ -41,12 +41,9 @@ MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 #first random, max_var offices had 2
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-
 MAX_NUM_ERRORS = 40
-
 PATH_DISC = 1 #m
 
-#TODO NON C'e LA COMMUNICATION, PER ORA (i robot non comunicano tra loro, non ci sono errori o problemi di comunicazione)
 
 class GenericRobot(object):
     def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, duration,
