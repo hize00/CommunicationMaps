@@ -146,7 +146,6 @@ class GenericRobot(object):
         # Allow TurtleBot up to 60 seconds to complete task
         success = self.client_motion.wait_for_result(rospy.Duration(60))
 
-        state = self.client_motion.get_state()
         result = False
 
         if success:
@@ -156,7 +155,8 @@ class GenericRobot(object):
             self.client_motion.cancel_goal()
 
         self.goal_sent = False
-        return result
+
+        #return result
 
 
 class Leader(GenericRobot):
@@ -189,6 +189,20 @@ class Leader(GenericRobot):
         rospy.loginfo(str(robot_id) + ' - Created environment variable')
 
 
+        self.comm_map = GPmodel(self.env.dimX, self.env.dimY, comm_range, tiling, self.comm_module.comm_model, self.log_filename)
+        self.comm_maps = [] #for logging
+
+        #for sending commands to the follower
+        #the name of the server is the name of the robot itself
+        self.clients_signal = {}
+        for teammate_id in teammates_id:
+            self.clients_signal[teammate_id] = actionlib.SimpleActionClient('/robot_' + str(teammate_id) + '/main_robot', SignalMappingAction)
+            rospy.loginfo(str(self.robot_id) + ' - Leader - waiting for follower server ' + str(teammate_id))
+            self.clients_signal[teammate_id].wait_for_server()
+            rospy.loginfo(str(self.robot_id) + ' - Done.')
+
+
+
 class Follower(GenericRobot):
     def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
@@ -212,14 +226,15 @@ class Follower(GenericRobot):
                                        log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist,
                                        resize_factor, errors_filename)
 
+        self._action_name = rospy.get_name()
+
+        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, auto_start=False)
+
         print 'created environment variable'
 
         rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
 
-
-
-
-
+        self._as.start()
 
 
 if __name__ == '__main__':
@@ -270,25 +285,19 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    position = {'x': 1.22, 'y': 2.56}
+    position = {'x': 11.50, 'y': 12.50}
     quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
-
-
 
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        position = {'x': 11.22, 'y': 12.56}
-        quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
-        rospy.loginfo("Go to (%s, %s) pose", position['x'], position['y'])
+        rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
         lead.go_to_pose(position,quaternion)
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
-        position = {'x': 1.22, 'y': 2.56}
-        quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
-        rospy.loginfo("Go to (%s, %s) pose", position['x'], position['y'])
-        foll.go_to_pose(position,quaternion)
+        rospy.loginfo("Follower goes to (%s, %s) position", position['x'], position['y'])
+        foll.go_to_pose(position, quaternion)
 
