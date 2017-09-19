@@ -1,3 +1,11 @@
+N_ROBOTS = 2
+;
+
+START =
+0
+4
+;
+
 VERTEXES = 6
 ;
 
