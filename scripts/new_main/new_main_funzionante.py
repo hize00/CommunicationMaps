@@ -80,6 +80,28 @@ class GenericRobot(object):
         self.comm_module = communication.CommunicationModule(sim, seed, robot_id, n_robots, comm_range, ref_dist,
                                                              map_filename, resize_factor)
 
+        # estimated position
+        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_robots)
+        self.x = 0.0
+        self.y = 0.0
+        self.last_x = None
+        self.last_y = None
+        self.traveled_dist = 0.0
+
+        # other robots' estimated position - cur robot position remains 0.0 here
+        self.other_robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
+        self.last_robots_polling_pos = [None for _ in xrange(n_robots)]
+
+        for i in xrange(n_robots):
+            if i == robot_id: continue
+            s = "def a_" + str(i) + "(self, msg): self.other_robots_pos[" + str(
+                i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
+            exec (s)
+            exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
+            exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.pos_teammate" + str(i) + ", queue_size = 100)")
+
+        self.lock_info = threading.Lock()
+
         # for logging
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
@@ -90,32 +112,15 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
+    def pose_robots(self, msg):
+        self.x = msg.pose.pose.position.x
+        self.y = msg.pose.pose.position.y
 
-        # estimated position
-        listener = tf.TransformListener()
+        if (self.last_x is not None):
+            self.traveled_dist += utils.eucl_dist((self.x, self.y), (self.last_x, self.last_y))
 
-
-        cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist)
-        rate = rospy.Rate(10.0)
-        while not rospy.is_shutdown():
-            try:
-                (trans, rot) = listener.lookupTransform('/odom', '/base_pose_ground_truth', rospy.Time(0))
-            except (tf.LookupException,  tf.ConnectivityException, tf.ExtrapolationException):
-                continue
-
-            # Get the 2-D position and orientation of the robot
-            x = trans[0]
-            y = trans[1]
-            euler_angles = euler_from_quaternion(rot)
-            theta = euler_angles[2]
-
-            rospy.loginfo('Position: %s,%s',x,y)
-            cmd = geometry_msgs.msg.Twist()
-            cmd.linear.x = linear
-            cmd.angular.z = angular
-            cmd_vel_publisher.publish(cmd)
-
-            rate.sleep()
+        self.last_x = self.x
+        self.last_y = self.y
 
     def distance_logger(self, event):
         f = open(self.log_filename, "a")
