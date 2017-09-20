@@ -10,11 +10,10 @@ import threading
 
 import rospy
 import tf
-from tf.transformations import euler_from_quaternion
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped, Pose, Quaternion
+from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
@@ -98,13 +97,13 @@ class GenericRobot(object):
 
         self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
 
-
         for i in xrange(n_robots):
             if i == robot_id: continue
             s = "def a_" + str(i) + "(self, msg): self.robots_pos[" + str(i) + "] = (msg.x, msg.y)"
             exec (s)
             exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/updated_pose', Point, self.pos_teammate" + str(i) + ", queue_size = 100)")
+
 
     def tf_callback(self, event):
         try:
@@ -114,37 +113,38 @@ class GenericRobot(object):
         except Exception as e:
             pass
 
-
     def distance_logger(self, event):
         f = open(self.log_filename, "a")
-        f.write(
-            'D ' + str((rospy.Time.now() - self.mission_start_time).secs) + '\n') # + str(self.traveled_dist)
+        f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + '\n') # + str(self.traveled_dist)
 
         f.close()
 
-        if ((rospy.Time.now() - self.mission_start_time) >= self.duration):
+        if (rospy.Time.now() - self.mission_start_time) >= self.duration:
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
-    def go_to_pose(self, pos,quat):
-        self.goal_sent = True
+    def go_to_pose(self, pos):
+        rospy.loginfo("Robot " + str(robot_id) + " goes to (%s, %s) position", pos['x'], pos['y'])
+
         goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = 'map'
+        goal.target_pose.header.frame_id = '/map'
         goal.target_pose.header.stamp = rospy.Time.now()
-        goal.target_pose.pose = Pose(Point(pos['x'], pos['y'], 0.000),
-                                     Quaternion(quat['r1'], quat['r2'], quat['r3'], quat['r4']))
+
+        goal.target_pose.pose.position = Point(pos['x'], pos['y'], 0.000)
+        goal.target_pose.pose.orientation.w = 1
+
         # Start moving
         self.client_motion.send_goal(goal)
 
         # Allow TurtleBot up to 60 seconds to complete task
         success = self.client_motion.wait_for_result(rospy.Duration(60))
+        state = self.client_motion.get_state()
 
-        if success:
+        if success and state == GoalStatus.SUCCEEDED:
             pass
         else:
             self.client_motion.cancel_goal()
 
-        self.goal_sent = False
 
 
 class Leader(GenericRobot):
@@ -274,20 +274,17 @@ if __name__ == '__main__':
     print "Logging possible errors to: " + errors_filename
 
     position = {'x': 11.50, 'y': 12.50}
-    quaternion = {'r1': 0.000, 'r2': 0.000, 'r3': 0.000, 'r4': 1.000}
 
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        lead.go_to_pose(position, quaternion)
+        lead.go_to_pose(position)
         rospy.spin()
-        rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
 
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
-        rospy.loginfo("Follower goes to (%s, %s) position", position['x'], position['y'])
-        foll.go_to_pose(position,quaternion)
+        foll.go_to_pose(position)
 
