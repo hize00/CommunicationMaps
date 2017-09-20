@@ -94,11 +94,23 @@ class GenericRobot(object):
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
+        self.robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
+
+        self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
+
+
+        for i in xrange(n_robots):
+            if i == robot_id: continue
+            s = "def a_" + str(i) + "(self, msg): self.robots_pos[" + str(i) + "] = (msg.x, msg.y)"
+            exec (s)
+            exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
+            exec ("rospy.Subscriber('/robot_" + str(i) + "/updated_pose', Point, self.pos_teammate" + str(i) + ", queue_size = 100)")
 
     def tf_callback(self, event):
         try:
             (trans, rot) = self.listener.lookupTransform('/map', rospy.get_namespace() + 'base_link', rospy.Time(0))
-            # x = trans[0], y = trans[1]
+            self.robots_pos[self.robot_id] = (trans[0],trans[1])
+            pub_my_pose.publish(Point(trans[0],trans[1],0.0))
         except Exception as e:
             pass
 
@@ -114,31 +126,25 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
-    def go_to_pose(self, pos, quat):
+    def go_to_pose(self, pos,quat):
         self.goal_sent = True
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = 'map'
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose = Pose(Point(pos['x'], pos['y'], 0.000),
                                      Quaternion(quat['r1'], quat['r2'], quat['r3'], quat['r4']))
-
         # Start moving
         self.client_motion.send_goal(goal)
 
         # Allow TurtleBot up to 60 seconds to complete task
         success = self.client_motion.wait_for_result(rospy.Duration(60))
 
-        result = False
-
         if success:
-            # We made it!
-            result = True
+            pass
         else:
             self.client_motion.cancel_goal()
 
         self.goal_sent = False
-
-        #return result
 
 
 class Leader(GenericRobot):
@@ -276,12 +282,12 @@ if __name__ == '__main__':
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
         lead.go_to_pose(position, quaternion)
         rospy.spin()
-        #rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
+        rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
 
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
         rospy.loginfo("Follower goes to (%s, %s) position", position['x'], position['y'])
-        foll.go_to_pose(position, quaternion)
+        foll.go_to_pose(position,quaternion)
 
