@@ -216,7 +216,7 @@ class Follower(GenericRobot):
 
         self._action_name = rospy.get_name()
 
-        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, auto_start=False)
+        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, execute_cb=self.execute_cb_dora, auto_start=False)
 
         print 'created environment variable'
 
