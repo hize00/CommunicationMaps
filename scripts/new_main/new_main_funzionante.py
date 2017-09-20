@@ -10,12 +10,13 @@ import threading
 
 import rospy
 import tf
+from tf.transformations import euler_from_quaternion
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from actionlib_msgs.msg import *
 from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped, Pose, Quaternion
 from sensor_msgs.msg import LaserScan
-from nav_msgs.msg import Path
+from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
 from std_msgs.msg import Float32, Bool
 
@@ -81,26 +82,8 @@ class GenericRobot(object):
                                                              map_filename, resize_factor)
 
         # estimated position
-        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.pose_robots)
-        self.x = 0.0
-        self.y = 0.0
-        self.last_x = None
-        self.last_y = None
-        self.traveled_dist = 0.0
-
-        # other robots' estimated position - cur robot position remains 0.0 here
-        self.other_robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
-        self.last_robots_polling_pos = [None for _ in xrange(n_robots)]
-
-        for i in xrange(n_robots):
-            if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.other_robots_pos[" + str(
-                i) + "] = (msg.pose.pose.position.x, msg.pose.pose.position.y)"
-            exec (s)
-            exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/amcl_pose', PoseWithCovarianceStamped, self.pos_teammate" + str(i) + ", queue_size = 100)")
-
-        self.lock_info = threading.Lock()
+        self.listener = tf.TransformListener()
+        rospy.Timer(rospy.Duration(0.1), self.tf_callback)
 
         # for logging
         self.log_filename = log_filename
@@ -112,20 +95,19 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-    def pose_robots(self, msg):
-        self.x = msg.pose.pose.position.x
-        self.y = msg.pose.pose.position.y
+    def tf_callback(self, event):
+        try:
+            (trans, rot) = self.listener.lookupTransform('/map', rospy.get_namespace() + 'base_link', rospy.Time(0))
+            # x = trans[0], y = trans[1]
+        except Exception as e:
+            pass
 
-        if (self.last_x is not None):
-            self.traveled_dist += utils.eucl_dist((self.x, self.y), (self.last_x, self.last_y))
-
-        self.last_x = self.x
-        self.last_y = self.y
 
     def distance_logger(self, event):
         f = open(self.log_filename, "a")
         f.write(
-            'D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
+            'D ' + str((rospy.Time.now() - self.mission_start_time).secs) + '\n') # + str(self.traveled_dist)
+
         f.close()
 
         if ((rospy.Time.now() - self.mission_start_time) >= self.duration):
@@ -292,8 +274,10 @@ if __name__ == '__main__':
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
-        lead.go_to_pose(position,quaternion)
+        lead.go_to_pose(position, quaternion)
+        rospy.spin()
+        #rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
+
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,

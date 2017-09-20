@@ -82,8 +82,8 @@ class GenericRobot(object):
                                                              map_filename, resize_factor)
 
         # estimated position
-        rospy.Subscriber('/odom', Odometry, self.odom_cb)
-
+        self.listener = tf.TransformListener()
+        rospy.Timer(rospy.Duration(0.1), self.tf_callback)
 
         # for logging
         self.log_filename = log_filename
@@ -95,23 +95,13 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-    def odom_cb(self,msg):
-        x = msg.pose.pose.position.x
-        y = msg.pose.pose.position.y
-        z = msg.pose.pose.position.z
-        print "Odom: [%f,%f,%f]", x, y, z
+    def tf_callback(self, event):
+        try:
+            (trans, rot) = self.listener.lookupTransform('/map', rospy.get_namespace() + 'base_link', rospy.Time(0))
+            # x = trans[0], y = trans[1]
+        except Exception as e:
+            pass
 
-
-
-    def pose_robots(self, msg):
-        self.x = msg.pose.pose.position.x
-        self.y = msg.pose.pose.position.y
-
-        if (self.last_x is not None):
-            self.traveled_dist += utils.eucl_dist((self.x, self.y), (self.last_x, self.last_y))
-
-        self.last_x = self.x
-        self.last_y = self.y
 
     def distance_logger(self, event):
         f = open(self.log_filename, "a")
@@ -284,8 +274,10 @@ if __name__ == '__main__':
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
-        lead.go_to_pose(position,quaternion)
+        lead.go_to_pose(position, quaternion)
+        rospy.spin()
+        #rospy.loginfo("Leader goes to (%s, %s) position", position['x'], position['y'])
+
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
