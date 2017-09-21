@@ -6,6 +6,7 @@ import itertools
 from igraph import *
 from operator import itemgetter
 from gurobipy import *
+from copy import deepcopy
 
 #start the time
 start_time = time.time()
@@ -267,8 +268,6 @@ def computeMoves(configuration, points_to_visit):
 		for j in range(i+1,len(configuration)):
 			for k in range(0,len(points_to_visit)):
 				#t is the time
-				#t = min( max(time_matrix[configuration[i]][points_to_visit[k][0]], time_matrix[configuration[j]][points_to_visit[k][1]]), max(time_matrix[configuration[i]][points_to_visit[k][1]], time_matrix[configuration[j]][points_to_visit[k][0]]))
-				#if (max(time_matrix[configuration[i]][points_to_visit[k][0]], time_matrix[configuration[j]][points_to_visit[k][1]])) <= max(time_matrix[configuration[i]][points_to_visit[k][1]], time_matrix[configuration[j]][points_to_visit[k][0]]):
 				t = min( max(shortest_time_matrix[configuration[i]][points_to_visit[k][0]], shortest_time_matrix[configuration[j]][points_to_visit[k][1]]), max(shortest_time_matrix[configuration[i]][points_to_visit[k][1]], shortest_time_matrix[configuration[j]][points_to_visit[k][0]]))
 				if (max(shortest_time_matrix[configuration[i]][points_to_visit[k][0]], shortest_time_matrix[configuration[j]][points_to_visit[k][1]])) <= max(shortest_time_matrix[configuration[i]][points_to_visit[k][1]], shortest_time_matrix[configuration[j]][points_to_visit[k][0]]):
 					movingRobots = [0] * len(configuration)
@@ -315,6 +314,7 @@ def CHOOSE(state, heuristic):
 	else:
 		print "heuristic doesn't exist"
 
+###GREEDY HEURISTIC: pure greedy choice
 def GREEDY(state):
 	LGe = []
 	LGe = EXPAND(state)
@@ -357,22 +357,21 @@ def GENERATE(state, heuristic):
 #------------------------------------------------------
 #greedy deterministica
 
-state = root
+state = deepcopy(root)
 for i in range(0, len(POINTS_TO_EXPLORE)):
 	print "\n---> iteration " + str(i)
 	s = GENERATE(state, "greedy")
 	STATES.append(s)
 	s.infoState()
-	state = s
-#------------------- all uscita le timeTable sono tutte settate al max
-print "ESCO DALLA GENERAZIONE"
+	state = deepcopy(s)
+#------------------------------------------------------
 
 for i in range(0,len(STATES)):
 	print "\n|--- STEP "+str(i)+"---|"
 	print "Id State: " + str(STATES[i].getidNumber())
 	print "Configuration: " + str(STATES[i].getConfiguration())
 	CONFIGURATIONS.append(STATES[i].getConfiguration())
-	print "Time Table:\n" + str(STATES[i].getTimeTable()) ###-----aggiustare perche c e solo finale----#
+	print "Time Table:\n" + str(STATES[i].getTimeTable())
 
 #time in which robot complete exploration
 maxTF = 0

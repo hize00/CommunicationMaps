@@ -317,12 +317,10 @@ print "|------------GUROBI TSP COMPUTATION ENDED------------|\n\n\n"
 #accessing values of V2: [list index] | [vertex_id or pair] | [if pair, selects if first or second point]
 #example1: V2[1][1][1] accesses 2nd element of list, pair of point, second point of the pair
 #example2: V2[2][0] accesses 3rd element of list and vertex_id.
+tour_list = []
+tour_list.append([ V2[tour[0]][1][0], V2[tour[0]][1][1] ])
 
-#first value of configuration is robot1. 2nd value is robot2.
-tour_configuration = []
-#starting configuration: first node of the GUROBI tour
-tour_configuration.append( [ V2[tour[0]][1][0], V2[tour[0]][1][1] ] )
-
+#obsolete
 if obj_fun == "distance":
 	for i in range(1,len(tour)):
 		if ( D[V2[tour[i-1]][1][0]][V2[tour[i]][1][0]] + D[V2[tour[i-1]][1][1]][V2[tour[i]][1][1]] ) <  ( D[V2[tour[i-1]][1][0]][V2[tour[i]][1][1]] + D[V2[tour[i-1]][1][1]][V2[tour[i]][1][0]] ) :
@@ -330,7 +328,7 @@ if obj_fun == "distance":
 		else:
 			tour_configuration.append( [ V2[tour[i]][1][1], V2[tour[i]][1][0] ] )
 
-#transforming the tour planned by GUROBI into a succession of proper tour_configuration
+#transforming the tour planned by GUROBI into a succession of points in tour_list (not in order of robots)
 elif obj_fun == "time":
 	t = 0
 	for i in range(1,len(tour)):
@@ -338,72 +336,95 @@ elif obj_fun == "time":
 		t1 = T[tour[i-1]][tour[i]] 
 		print "iteration time: " + str(t1) 
 		t = t + t1
-		
-		if max(shortest_time_matrix[tour_configuration[i-1][0]][V2[tour[i]][1][0]] , shortest_time_matrix[tour_configuration[i-1][1]][V2[tour[i]][1][1]]) <= max(shortest_time_matrix[tour_configuration[i-1][0]][V2[tour[i]][1][1]] , shortest_time_matrix[tour_configuration[i-1][1]][V2[tour[i]][1][0]]):
-			tour_configuration.append([ V2[tour[i]][1][0], V2[tour[i]][1][1] ])
-		else:
-			tour_configuration.append( [ V2[tour[i]][1][1], V2[tour[i]][1][0] ] )
+		tour_list.append([ V2[tour[i]][1][0], V2[tour[i]][1][1] ])
+		print tour_list
 
-		print tour_configuration
+#list to order the tour points to visit
+tour_configuration = []
+
+#first append:  node of the GUROBI tour closest to STARTING_POS
+firstAppend = 9999999999999999999
+for i in range(0,len(tour)):
+	t1 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[i][0]] , shortest_time_matrix[STARTING_POS[1]][tour_list[i][1]])
+	t2 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[i][1]] , shortest_time_matrix[STARTING_POS[1]][tour_list[i][0]])
+	stfAp = min(t1, t2)
+	if stfAp < firstAppend:
+		firstAppend = stfAp
+		#index of tour_list of the closest point to STARTING_POS
+		fAp_index = i
+
+t1 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[fAp_index][0]] , shortest_time_matrix[STARTING_POS[1]][tour_list[fAp_index][1]])
+t2 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[fAp_index][1]] , shortest_time_matrix[STARTING_POS[1]][tour_list[fAp_index][0]])	
+if t1<=t2:
+	tour_configuration.append([ tour_list[fAp_index][0], tour_list[fAp_index][1] ])
+else:
+	tour_configuration.append([ tour_list[fAp_index][1], tour_list[fAp_index][0] ])
+
 
 print "\n\n\n----------------------------------------------------"
 print "RECAP"
 print "STARTING POSITION: " + str(STARTING_POS)
 print "time needed for completing the tour: " + str(t)
 
-#computation of the starting position of the GUROBI tour. It's the closest point to STARTING_POS
+CONFIGURATIONS = []
+CONFIGURATIONS.append(STARTING_POS)
+
+#computation of the starting position of the GUROBI tour. It has already been computed with fAp_index
 stp = 0
-for i in range(0, len(tour_configuration)):
-	if (STARTING_POS[0]==tour_configuration[i][0] and STARTING_POS[1]==tour_configuration[i][1]):
-		stp = 1
-		stp_index = i
+if (STARTING_POS[0]==tour_configuration[0][0] and STARTING_POS[1]==tour_configuration[0][1]) or (STARTING_POS[0]==tour_configuration[0][1] and STARTING_POS[1]==tour_configuration[0][0]):
+	stp = 1
 if stp == 1:
-	print "TOUR STARTS FROM: " + str(STARTING_POS[0]) + " " + str(STARTING_POS[1])
+	stpL = []
+	stpL.append(-1)
+	stpL.append(-1)
+	stpL[0] = STARTING_POS[0]
+	stpL[1] = STARTING_POS[1]
+	print "GUROBI TOUR STARTS FROM: " + str(STARTING_POS[0]) + " " + str(STARTING_POS[1])
 
 else:
 	stpL = []
 	stpL.append(-1)
 	stpL.append(-1)
-	min_distance = 999999999
-	for i in range(0, len(tour_configuration)):
-		stpDistance = min(max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[i][0]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[i][1]]), max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[i][1]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[i][0]]))
-		if stpDistance < min_distance:
-			min_distance = stpDistance
-			stpL[0] = tour_configuration[i][0]
-			stpL[1] = tour_configuration[i][1]
-			stp_index = i
-	print "TOUR STARTS FROM " + str(stpL[0]) + " " + str(stpL[1]) 
-
-#ordering tour configuration list 
-#stp_index is the index from where the tour starts
-CONFIGURATIONS = []
-tour_configuration_sorted = []
-CONFIGURATIONS.append(STARTING_POS)
-for i in range(stp_index,len(tour_configuration)):
-	CONFIGURATIONS.append(tour_configuration[i])
-	tour_configuration_sorted.append(tour_configuration[i])
-for i in range(0,stp_index):
-	CONFIGURATIONS.append(tour_configuration[i])
-	tour_configuration_sorted.append(tour_configuration[i])
+	stpL[0] = tour_configuration[0][0]
+	stpL[1] = tour_configuration[0][1]
+	print "GUROBI TOUR STARTS FROM " + str(stpL[0]) + " " + str(stpL[1])
 
 
+#check that fAp_index is not the last element, otherwise it has been already added
+if fAp_index < len(tour_list)-1:
+#second half of the tour_list: from [fAp_index] to end
+	#the element [fAp_index] has been already taken, therefore the loop starts at [fAp_index+1]
+	for i in range(fAp_index+1,len(tour_list)):
+		if max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
+			tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+		else:
+			tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+#first half of the tour_list: from 0 to [fAp_index]
+for i in range(0,fAp_index):
+	if max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
+		tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+	else:
+		tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+
+	
 
 print "\nFINAL CONFIGURATION TOUR LIST:"
-print tour_configuration_sorted
-
+print tour_configuration
+for i in range(0,len(tour_configuration)):
+	CONFIGURATIONS.append([tour_configuration[i][0], tour_configuration[i][1]])
 print "\nFINAL CONFIGURATION LIST:"
 print CONFIGURATIONS
 
 #final move
-print "\nFINAL MOVE: robots will move from " + str(tour_configuration[-1+stp_index]) + " back to " + str(STARTING_POS)
+print "\nFINAL MOVE: robots will move from " + str(tour_configuration[-1]) + " back to " + str(STARTING_POS)
 #adding the time from STARTING_POS to FIRST
-tS = min(max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[stp_index][0]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[stp_index][1]]), max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[stp_index][1]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[stp_index][0]]))
+tS = min(max(shortest_time_matrix[STARTING_POS[0]][stpL[0]] , shortest_time_matrix[STARTING_POS[1]][stpL[1]]), max(shortest_time_matrix[STARTING_POS[0]][stpL[1]] , shortest_time_matrix[STARTING_POS[1]][stpL[0]]))
 print "\ntime for moving from STARTING_POS to first point of the tour " 
-print str(STARTING_POS) + " ---> " + str(tour_configuration[stp_index])+ " : " + str(tS)
+print str(STARTING_POS) + " ---> " + str(tour_configuration[0])+ " : " + str(tS)
 #adding the time from LAST to STARTING_POS
-tF = min(max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[-1+stp_index][0]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[-1+stp_index][1]]), max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[-1+stp_index][1]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[-1+stp_index][0]]))
+tF = min(max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[-1][0]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[-1][1]]), max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[-1][1]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[-1][0]]))
 print "time for moving from last point of the tour to STARTING_POS " 
-print str(tour_configuration[-1+stp_index]) + " ---> " + str(STARTING_POS)+ " : " + str(tF)
+print str(tour_configuration[-1]) + " ---> " + str(STARTING_POS)+ " : " + str(tF)
 
 tEND = t + tS + tF
 print "\n\nFINAL TIMESTAMP: " + str(tEND)
