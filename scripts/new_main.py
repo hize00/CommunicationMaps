@@ -124,13 +124,13 @@ class GenericRobot(object):
             os.system("pkill -f ros")
 
     def go_to_pose(self, pos):
-        rospy.loginfo("Robot " + str(robot_id) + " goes to (%s, %s) position", pos['x'], pos['y'])
+        rospy.loginfo("Robot " + str(robot_id) + " goes to" +str(pos))
 
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = '/map'
         goal.target_pose.header.stamp = rospy.Time.now()
 
-        goal.target_pose.pose.position = Point(pos['x'], pos['y'], 0.000)
+        goal.target_pose.pose.position = Point(pos[0], pos[1], 0.000)
         goal.target_pose.pose.orientation.w = 1
 
         # Start moving
@@ -216,7 +216,7 @@ class Follower(GenericRobot):
 
         self._action_name = rospy.get_name()
 
-        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, execute_cb=self.execute_cb_dora, auto_start=False)
+        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, auto_start=False) #execute_cb=self.execute_cb_dora,
 
         print 'created environment variable'
 
@@ -273,7 +273,7 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    position = {'x': 11.50, 'y': 12.50}
+    position = [11.50,12.50]
 
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
