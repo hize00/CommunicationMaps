@@ -95,6 +95,66 @@ class GenericRobot(object):
         log_dataset_file.close()
         self.robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
 
+        # for estimating the path length
+        rospy.Subscriber('move_base_node/NavfnROS/plan', Path, self.path_callback)
+        self.pub_time_to_dest = rospy.Publisher('time_to_dest', Float32, queue_size=10)
+        self.my_path = None
+        self.my_time_to_dest = None
+        rospy.Timer(rospy.Duration(1), self.info_teammate_callback)
+
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/time_to_dest', Float32,self.teammate_time_path_callback)
+        self.teammate_time_to_dest = None
+
+        # to update path and time only at the begininning with the navfnros data
+        self.first_estimate_time = False
+        self.first_estimate_teammate_path = False
+        self.path_inserted_in_info = False
+
+        # start (joint) path time
+        self.time_start_path = None
+
+        # for the robotic pair "state machine"
+        self.moving_nominal_dest = False
+        self.arrived_nominal_dest = False
+        self.teammate_arrived_nominal_dest = False
+        self.path_timeout_elapsed = False
+        self.completed = False
+
+        # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
+        self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
+
+        self.iam_moving = False
+
+        # for maintaining and publishing all the info known by the robot w.r.t the other robots (destination and path)
+        self.robot_info_list = []
+        for r in xrange(n_robots):
+            robot_info = RobotInfo()
+            robot_info.robot_id = -1
+            self.robot_info_list.append(robot_info)
+
+        self.pub_all_info = rospy.Publisher('all_info', AllInfo, queue_size=10)
+        rospy.Timer(rospy.Duration(0.25), self.pub_all_info_callback)
+
+        rospy.sleep(rospy.Duration(1))
+
+        for r in range(n_robots):
+            if r == robot_id: continue
+            rospy.Subscriber('/robot_' + str(r) + '/all_info', AllInfo, self.update_all_info_callback)
+
+        # for maintaining and selectively publishing signal data
+        self.robot_data_list = []
+        for r in xrange(n_robots):
+            self.robot_data_list.append([])
+
+        rospy.Service('/robot_' + str(self.robot_id) + '/get_signal_data', GetSignalData, self.handle_get_signal_data)
+        # subscribe to all the other robots - will never call mine
+        self.get_signal_data_service_proxies = []
+        for r in xrange(n_robots):
+            service_name = '/robot_' + str(r) + '/get_signal_data'
+            rospy.wait_for_service(service_name)
+            self.get_signal_data_service_proxies.append(rospy.ServiceProxy(service_name, GetSignalData))
+
         self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
 
         for i in xrange(n_robots):
@@ -104,6 +164,7 @@ class GenericRobot(object):
             exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/updated_pose', Point, self.pos_teammate" + str(i) + ", queue_size = 100)")
 
+        self.lock_info = threading.Lock()
 
     def tf_callback(self, event):
         try:
@@ -112,6 +173,97 @@ class GenericRobot(object):
             pub_my_pose.publish(Point(trans[0],trans[1],0.0))
         except Exception as e:
             pass
+
+    def path_callback(self, msg):
+        if (not (self.moving_nominal_dest)): return  # not needed
+
+        # cannot update estimated time -
+        if (self.first_estimate_time):
+            self.my_path = self.extrapolate_waypoints(msg.poses)
+            self.my_time_to_dest = self.compute_dist(msg.poses) / SPEED
+            self.my_time_to_dest = self.my_time_to_dest + TIME_TOL_PERC * self.my_time_to_dest
+
+            self.first_estimate_time = False
+            rospy.loginfo('Time to dest robot ' + str(self.robot_id) + ' = ' + str(self.my_time_to_dest))
+
+    def info_teammate_callback(self, event):
+        if (self.moving_nominal_dest):
+            self.pub_time_to_dest.publish(Float32(self.my_time_to_dest))
+
+        self.pub_state.publish(Bool(self.arrived_nominal_dest))
+
+    def teammate_time_path_callback(self, msg):
+        if (not (self.moving_nominal_dest)): return
+
+        self.teammate_time_to_dest = float(msg.data)
+
+    def state_callback(self, msg):
+        self.teammate_arrived_nominal_dest = msg.data
+
+    def handle_get_signal_data(self, req):
+        return GetSignalDataResponse(filter(lambda x: x.timestep > req.timestep, self.robot_data_list[req.robot_id]))
+
+    def reset_stuff(self):
+        self.last_feedback_pose = None
+        self.last_motion_time = None
+        self.stop_when_comm = False
+        self.teammate_comm_regained = False
+        self.iam_moving = False
+        self.path_timeout_elapsed = False
+        self.my_path = None
+        self.teammate_path = None
+        self.my_time_to_dest = 0.0
+        self.teammate_time_to_dest = 0.0
+        self.time_start_path = None
+        self.first_estimate_time = False
+        self.first_estimate_teammate_path = False
+        self.path_inserted_in_info = False
+        self.moving_nominal_dest = False
+        self.arrived_nominal_dest = False
+        self.teammate_arrived_nominal_dest = False
+
+
+    def pub_all_info_callback(self, event):
+        if (self.my_path is not None and self.teammate_path is not None and not (self.path_inserted_in_info)):
+            self.robot_info_list[self.robot_id].path_leader = map(
+                lambda x: Point(x.pose.position.x, x.pose.position.y, 0.0), self.my_path)
+            self.robot_info_list[self.robot_id].path_follower = map(
+                lambda x: Point(x.pose.position.x, x.pose.position.y, 0.0), self.teammate_path)
+            self.robot_info_list[self.robot_id].timestep = int((rospy.Time.now() - self.mission_start_time).secs)
+            self.robot_info_list[self.robot_id].timestep_path = int((rospy.Time.now() - self.mission_start_time).secs)
+            rospy.loginfo(str(self.robot_id) + " inserting new paths in info to share")
+            self.path_inserted_in_info = True
+
+        all_info = AllInfo()
+        all_info.all_info = self.robot_info_list
+        all_info.sender = self.robot_id
+        self.pub_all_info.publish(all_info)
+
+    def update_all_info_callback(self, msg):
+        if (self.sim and not (self.comm_module.can_communicate(msg.sender))):
+            # rospy.loginfo(str(self.robot_id) + " cannot be updated with info received by " + str(msg.sender))
+            return
+
+        self.lock_info.acquire()
+        for robot_info in msg.all_info:
+            if robot_info.robot_id == -1 or robot_info.robot_id == self.robot_id:
+                continue
+
+            if (self.robot_info_list[robot_info.robot_id] is None or
+                        robot_info.timestep > self.robot_info_list[robot_info.robot_id].timestep or
+                        robot_info.timestep_path > self.robot_info_list[robot_info.robot_id].timestep_path):
+                self.robot_info_list[robot_info.robot_id] = robot_info
+
+            if (not (self.is_leader) and robot_info.robot_id in self.teammates_id and
+                    (robot_info.dest_follower.x < -99999 or self.robot_info_list[
+                        self.robot_id].dest_follower.x < -99999)):
+                # print "Setting planning in follower!"
+                self.robot_info_list[self.robot_id] = robot_info
+                self.robot_info_list[self.robot_id].robot_id = self.robot_id
+                self.robot_info_list[self.robot_id].path_leader = []
+                self.robot_info_list[self.robot_id].path_follower = []
+
+        self.lock_info.release()
 
     def distance_logger(self, event):
         f = open(self.log_filename, "a")
@@ -144,6 +296,37 @@ class GenericRobot(object):
             pass
         else:
             self.client_motion.cancel_goal()
+
+    def send_to(self, target, timeout=0):
+        rospy.loginfo(str(self.robot_id) + ' moving to ' + str(target))
+        success = False
+
+        while (not (success)):
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = '/map'
+            goal.target_pose.pose.position.x = target[0]
+            goal.target_pose.pose.position.y = target[1]
+            goal.target_pose.pose.orientation.w = 1
+            self.last_feedback_pose = None
+            self.last_motion_time = rospy.Time.now()
+            self.client_motion.send_goal(goal)
+            self.iam_moving = True
+            self.client_motion.wait_for_result()
+            self.iam_moving = False
+            state = self.client_motion.get_state()
+            if state == GoalStatus.SUCCEEDED:
+                rospy.loginfo(str(self.robot_id) + " destination reached.")
+                success = True
+                if self.moving_nominal_dest:
+                    rospy.loginfo(str(self.robot_id) + " setting arrived nominal dest to true.")
+                    self.arrived_nominal_dest = True
+            else:
+                if state == GoalStatus.ABORTED:
+                    # in multi2, when trying to reach the backup assume that will always succeed
+                    rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! ")
+                    success = False
+
+        return True
 
 
 
@@ -188,6 +371,12 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Leader - waiting for follower server ' + str(teammate_id))
             self.clients_signal[teammate_id].wait_for_server()
             rospy.loginfo(str(self.robot_id) + ' - Done.')
+
+        self.replan_rate = REPLAN_RATE
+
+        # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached, 3: all reached. - for pair
+        # -1: plan, 0: plan_set, 1-2 leaders/followers reached safe, 3: all paths sent, 4: completed - for multi2
+        self.explore_comm_maps_state = -1
 
 
 
