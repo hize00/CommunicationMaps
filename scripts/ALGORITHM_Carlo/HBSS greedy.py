@@ -224,9 +224,9 @@ class State(object):
 	def setPointsToVisit(self, ptv):
 		self.points_to_visit = ptv
 
-	def gegreedy_timeather(self):
+	def getFather(self):
 		return self.father
-	def segreedy_timeather(self, fath):
+	def setFather(self, fath):
 		self.father = fath
 
 	def getChildren(self):
