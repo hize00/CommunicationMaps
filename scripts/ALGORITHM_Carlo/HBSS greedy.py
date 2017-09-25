@@ -393,7 +393,7 @@ maxTF = 0
 for i in range(0,len(STARTING_POS)):
 	if shortest_time_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] > maxTF:
 		maxTF = shortest_time_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] 
-tF = int(max(STATES[-1].getTimeTable())) + maxTF
+greedy_time = float(max(STATES[-1].getTimeTable())) + maxTF
 
 print "\n\n\n----------------------------------------------------"
 print "GREEDY RECAP"
@@ -401,11 +401,11 @@ print "STARTING POSITION: " + str(STARTING_POS)
 print "\nFINAL CONFIGURATION LIST"
 print CONFIGURATIONS
 print "\nTIME ELAPSED"
-print int(max(STATES[-1].getTimeTable()))
+print float(max(STATES[-1].getTimeTable()))
 print "\nFINAL MOVE: robots will go from " + str(STATES[-1].getConfiguration()) + " back to " + str(STARTING_POS)
 print "\ntime for moving from last point of the tour to STARTING_POS"
 print str(CONFIGURATIONS[-1]) + " ---> " + str(STARTING_POS) + " : " + str(maxTF)
-print "\n\nFINAL TIMESTAMP: " + str(tF)
+print "\n\nFINAL TIMESTAMP: " + str(greedy_time)
 print "----------------------------------------------------------"
 
 print "\n\n\n----------------------------------------------------"
@@ -418,17 +418,7 @@ HB_STATES = []
 
 def HBBS(state0, heuristic, bias, bound, initialBest):
 	result = HBBS_Search(state0, heuristic, bias, 0, bound)
-	#max time of last movement computed by HBBS Search
-	t_HBSS = HB_STATES[-1].getTimeTable().max()
-	bestT = initialBest
-	if t_HBSS <= bestT:
-		bestT = t_HBSS
-		solution = deepcopy(HB_STATES)
-		return solution
-	else:
-		solution = deepcopy(HB_STATES)
-		return solution
-
+	return result
 	
 def HBBS_Search(state, heuristic, bias, depth, bound):
 	scores = []
@@ -446,7 +436,14 @@ def HBBS_Search(state, heuristic, bias, depth, bound):
 			total_weight = total_weight + weight[i]
 		for i in range(0, len(scores)):
 			probability[i] = weight[i]/total_weight
+		
+		###probability selections
 		child_index = SELECT(probability)
+		
+		###totally random selection
+		#p = random.choice(probability)
+		#child_index = probability.index(p)
+		
 		#selected move according to BIAS and probability
 		m = scores[child_index]
 		ttable = updateTimeTable(state, m)
@@ -455,23 +452,20 @@ def HBBS_Search(state, heuristic, bias, depth, bound):
 		child = State(maxId(HB_STATES)+1, m[2], ttable, state.getDepthLevel()+1, ptv, state, [])
 		state.addChild(child)
 		HB_STATES.append(child)
-
 		#print "\nchecking print for state " + str(state.getidNumber())
 		#print "my scores are " + str(scores)
 		#print "my weight are " + str(weight)
 		#print "my probability are " + str(probability)
 		#print "my child index is " + str(child_index)
 		#print "the move I choose is " + str(m)
-
 		depth = depth + 1
 		HBBS_Search(child, heuristic, bias, depth, bound)
-		
-		return HB_STATES
+
+	return HB_STATES
 
 #sort the moves computed previously according to the heuristic
 def SORT_heuristic(state, heuristic):
 	sortedMoves = []
-
 	if heuristic == "GREEDY":
 		sortedMoves = SORT_Greedy(state)
 		return sortedMoves
@@ -503,14 +497,13 @@ def SORT_Greedy(state):
 			tt = np.full((N_ROBOTS,1), 0)
 		LSG.append(scan[top_index])
 		moves.remove(scan[top_index])
-
 	return LSG
 
 #weighted probability selection
 def SELECT(probabilityList):
 	randomN = random.uniform(0, 1)
 	found = 0
-	#select random number based on probabilty, otherwise if non is selected choose the most probable
+	#select random number based on probabilty. If none is selected choose the most probable
 	for i in range(0,len(probabilityList)):
 		if probabilityList[i] - randomN <= 0:
 			found = 1
@@ -523,19 +516,27 @@ def BIAS_FUNCTION(bias, rank):
 	w = 0
 	if bias == "LOG":
 		w = 1/math.log10(rank+1)
-		return w
+	elif bias == "EXP":
+		w = math.exp(-rank)
+	elif bias == "POLY2":
+		w = math.pow(rank, -2)
+	elif bias == "POLY3":
+		w = math.pow(rank, -3)
+	elif bias == "POLY4":
+		w = math.pow(rank, -4)
+	else:
+		print "Unknown BIAS function"
+	return w
 	
 
 TIMES = []
-for j in range (0, 5):
+for j in range (0, 30):
+	#empty the lists
 	HB_STATES[:] = []
 	HB_CONFIGURATIONS[:] = []
-	T_exploration = 0
-
 	#print "---COMPUTATION " + str(j+1) + "---\n"
 	HB_STATES.append(root)
-	HB_STATES = HBBS(root, "GREEDY", "LOG", len(POINTS_TO_EXPLORE), tF)
-
+	HB_STATES = HBBS(root, "GREEDY", "LOG", len(POINTS_TO_EXPLORE), greedy_time)
 	for i in range(0,len(HB_STATES)):
 		#print "\nSTEP "+str(i)
 		#print "Id State: " + str(HB_STATES[i].getidNumber())
@@ -543,14 +544,13 @@ for j in range (0, 5):
 		HB_CONFIGURATIONS.append(HB_STATES[i].getConfiguration())
 		#print "Time Table:\n" + str(HB_STATES[i].getTimeTable())
 	HB_CONFIGURATIONS_LIST.append(HB_CONFIGURATIONS)
-
-	#time in which robot complete exploration
+	T_exploration = 0
+	#time in which robot complete exploration after final move
 	for i in range(0,len(STARTING_POS)):
 		if shortest_time_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] > T_exploration:
-			T_exploration = shortest_time_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] 
-	T_final = int(max(HB_STATES[-1].getTimeTable())) + T_exploration
+			T_exploration = shortest_time_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] 
+	T_final = float(max(HB_STATES[-1].getTimeTable())) + T_exploration
 	TIMES.append(T_final)
-
 	#set timetable of root to 0
 	tt = np.full((N_ROBOTS,1), 0)
 	root.setTimeTable(tt)
@@ -558,15 +558,17 @@ for j in range (0, 5):
 print "\n\n\n"
 print "----------------------------------------------------"
 print "HBBS RECAP\n"
-print "Greedy solution time: " + str(tF)
+print "Greedy solution time: " + str(greedy_time)
 print "Times computed by different HBBS launches: \n" + str(TIMES)
 bestTime = min(TIMES)
 print "The best time found by HBBS is: " + str(bestTime)
 bestIndex = TIMES.index(bestTime)
 print "The order of configuration is: "
+#append STARTING POS
+HB_CONFIGURATIONS_LIST[bestIndex].append(STARTING_POS)
 print HB_CONFIGURATIONS_LIST[bestIndex]
 
-if bestTime < tF:
+if bestTime < greedy_time:
 	print "\nHBBS has improved the solution"
 
 print("\n\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
