@@ -132,7 +132,7 @@ class GenericRobot(object):
             os.system("pkill -f ros")
 
     def go_to_pose(self, pos):
-        rospy.loginfo("Robot " + str(robot_id) + " goes to " + str(pos))
+        #rospy.loginfo("Robot " + str(robot_id) + " goes to " + str(pos))
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = '/map'
         goal.target_pose.header.stamp = rospy.Time.now()
@@ -143,7 +143,6 @@ class GenericRobot(object):
         # Start moving
         self.client_motion.send_goal(goal)
 
-        # Allow TurtleBot up to 60 seconds to complete task
         success = self.client_motion.wait_for_result()
         state = self.client_motion.get_state()
 
@@ -152,12 +151,17 @@ class GenericRobot(object):
         else:
             self.client_motion.cancel_goal()
 
+
     def execute_plan(self):
-
-
-
-
-
+        while not rospy.is_shutdown():
+            if self.plan == None:
+                lead.calculate_plan()
+            else:
+                rospy.sleep(rospy.Duration(2.0))
+                t1 = threading.Thread(target = self.go_to_pose, args=(self.plan[0],))
+                t1.start()
+                t2 = threading.Thread(target = self.send_foll_to, args=(self.teammates_id,self.plan[1]))
+                t2.start()
 
 
 class Leader(GenericRobot):
@@ -203,18 +207,20 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plan = [[11,12],[31,13],self.teammates_id,15]
-        dest_leader = self.plan[0]
-        print 'Robot '+ str(robot_id + 'plan:' + self.plan
-        t1 = threading.Thread(target= self.send_plan_to_foll, args=(plan))
-        t1.start()
+        self.plan = [[11,12],[31,13]]
+        rospy.loginfo('Leader has calculated the plan')
+        rospy.loginfo('Robot ' + str(robot_id) + ' plan:' + str(self.plan))
 
-    def send_plan_to_foll(self,plan):
-        self.plan = [[31, 13], [11, 12], self.teammates_id, 15]
-        dest_foll = self.plan[0]
-        print 'Robot ' + str(robot_id + 'plan:' + self.plan
-
-
+    def send_foll_to(self,teammates_id,plan):
+        rospy.loginfo("MANDO IL FOLLOWER")
+        double_goals = []
+        double_goal = GoalWithBackup()
+        double_goal.target_follower = PoseStamped()
+        double_goal.target_follower.pose.position = plan[1]
+        double_goals.append(double_goal)
+        goal = SignalMappingGoal(double_goals=double_goals)
+        self.clients_signal[self.teammates_id[0]].send_goal(goal)
+        rospy.loginfo("HO MANDATO IL FOLLOWER")
 
 
 
@@ -243,13 +249,21 @@ class Follower(GenericRobot):
 
         self._action_name = rospy.get_name()
 
-        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, auto_start=False)
+        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, execute_cb=self.execute_callback, auto_start=False)
 
         print 'created environment variable'
 
         rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
 
         self._as.start()
+
+    def execute_callback(self,goal):
+        rospy.loginfo("STO MANDANDO IL FOLLOWER")
+
+        self.go_to_pose(goal.target_pose.pose.position)
+
+        rospy.loginfo("FOLLOWER CAMMINA")
+
 
 
 if __name__ == '__main__':
@@ -306,12 +320,15 @@ if __name__ == '__main__':
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        lead.go_to_pose(position)
-        rospy.spin()
+        #lead.go_to_pose(position)
+        lead.execute_plan()
 
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
-        foll.go_to_pose(position)
+        #foll.go_to_pose(position)
+        rospy.spin()
+
+
 
