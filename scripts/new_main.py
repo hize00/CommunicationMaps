@@ -80,10 +80,6 @@ class GenericRobot(object):
         self.comm_module = communication.CommunicationModule(sim, seed, robot_id, n_robots, comm_range, ref_dist,
                                                              map_filename, resize_factor)
 
-        # estimated position
-        self.listener = tf.TransformListener()
-        rospy.Timer(rospy.Duration(0.1), self.tf_callback)
-
         # for logging
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
@@ -93,6 +89,10 @@ class GenericRobot(object):
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
+
+        #estimated position
+        self.listener = tf.TransformListener()
+        rospy.Timer(rospy.Duration(0.1), self.tf_callback)
         self.robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
 
         self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
@@ -103,6 +103,14 @@ class GenericRobot(object):
             exec (s)
             exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/updated_pose', Point, self.pos_teammate" + str(i) + ", queue_size = 100)")
+
+        #path for navigation
+        self.plan = None
+
+        self.lock_info = threading.Lock()
+
+
+
 
 
     def tf_callback(self, event):
@@ -143,6 +151,12 @@ class GenericRobot(object):
             pass
         else:
             self.client_motion.cancel_goal()
+
+    def execute_plan(self):
+
+
+
+
 
 
 
@@ -187,6 +201,20 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Leader - waiting for follower server ' + str(teammate_id))
             self.clients_signal[teammate_id].wait_for_server()
             rospy.loginfo(str(self.robot_id) + ' - Done.')
+
+    def calculate_plan(self):
+        self.plan = [[11,12],[31,13],self.teammates_id,15]
+        dest_leader = self.plan[0]
+        print 'Robot '+ str(robot_id + 'plan:' + self.plan
+        t1 = threading.Thread(target= self.send_plan_to_foll, args=(plan))
+        t1.start()
+
+    def send_plan_to_foll(self,plan):
+        self.plan = [[31, 13], [11, 12], self.teammates_id, 15]
+        dest_foll = self.plan[0]
+        print 'Robot ' + str(robot_id + 'plan:' + self.plan
+
+
 
 
 
