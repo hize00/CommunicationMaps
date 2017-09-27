@@ -322,11 +322,15 @@ tour_list.append([ V2[tour[0]][1][0], V2[tour[0]][1][1] ])
 
 #obsolete
 if obj_fun == "distance":
+	t = 0
 	for i in range(1,len(tour)):
-		if ( D[V2[tour[i-1]][1][0]][V2[tour[i]][1][0]] + D[V2[tour[i-1]][1][1]][V2[tour[i]][1][1]] ) <  ( D[V2[tour[i-1]][1][0]][V2[tour[i]][1][1]] + D[V2[tour[i-1]][1][1]][V2[tour[i]][1][0]] ) :
-			tour_configuration.append( [ V2[tour[i]][1][0], V2[tour[i]][1][1] ] )
-		else:
-			tour_configuration.append( [ V2[tour[i]][1][1], V2[tour[i]][1][0] ] )
+		print "\ntour iteration number " + str(i-1)
+		t1 = D[tour[i-1]][tour[i]] 
+		print "iteration distance: " + str(t1) 
+		t = t + t1
+		tour_list.append([ V2[tour[i]][1][0], V2[tour[i]][1][1] ])
+		print tour_list
+	shortest_time_matrix = deepcopy(distance_matrix)
 
 #transforming the tour planned by GUROBI into a succession of points in tour_list (not in order of robots)
 elif obj_fun == "time":

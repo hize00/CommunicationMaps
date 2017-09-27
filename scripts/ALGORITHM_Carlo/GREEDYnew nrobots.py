@@ -300,7 +300,8 @@ def EXPAND(state):
 	LEx = []
 	print"\nMoves of state " + str(state.getidNumber())
 	LEx = computeMoves(state.getConfiguration(), state.getPointsToVisit())
-	print LEx
+	print "possibili mosse sono " + str(len(LEx))
+	#print LEx
 	return LEx
 
 
@@ -313,18 +314,19 @@ def CHOOSE(state, heuristic):
 	else:
 		print "heuristic doesn't exist"
 
-###GREEDY HEURISTIC: greedy choice -> min bottleneck time
+###GREEDY HEURISTIC: greedy choice with min bottleneck time
 def GREEDY(state):
 	tt = np.full((N_ROBOTS,1), 0)
 	#auxiliary matrix
 	twork = np.full((N_ROBOTS,1), 9999999999999999)
+	#list with move computed by EXPAND
 	LGe = []
 	LGe = EXPAND(state)
 	#computation of move with minimum bottleneck time
 	for i in range(0,len(LGe)):
+		#LGe[i][3] contains the robots that are moving (1 moving, 0 not)
 		for j in range(0,len(LGe[i][3])):
 			if LGe[i][3][j] == 1:
-			#move[0] contains the time
 				tt[j][0] =  tt[j][0] + LGe[i][0] + state.getTimeTable()[j][0]
 
 		if tt.max() < twork.max():
@@ -332,11 +334,9 @@ def GREEDY(state):
 			greedy_index = i
 		tt = np.full((N_ROBOTS,1), 0)
 
-	print "index greedy " + str(greedy_index) + " : " + str(LGe[greedy_index])
-	print "tt " + str(twork)
-
+	#print "index greedy " + str(greedy_index) + " : " + str(LGe[greedy_index])
+	#print "tt " + str(twork)
 	chosen = LGe[greedy_index]
-	
 	return chosen
 
 
@@ -380,16 +380,16 @@ for i in range(0, len(POINTS_TO_EXPLORE)):
 	print "\n---> iteration " + str(i)
 	s = GENERATE(state, "greedy")
 	STATES.append(s)
-	s.infoState()
+	#s.infoState()
 	state = deepcopy(s)
 #------------------------------------------------------
 
 for i in range(0,len(STATES)):
-	print "\n|--- STEP "+str(i)+"---|"
-	print "Id State: " + str(STATES[i].getidNumber())
-	print "Configuration: " + str(STATES[i].getConfiguration())
+	#print "\n|--- STEP "+str(i)+"---|"
+	#print "Id State: " + str(STATES[i].getidNumber())
+	#print "Configuration: " + str(STATES[i].getConfiguration())
 	CONFIGURATIONS.append(STATES[i].getConfiguration())
-	print "Time Table:\n" + str(STATES[i].getTimeTable())
+	#print "Time Table:\n" + str(STATES[i].getTimeTable())
 
 #time in which robot complete exploration
 maxTF = 0

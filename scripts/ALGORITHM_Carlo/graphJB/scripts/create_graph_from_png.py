@@ -1,8 +1,3 @@
-'''
-Created on Jul 31, 2017
-
-@author: banfi
-'''
 import math
 import cv2
 import numpy as np
@@ -17,11 +12,7 @@ gflags.DEFINE_string('file_path', '../envs/offices.png', 'png file path')
 gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretization - physical')
 gflags.DEFINE_integer('cell_size', 11, 'pixels making 1 grid cell (only for uniform grid discretization)')
 
-gflags.DEFINE_string('comm_discr_type', 'los', 'environment discretization - comm')
-gflags.DEFINE_integer('range', 150, 'communication range (in pixels)')
-
 gflags.DEFINE_string('output_phys', '../data/offices_phys', 'physical graph output')
-gflags.DEFINE_string('output_comm', '../data/offices_comm', 'communication graph output')
 
 gflags.DEFINE_bool('debug', True, 'debug mode active')
 
@@ -136,85 +127,10 @@ def create_phys_graph_grid():
             v1 = G_E.vs[edge.source]
             v2 = G_E.vs[edge.target]
             plt.plot([v1['x_coord'] ,v2['x_coord']],[v1['y_coord'], v2['y_coord']],'b')
-
         plt.show()
 
     return G_E,im_array
 
-def create_comm_graph_range(G_E, im_array=None):
-    print 'Creating range communication graph...'
-    G_C = Graph(directed=False)
-    for vertex_id in range(len(G_E.vs)):
-        G_C.add_vertex()
-        G_C.vs[vertex_id]['x_coord'] = G_E.vs[vertex_id]['x_coord']
-        G_C.vs[vertex_id]['y_coord'] = G_E.vs[vertex_id]['y_coord']
-
-    neighbors = []
-    range_squared = gflags.FLAGS.range**2
-
-    for vertex_id_1 in range(len(G_C.vs)):
-        for vertex_id_2 in range(vertex_id_1 + 1, len(G_C.vs)):
-            if (G_C.vs[vertex_id_1]['x_coord']- G_C.vs[vertex_id_2]['x_coord'])**2 + \
-               (G_C.vs[vertex_id_1]['y_coord']- G_C.vs[vertex_id_2]['y_coord'])**2 <= range_squared:
-               neighbors.append((vertex_id_1, vertex_id_2))
-
-    G_C.add_edges(neighbors)
-
-    print 'Done.'
-
-    if gflags.FLAGS.debug:
-        plt.imshow(im_array)
-        for edge in G_C.es.select(_source=0):
-            v1 = G_C.vs[edge.source]
-            v2 = G_C.vs[edge.target]
-            plt.plot([v1['x_coord'], v2['x_coord']],[v1['y_coord'], v2['y_coord']],'b')
-        for edge in G_C.es.select(_target=0):
-            v1 = G_C.vs[edge.source]
-            v2 = G_C.vs[edge.target]
-            plt.plot([v1['x_coord'], v2['x_coord']],[v1['y_coord'], v2['y_coord']],'b')
-
-        plt.show()
-    return G_C
-
-
-def create_comm_graph_los(G_E, im_array=None):
-    print 'Creating los communication graph...'
-    G_C = Graph(directed=False)
-    for vertex_id in range(len(G_E.vs)):
-        G_C.add_vertex()
-        G_C.vs[vertex_id]['x_coord'] = G_E.vs[vertex_id]['x_coord']
-        G_C.vs[vertex_id]['y_coord'] = G_E.vs[vertex_id]['y_coord']
-
-    neighbors = []
-    range_squared = gflags.FLAGS.range**2
-
-    for vertex_id_1 in range(len(G_C.vs)):
-        for vertex_id_2 in range(vertex_id_1 + 1, len(G_C.vs)):
-            if (G_C.vs[vertex_id_1]['x_coord']- G_C.vs[vertex_id_2]['x_coord'])**2 + \
-               (G_C.vs[vertex_id_1]['y_coord']- G_C.vs[vertex_id_2]['y_coord'])**2 <= range_squared:
-
-                if(directLinePossibleBresenham((G_C.vs[vertex_id_1]['y_coord'], G_C.vs[vertex_id_1]['x_coord']), 
-                                               (G_C.vs[vertex_id_2]['y_coord'], G_C.vs[vertex_id_2]['x_coord']), 
-                                               im_array)):
-                    neighbors.append((vertex_id_1, vertex_id_2))
-
-    G_C.add_edges(neighbors)
-
-    print 'Done.'
-
-    if gflags.FLAGS.debug:
-        plt.imshow(im_array)
-        for edge in G_C.es.select(_source=0):
-            v1 = G_C.vs[edge.source]
-            v2 = G_C.vs[edge.target]
-            plt.plot([v1['x_coord'], v2['x_coord']],[v1['y_coord'], v2['y_coord']],'b')
-        for edge in G_C.es.select(_target=0):
-            v1 = G_C.vs[edge.source]
-            v2 = G_C.vs[edge.target]
-            plt.plot([v1['x_coord'], v2['x_coord']],[v1['y_coord'], v2['y_coord']],'b')
-
-        plt.show()
-    return G_C
 
 
 if __name__ == "__main__":
@@ -225,21 +141,8 @@ if __name__ == "__main__":
         print 'Error! Physical discretization not supported!'
         exit(1)
 
-    G_E.write(gflags.FLAGS.output_phys + '_' + gflags.FLAGS.phys_discr_type + '_' + \
-              str(gflags.FLAGS.cell_size) + '_' + gflags.FLAGS.comm_discr_type + '_' + \
-              str(gflags.FLAGS.range) + '.graphml', format='graphml')
+    G_E.write(gflags.FLAGS.output_phys + '_' + gflags.FLAGS.phys_discr_type + '.graphml', format='graphml')
 
-    if gflags.FLAGS.comm_discr_type == 'range':
-        G_C = create_comm_graph_range(G_E, im_array)    
-    elif gflags.FLAGS.comm_discr_type == 'los':
-        G_C = create_comm_graph_los(G_E, im_array)
-    else:
-        print 'Error! Comm discretization not supported!'
-        exit(1)
-
-    G_C.write(gflags.FLAGS.output_comm + '_' + gflags.FLAGS.phys_discr_type + '_' + \
-              str(gflags.FLAGS.cell_size) + '_' + gflags.FLAGS.comm_discr_type + '_' + \
-              str(gflags.FLAGS.range) + '.graphml', format='graphml')
 
 
 

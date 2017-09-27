@@ -1,0 +1,7 @@
+The map used for these experimente is 'offices'
+
+create_graph_from_png.py = given a png divides the image into a grid and assign a vertex with coordinates to each square
+
+create_ptexplore.py = allows to draw as many points as you want until you press 'q'. This points will be saved into 'provaC.exp' and will be the points of our graph
+
+parsingData.py = TODO parse the previous file and create a new file .dat with corresponding data ready to be read from the algorithm

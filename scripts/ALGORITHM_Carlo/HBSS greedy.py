@@ -436,14 +436,8 @@ def HBBS_Search(state, heuristic, bias, depth, bound):
 			total_weight = total_weight + weight[i]
 		for i in range(0, len(scores)):
 			probability[i] = weight[i]/total_weight
-		
-		###probability selections
+		#probability selection
 		child_index = SELECT(probability)
-		
-		###totally random selection
-		#p = random.choice(probability)
-		#child_index = probability.index(p)
-		
 		#selected move according to BIAS and probability
 		m = scores[child_index]
 		ttable = updateTimeTable(state, m)
@@ -530,7 +524,9 @@ def BIAS_FUNCTION(bias, rank):
 	
 
 TIMES = []
-for j in range (0, 30):
+
+N_ITERATIONS = 30
+for j in range (0, N_ITERATIONS):
 	#empty the lists
 	HB_STATES[:] = []
 	HB_CONFIGURATIONS[:] = []
