@@ -26,7 +26,7 @@ from GPmodel import GPmodel
 import utils
 from utils import conv_to_hash, eucl_dist
 from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, SignalMappingGoal, \
-                         SignalMappingFeedback, SignalMappingResult, GoalWithBackup, GoalTarget
+                         SignalMappingFeedback, SignalMappingResult, GoalWithBackup, GoalDest
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
 TIME_STUCK = 3.0
@@ -154,9 +154,9 @@ class GenericRobot(object):
                 self.calculate_plan()
             else:
                 rospy.sleep(rospy.Duration(2.0))
-                t1 = threading.Thread(target = self.go_to_pose, args=(self.plan[0],))
+                t1 = threading.Thread(target = self.go_to_pose, args=(self.plan[0][0][0],))
                 t1.start()
-                t2 = threading.Thread(target = self.send_foll_to, args=(self.teammates_id,self.plan[1]))
+                t2 = threading.Thread(target = self.send_foll_to, args=(self.plan,))
                 t2.start()
 
 
@@ -203,14 +203,55 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plan = ([11,12],[31,13])
+        #self.plan = (([31,13],[28,15]),([28,15],(31,13)))
+        #piano completo:
+        self.plan = ((([11,12],[31,13]), self.teammates_id,10),(([13,15],[25,18]),self.teammates_id,12),(([18,18],[15,15]),self.teammates_id,11))
         rospy.loginfo('Leader has calculated the plan')
         rospy.loginfo('Robot ' + str(robot_id) + ' plan:' + str(self.plan))
+        #rospy.loginfo('Plan[0] = ' + str(self.plan[0])) #([31,13],[28,15])
+        #rospy.loginfo('Plan[1] = ' + str(self.plan[1])) #([28,15],(31,13)
+        #rospy.loginfo('Plan[0][0] = ' + str(self.plan[0][0])) #[31,13]
 
-    def send_foll_to(self,teammates_id,plan):
+
+    def send_foll_to(self,plans):
         rospy.loginfo("MANDO IL FOLLOWER")
+        clients_messages = []
+        for plan in plans:
+            print plan
+            points = plan[0]
+            print points
+            teammate_id = plan[1]
+            timestep = plan[2]
+            goal_dests = []
 
+            goal_dest = GoalDest()
+            goal_dest.leader_dest = points[0]
+            goal_dest.follower_dest = points[1]
 
+            goal_dests.append(goal_dest)
+
+            goal = SignalMappingGoal(goal_dests=goal_dests)
+            clients_messages.append((teammate_id, goal))
+
+        goal_threads = []
+
+        for (teammate_id, goal) in clients_messages:
+            t = threading.Thread(target=self.send_and_wait_goal, args=(teammate_id, goal))
+            t.start()
+            goal_threads.append(t)
+
+        for t in goal_threads:
+            t.join()
+
+    def send_and_wait_goal(self, teammate_id, goal):
+        rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
+        self.clients_signal[teammate_id].send_goal(goal)
+
+        self.clients_signal[teammate_id].wait_for_result()
+        rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+
+        if (self.explore_comm_maps_state == 0):
+            self.already_arrived[teammate_id] = True
 
 
 class Follower(GenericRobot):
@@ -248,6 +289,9 @@ class Follower(GenericRobot):
 
     def execute_callback(self,goal):
         rospy.loginfo("STO MANDANDO IL FOLLOWER")
+
+        for destination in goal.goal_dests:
+            success = self.send_to(destination.follower_dest.position)
 
 
 
@@ -299,7 +343,6 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    position = [11.50,12.50]
 
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,

@@ -1,3 +1,0 @@
-geometry_msgs/Pose target_leader
-geometry_msgs/Pose target_follower
-
