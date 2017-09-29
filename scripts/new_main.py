@@ -13,7 +13,7 @@ import tf
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped
+from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped, Pose
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
@@ -25,8 +25,8 @@ import exploration_strategies
 from GPmodel import GPmodel
 import utils
 from utils import conv_to_hash, eucl_dist
-from strategy.msg import GoalWithBackup, SignalData, RobotInfo, AllInfo, SignalMappingAction, \
-                               SignalMappingGoal, SignalMappingFeedback, SignalMappingResult
+from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, SignalMappingGoal, \
+                         SignalMappingFeedback, SignalMappingResult, GoalWithBackup, GoalTarget
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
 TIME_STUCK = 3.0
@@ -109,10 +109,6 @@ class GenericRobot(object):
 
         self.lock_info = threading.Lock()
 
-
-
-
-
     def tf_callback(self, event):
         try:
             (trans, rot) = self.listener.lookupTransform('/map', rospy.get_namespace() + 'base_link', rospy.Time(0))
@@ -154,8 +150,8 @@ class GenericRobot(object):
 
     def execute_plan(self):
         while not rospy.is_shutdown():
-            if self.plan == None:
-                lead.calculate_plan()
+            if not self.plan:
+                self.calculate_plan()
             else:
                 rospy.sleep(rospy.Duration(2.0))
                 t1 = threading.Thread(target = self.go_to_pose, args=(self.plan[0],))
@@ -207,20 +203,13 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plan = [[11,12],[31,13]]
+        self.plan = ([11,12],[31,13])
         rospy.loginfo('Leader has calculated the plan')
         rospy.loginfo('Robot ' + str(robot_id) + ' plan:' + str(self.plan))
 
     def send_foll_to(self,teammates_id,plan):
         rospy.loginfo("MANDO IL FOLLOWER")
-        double_goals = []
-        double_goal = GoalWithBackup()
-        double_goal.target_follower = PoseStamped()
-        double_goal.target_follower.pose.position = plan[1]
-        double_goals.append(double_goal)
-        goal = SignalMappingGoal(double_goals=double_goals)
-        self.clients_signal[self.teammates_id[0]].send_goal(goal)
-        rospy.loginfo("HO MANDATO IL FOLLOWER")
+
 
 
 
@@ -230,7 +219,7 @@ class Follower(GenericRobot):
                  resize_factor, errors_filename):
 
         rospy.loginfo(str(robot_id) + ' - Follower - starting!')
-        # Load Environment for follower to filter readings.
+        #Load Environment for follower to filter readings.
         environment_not_loaded = True
 
         while environment_not_loaded:
@@ -259,10 +248,6 @@ class Follower(GenericRobot):
 
     def execute_callback(self,goal):
         rospy.loginfo("STO MANDANDO IL FOLLOWER")
-
-        self.go_to_pose(goal.target_pose.pose.position)
-
-        rospy.loginfo("FOLLOWER CAMMINA")
 
 
 
