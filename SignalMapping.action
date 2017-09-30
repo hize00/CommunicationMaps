@@ -1,0 +1,8 @@
+# Define the goal
+GoalDest[] goal_dests
+---
+# Define the result
+SignalData[] data
+---
+# Define a feedback message
+SignalData[] data

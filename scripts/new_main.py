@@ -203,14 +203,9 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        #self.plan = (([31,13],[28,15]),([28,15],(31,13)))
-        #piano completo:
         self.plan = ((([11,12],[31,13]), self.teammates_id,10),(([13,15],[25,18]),self.teammates_id,12),(([18,18],[15,15]),self.teammates_id,11))
         rospy.loginfo('Leader has calculated the plan')
         rospy.loginfo('Robot ' + str(robot_id) + ' plan:' + str(self.plan))
-        #rospy.loginfo('Plan[0] = ' + str(self.plan[0])) #([31,13],[28,15])
-        #rospy.loginfo('Plan[1] = ' + str(self.plan[1])) #([28,15],(31,13)
-        #rospy.loginfo('Plan[0][0] = ' + str(self.plan[0][0])) #[31,13]
 
 
     def send_foll_to(self,plans):
@@ -219,19 +214,26 @@ class Leader(GenericRobot):
         for plan in plans:
             print plan
             points = plan[0]
-            print points
-            teammate_id = plan[1]
+            print 'Points: ' + str(points)
+            teammate_id = plan[1][0]
+            print 'Teammate_id: ' + str(teammate_id)
             timestep = plan[2]
             goal_dests = []
 
             goal_dest = GoalDest()
+            goal_dest.leader_dest = Point()
             goal_dest.leader_dest = points[0]
+
+            print 'goal_dest.leader_dest: ' + str(goal_dest.leader_dest)
+            goal_dest.follower_dest = Point()
             goal_dest.follower_dest = points[1]
+            print 'goal_dest.follower_dest: ' + str(goal_dest.follower_dest)
 
             goal_dests.append(goal_dest)
 
             goal = SignalMappingGoal(goal_dests=goal_dests)
             clients_messages.append((teammate_id, goal))
+            print '(teammate_id, goal): ' + str((teammate_id, goal))
 
         goal_threads = []
 
@@ -247,11 +249,8 @@ class Leader(GenericRobot):
         rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
         self.clients_signal[teammate_id].send_goal(goal)
 
-        self.clients_signal[teammate_id].wait_for_result()
+        self.clients_signal[teammate_id[0]].wait_for_result()
         rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
-
-        if (self.explore_comm_maps_state == 0):
-            self.already_arrived[teammate_id] = True
 
 
 class Follower(GenericRobot):
