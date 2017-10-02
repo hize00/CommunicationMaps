@@ -114,7 +114,7 @@ class GenericRobot(object):
             self.arrived_nominal_dest = False
             self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
             rospy.Timer(rospy.Duration(1), self.info_teammate_callback)
-            rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/move_base_node/NavfnROS/plan', Path,self.teammate_path_callback)
+            #rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/move_base_node/NavfnROS/plan', Path,self.teammate_path_callback)
         else:
             self.teammate_arrived_nominal_dest = False
             rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
@@ -359,10 +359,11 @@ class Follower(GenericRobot):
         self._as.start()
 
     def execute_callback(self,goal):
-        rospy.loginfo("STO MANDANDO IL FOLLOWER")
+        rospy.loginfo(str(self.robot_id) + ' - Follower - has received a new goal.')
+        self.reset_stuff()
 
         for destination in goal.goal_dests:
-            success = self.send_to(destination.follower_dest.position)
+            self.go_to_pose((destination.follower_dest.position.x, destination.follower_dest.position.y))
 
 
 if __name__ == '__main__':
