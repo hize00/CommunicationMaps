@@ -109,6 +109,31 @@ class GenericRobot(object):
 
         self.lock_info = threading.Lock()
 
+        #for managing the movements of robots
+        if self.is_leader:
+            self.arrived_nominal_dest = False
+            self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
+            rospy.Timer(rospy.Duration(1), self.info_teammate_callback)
+            rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/move_base_node/NavfnROS/plan', Path,self.teammate_path_callback)
+        else:
+            self.teammate_arrived_nominal_dest = False
+            rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
+
+        self.already_arrived = [False for _ in xrange(self.n_robots)]
+
+        # for maintaining and selectively publishing signal data
+        self.robot_data_list = []
+        for r in xrange(n_robots):
+            self.robot_data_list.append([])
+
+        rospy.Service('/robot_' + str(self.robot_id) + '/get_signal_data', GetSignalData,self.handle_get_signal_data)
+        # subscribe to all the other robots - will never call mine
+        self.get_signal_data_service_proxies = []
+        for r in xrange(n_robots):
+            service_name = '/robot_' + str(r) + '/get_signal_data'
+            rospy.wait_for_service(service_name)
+
+
     def tf_callback(self, event):
         try:
             (trans, rot) = self.listener.lookupTransform('/map', rospy.get_namespace() + 'base_link', rospy.Time(0))
@@ -127,13 +152,45 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
-    def teammate_path_callback(self, msg):
-        if (not (self.moving_nominal_dest)): return  # not needed
+    def info_teammate_callback(self,event):
+        if self.is_leader:
+            self.pub_state.publish(Bool(self.arrived_nominal_dest))
 
-        if (self.first_estimate_teammate_path):
+    def teammate_path_callback(self, msg):
+        if not self.moving_nominal_dest: return  # not needed
+
+        if self.first_estimate_teammate_path:
             self.teammate_path = self.extrapolate_waypoints(msg.poses)
 
             self.first_estimate_teammate_path = False
+
+    def extrapolate_waypoints(self, poses):
+        meters = PATH_DISC
+        if len(poses) == 0: return []
+
+        waypoints = [poses[0]]
+        dist = 0.0
+        for i in xrange(1, len(poses)):
+            dist += utils.eucl_dist((poses[i].pose.position.x, poses[i].pose.position.y),
+                                    (poses[i - 1].pose.position.x, poses[i - 1].pose.position.y))
+            if dist >= meters:
+                waypoints.append(poses[i])
+                meters += PATH_DISC
+
+        return waypoints
+
+    def state_callback(self, msg):
+        self.teammate_arrived_nominal_dest = msg.data
+
+    def handle_get_signal_data(self, req):
+        return GetSignalDataResponse(filter(lambda x: x.timestep > req.timestep, self.robot_data_list[req.robot_id]))
+
+    def reset_stuff(self):
+        if self.is_leader:
+            self.arrived_nominal_dest = False
+        else:
+            self.teammate_arrived_nominal_dest = False
+        self.already_arrived = [False for _ in xrange(self.n_robots)]
 
     def go_to_pose(self, pos):
         #rospy.loginfo("Robot " + str(robot_id) + " goes to " + str(pos))
@@ -223,27 +280,31 @@ class Leader(GenericRobot):
         for plan in plans:
             print plan
             points = plan[0]
-            print 'Points: ' + str(points)
+            #print 'Points: ' + str(points)
             teammate_id = plan[1][0] #teammates_id is a list
-            print 'Teammate_id: ' + str(teammate_id)
+            #print 'Teammate_id: ' + str(teammate_id)
             timestep = plan[2]
             goal_dests = []
 
             goal_dest = GoalDest()
-            goal_dest.leader_dest = Point()
-            goal_dest.leader_dest = points[0]
-            print 'goal_dest.leader_dest: ' + str(goal_dest.leader_dest)
+            goal_dest.leader_dest = Pose()
+            goal_dest.leader_dest.position.x = points[0][0]
+            goal_dest.leader_dest.position.y = points[0][1]
 
-            goal_dest.follower_dest = Point()
-            goal_dest.follower_dest = points[1]
-            print 'goal_dest.follower_dest: ' + str(goal_dest.follower_dest)
+            print 'LEADER: ' + str(goal_dest.leader_dest)
+
+            goal_dest.follower_dest = Pose()
+            goal_dest.follower_dest.position.x = points[1][0]
+            goal_dest.follower_dest.position.y = points[1][1]
+
+            print 'FOLLOWER: ' + str(goal_dest.follower_dest)
 
             goal_dests.append(goal_dest)
-            print 'goal_dest: ' + str(goal_dest)
-
             goal = SignalMappingGoal(goal_dests=goal_dests)
-            clients_messages.append((teammate_id, goal))
-            print '(teammate_id, goal): ' + str((teammate_id, goal))
+
+            clients_messages.append((teammate_id,goal))
+
+            print '(TEAMMATEID, GOAL): ' + str((teammate_id,goal))
 
         goal_threads = []
 
@@ -255,12 +316,14 @@ class Leader(GenericRobot):
         for t in goal_threads:
             t.join()
 
+
     def send_and_wait_goal(self, teammate_id, goal):
         rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
         self.clients_signal[teammate_id].send_goal(goal)
 
-        #self.clients_signal[teammate_id].wait_for_result()
+        self.clients_signal[teammate_id].wait_for_result()
         rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+
 
 
 class Follower(GenericRobot):
@@ -300,7 +363,6 @@ class Follower(GenericRobot):
 
         for destination in goal.goal_dests:
             success = self.send_to(destination.follower_dest.position)
-
 
 
 if __name__ == '__main__':
