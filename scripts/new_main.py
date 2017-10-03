@@ -107,6 +107,9 @@ class GenericRobot(object):
         #plan for navigation
         self.plan = None
 
+        # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached,
+        self.execute_plan_state = -1
+
         self.lock_info = threading.Lock()
 
         #for managing the movements of robots
@@ -213,16 +216,33 @@ class GenericRobot(object):
             self.client_motion.cancel_goal()
 
 
+        # -1: plan, 0: plan_set
+        # 1-2 leader/follower arrived and they have to wait for their teammate
+        # 3: all paths sent
+        # 4: completed
     def execute_plan(self):
         if self.is_leader:
-            if not self.plan:
-                self.calculate_plan()
             while not rospy.is_shutdown():
-                rospy.sleep(rospy.Duration(2.0))
-                t1 = threading.Thread(target = self.go_to_pose, args=(self.plan[0][0][0],))
-                t1.start()
-                t2 = threading.Thread(target = self.send_foll_to, args=(self.plan,))
-                t2.start()
+                if self.execute_plan_state == -1:
+                    self.calculate_plan()
+                elif self.execute_plan_state == 0:
+                    rospy.sleep(rospy.Duration(2.0))
+                    t1 = threading.Thread(target = self.go_to_pose, args=(self.plan[0][0][0],))
+                    t1.start()
+                    t2 = threading.Thread(target = self.send_foll_to, args=(self.plan,))
+                    #Oppure t2 = threading.Thread(target = self.send_robots_to, args=(self.plan,))
+                    t2.start()
+                #elif self.execute_plan_state == 1:
+                    # robot 0 has to wait robot 1
+                #elif self.execute_plan_state == 2:
+                # robot 1 has to wait robot 2
+                #elif self.execute_plan_state == 3:
+                # robot 0 and robot 1 are arrived, go to next destinations
+                #elif self.execute_plan_state == 4:
+                # plan completed
+                # self.execute_plan_state = -1
+
+
 
 
 class Leader(GenericRobot):
@@ -270,19 +290,21 @@ class Leader(GenericRobot):
     def calculate_plan(self):
         self.plan = ((([11,12],[31,13]), self.teammates_id,10),(([13,15],[25,18]),self.teammates_id,12),
                      (([18,18],[15,15]),self.teammates_id,11))
-        rospy.loginfo('Leader has calculated the plan')
-        rospy.loginfo('Robot ' + str(robot_id) + ' plan:' + str(self.plan))
+        rospy.loginfo(str(self.robot_id) + ' - Leader is planning')
+        rospy.loginfo(str(self.robot_id) + ' - Plan: ' + str(self.plan))
+
+        self.execute_plan_state = 0
 
 
     def send_foll_to(self,plans):
-        rospy.loginfo("MANDO IL FOLLOWER")
+    #def send_robots_to
         clients_messages = []
         for plan in plans:
             print plan
             points = plan[0]
-            #print 'Points: ' + str(points)
+            print 'Points: ' + str(points)
             teammate_id = plan[1][0] #teammates_id is a list
-            #print 'Teammate_id: ' + str(teammate_id)
+            print 'Teammate_id: ' + str(teammate_id)
             timestep = plan[2]
             goal_dests = []
 
@@ -292,6 +314,8 @@ class Leader(GenericRobot):
             goal_dest.leader_dest.position.y = points[0][1]
 
             print 'LEADER: ' + str(goal_dest.leader_dest)
+
+            #self.go_to_pose(goal_dest.leader_dest.position.x, goal_dest.leader_dest.position.y)
 
             goal_dest.follower_dest = Pose()
             goal_dest.follower_dest.position.x = points[1][0]
@@ -304,7 +328,7 @@ class Leader(GenericRobot):
 
             clients_messages.append((teammate_id,goal))
 
-            print '(TEAMMATEID, GOAL): ' + str((teammate_id,goal))
+            #print '(TEAMMATEID, GOAL): ' + str((teammate_id,goal))
 
         goal_threads = []
 
@@ -315,6 +339,8 @@ class Leader(GenericRobot):
 
         for t in goal_threads:
             t.join()
+
+        self.execute_plan_state +=1
 
 
     def send_and_wait_goal(self, teammate_id, goal):
@@ -350,7 +376,8 @@ class Follower(GenericRobot):
                                        resize_factor, errors_filename)
 
         self._action_name = rospy.get_name()
-        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, execute_cb=self.execute_callback, auto_start=False)
+        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction,
+                                                execute_cb=self.execute_callback, auto_start=False)
 
         print 'created environment variable'
 
