@@ -108,6 +108,7 @@ class GenericRobot(object):
         self.plan = None
 
         # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached,
+        self.replan_rate = REPLAN_RATE
         self.execute_plan_state = -1
 
         self.lock_info = threading.Lock()
@@ -222,6 +223,7 @@ class GenericRobot(object):
         # 4: completed
     def execute_plan(self):
         if self.is_leader:
+            r = rospy.Rate(self.replan_rate)
             while not rospy.is_shutdown():
                 if self.execute_plan_state == -1:
                     self.calculate_plan()
@@ -236,11 +238,15 @@ class GenericRobot(object):
                     # robot 0 has to wait robot 1
                 #elif self.execute_plan_state == 2:
                 # robot 1 has to wait robot 2
-                #elif self.execute_plan_state == 3:
+                elif self.execute_plan_state == 3:
                 # robot 0 and robot 1 are arrived, go to next destinations
+                    t3 = threading.Thread(target=self.send_foll_to, args=(self.plan,))
+                    t3.start()
                 #elif self.execute_plan_state == 4:
                 # plan completed
                 # self.execute_plan_state = -1
+
+                r.sleep()
 
 
 
