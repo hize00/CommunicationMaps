@@ -58,6 +58,7 @@ add_message_files(
     AllInfo.msg
     GoalWithBackup.msg
     GoalDest.msg
+    Plan.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -1,5 +1,8 @@
 # Define the goal
-GoalDest[] goal_dests
+#GoalWithBackup[] double_goals
+#GoalDest[] goal_dests
+Plan[] plans_follower
+
 ---
 # Define the result
 SignalData[] data
