@@ -156,6 +156,8 @@ class GenericRobot(object):
        for plan in self.plans:
            self.go_to_pose(plan[0][0])
 
+       self.execute_plan_state = 2
+
 
     # -1: plan, 0: plan_set
     # 1-2 leader/follower arrived and they have to wait for their teammate
@@ -172,10 +174,10 @@ class GenericRobot(object):
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
                 self.move_robot()
-            #elif self.execute_plan_state == 2:
-                # plan completed
-            #    rospy.loginfo('Exploration completed!')
-            #    break
+            elif self.execute_plan_state == 2:
+                #plan completed
+                rospy.loginfo('Exploration completed!')
+                break
 
             r.sleep()
 
