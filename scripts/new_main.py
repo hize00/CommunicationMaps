@@ -107,27 +107,9 @@ class GenericRobot(object):
         #plan for navigation
         self.plans = []
 
-        # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached,
+        # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached, 3: plan finished
         self.replan_rate = REPLAN_RATE
         self.execute_plan_state = -1
-
-        self.lock_info = threading.Lock()
-
-        # for maintaining and publishing all the info known by the robot w.r.t the other robots (destination and path)
-        self.robot_info_list = []
-        for r in xrange(n_robots):
-            robot_info = RobotInfo()
-            robot_info.robot_id = -1
-            self.robot_info_list.append(robot_info)
-
-        self.pub_all_info = rospy.Publisher('all_info', AllInfo, queue_size=10)
-        rospy.Timer(rospy.Duration(0.25), self.pub_all_info_callback)
-
-        rospy.sleep(rospy.Duration(1))
-
-        for r in range(n_robots):
-            if r == robot_id: continue
-            rospy.Subscriber('/robot_' + str(r) + '/all_info', AllInfo, self.update_all_info_callback)
 
     def tf_callback(self, event):
         try:
@@ -147,34 +129,6 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
-    def pub_all_info_callback(self, event):
-        if (self.strategy != 'multi2' and self.my_path is not None and self.teammate_path is not None and not (
-        self.path_inserted_in_info)):
-            self.robot_info_list[self.robot_id].path_leader = map(
-                lambda x: Point(x.pose.position.x, x.pose.position.y, 0.0), self.my_path)
-            self.robot_info_list[self.robot_id].path_follower = map(
-                lambda x: Point(x.pose.position.x, x.pose.position.y, 0.0), self.teammate_path)
-            self.robot_info_list[self.robot_id].timestep = int((rospy.Time.now() - self.mission_start_time).secs)
-            self.robot_info_list[self.robot_id].timestep_path = int((rospy.Time.now() - self.mission_start_time).secs)
-            rospy.loginfo(str(self.robot_id) + " inserting new paths in info to share")
-            self.path_inserted_in_info = True
-
-        all_info = AllInfo()
-        all_info.all_info = self.robot_info_list
-        all_info.sender = self.robot_id
-        self.pub_all_info.publish(all_info)
-
-    def fill_cur_destinations(self, dest_leader, dest_follower):
-        if (self.robot_info_list[self.robot_id].robot_id == -1):
-            self.robot_info_list[self.robot_id].robot_id = self.robot_id
-            if (self.strategy != 'multi2' and (self.my_path is None or self.teammate_path is None)):
-                # the follower will always have empty lists
-                self.robot_info_list[self.robot_id].path_leader = []
-                self.robot_info_list[self.robot_id].path_follower = []
-
-        self.robot_info_list[self.robot_id].timestep = int((rospy.Time.now() - self.mission_start_time).secs)
-        self.robot_info_list[self.robot_id].dest_leader = Point(dest_leader[0], dest_leader[1], 0)
-        self.robot_info_list[self.robot_id].dest_follower = Point(dest_follower[0], dest_follower[1], 0)
 
     def go_to_pose(self, pos):
         rospy.loginfo(str(robot_id) + ' - moving to ' + str(pos))
@@ -191,7 +145,6 @@ class GenericRobot(object):
 
         success = self.client_motion.wait_for_result()
         state = self.client_motion.get_state()
-        timer = rospy.Time.now()
 
         if success and state == GoalStatus.SUCCEEDED:
             rospy.loginfo(str(robot_id) + ' - position reached ')
@@ -199,19 +152,14 @@ class GenericRobot(object):
         else:
             self.client_motion.cancel_goal()
 
-    def move_robot(self, plans):
-        for plan in plans:
-            self.go_to_pose(plan[0][0])
+    def move_robot(self):
+       for plan in self.plans:
+           self.go_to_pose(plan[0][0])
 
-            #L'ALTRO ROBOT VA IN [0][1]
-            #self.teammates_id[0].go_to_pose(plan[0][1])
-
-        self.execute_plan_state = 2
 
     # -1: plan, 0: plan_set
     # 1-2 leader/follower arrived and they have to wait for their teammate
-    # 3: all paths sent
-    # 4: completed
+    # 3: completed
     def execute_plan(self):
         r = rospy.Rate(self.replan_rate)
         while not rospy.is_shutdown():
@@ -223,14 +171,13 @@ class GenericRobot(object):
                 self.send_plans_to_foll(self.plans)
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
-                self.move_robot(self.plans)
-            elif self.execute_plan_state == 2:
+                self.move_robot()
+            #elif self.execute_plan_state == 2:
                 # plan completed
-                rospy.loginfo('Exploration completed!')
-                break
+            #    rospy.loginfo('Exploration completed!')
+            #    break
 
             r.sleep()
-
 
 
 
@@ -278,15 +225,14 @@ class Leader(GenericRobot):
 
     def calculate_plan(self):
         self.plans = ((([11,12],[31,13]), self.teammates_id,10),(([13,15],[25,18]),self.teammates_id,12),
-                     (([15,9],[15,15]),self.teammates_id,11))
-        rospy.loginfo(str(self.robot_id) + ' - Leader is planning')
+                     (([14,16],[15,15]),self.teammates_id,11))
+        rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
         self.execute_plan_state = 0
 
     def send_plans_to_foll(self,plans):
         clients_messages = []
         for plan in plans:
-            #print 'SEND_PLAN_TO_FOLL: ' + str(plan)
             points = plan[0]
             plans_follower = []
 
@@ -316,14 +262,13 @@ class Leader(GenericRobot):
 
             plans_follower.append(plan_follower)
             goal = SignalMappingGoal(plans_follower=plans_follower)
-
             clients_messages.append((plan_follower.teammate_id,goal))
 
         goal_threads = []
 
         for (plan_follower.teammate_id, goal) in clients_messages:
             t = threading.Thread(target=self.send_and_wait_goal, args=(plan_follower.teammate_id, goal))
-            #print 'THREAD PIANO: ' + str(goal)
+            rospy.sleep(rospy.Duration(2.0))
             t.start()
             goal_threads.append(t)
 
@@ -339,6 +284,7 @@ class Leader(GenericRobot):
 
         self.clients_signal[teammate_id].wait_for_result()
         rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+
 
 
 
@@ -377,7 +323,7 @@ class Follower(GenericRobot):
         self._as.start()
 
     def execute_callback(self,goal):
-        rospy.loginfo(str(self.robot_id) + ' - Follower - has received a new goal.')
+        rospy.loginfo(str(self.robot_id) + ' - Follower - has received new goal ')
 
         for plan in goal.plans_follower:
             success = True
@@ -443,14 +389,12 @@ if __name__ == '__main__':
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        #lead.go_to_pose(position)
         lead.execute_plan()
 
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
-        #foll.go_to_pose(position)
         rospy.spin()
 
 

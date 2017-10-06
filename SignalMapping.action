@@ -1,6 +1,5 @@
 # Define the goal
 #GoalWithBackup[] double_goals
-#GoalDest[] goal_dests
 Plan[] plans_follower
 
 ---

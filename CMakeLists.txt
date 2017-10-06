@@ -57,7 +57,6 @@ add_message_files(
     RobotInfo.msg
     AllInfo.msg
     GoalWithBackup.msg
-    GoalDest.msg
     Plan.msg
 )
 
