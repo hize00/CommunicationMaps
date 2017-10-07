@@ -666,6 +666,7 @@ print flat
 
 if bestTime < greedy_time:
 	print "\nHBBS has improved the solution"
+print "HBBS ended computation at " + str(bestTime)
 
 
 print("\n\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
