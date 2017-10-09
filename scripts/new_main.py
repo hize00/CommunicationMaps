@@ -153,10 +153,14 @@ class GenericRobot(object):
             self.client_motion.cancel_goal()
 
     def move_robot(self):
-       for plan in self.plans:
-           self.go_to_pose(plan[0][0])
+        for plan in self.plans:
+            if self.is_leader:
+                self.go_to_pose(plan[0][0])
+                # self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
+            else:
+                self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
 
-       self.execute_plan_state = 2
+        #self.execute_plan_state = 2
 
 
     # -1: plan, 0: plan_set
@@ -166,11 +170,17 @@ class GenericRobot(object):
         r = rospy.Rate(self.replan_rate)
         while not rospy.is_shutdown():
             if self.execute_plan_state == -1:
-                #leder calculates plan
-                self.calculate_plan()
+                if self.is_leader:
+                    self.calculate_plan()
+                else:
+                    self.execute_plan_state = 0
             elif self.execute_plan_state == 0:
                 #leader sends plans to follower
-                self.send_plans_to_foll(self.plans)
+                if self.is_leader:
+                    self.send_plans_to_foll(self.plans)
+                else:
+                    rospy.sleep(rospy.Duration(2.0))
+                    self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
                 self.move_robot()
@@ -180,6 +190,7 @@ class GenericRobot(object):
                 break
 
             r.sleep()
+
 
 
 
@@ -226,7 +237,7 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plans = ((([11,12],[31,13]), self.teammates_id,10),(([13,15],[25,18]),self.teammates_id,12),
+        self.plans = ((([11,12],[25,18]), self.teammates_id,10),(([13,15],[31,13]),self.teammates_id,12),
                      (([14,16],[15,15]),self.teammates_id,11))
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
@@ -397,6 +408,7 @@ if __name__ == '__main__':
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
+        foll.execute_plan()
         rospy.spin()
 
 
