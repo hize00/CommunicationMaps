@@ -106,10 +106,22 @@ class GenericRobot(object):
 
         #plan for navigation
         self.plans = []
+        self.teammate_arrived_nominal_dest = False
+        self.arrived_nominal_dest = False
+        self.teammate_moving_nominal_dest = False
 
-        # -1: plan, 0: plan_set, 1: leader reached, 2: follower reached, 3: plan finished
+        # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
+        self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
+
+        # teammate movement state publisher: 0 = not moving, 1 = moving
+        self.pub_movement = rospy.Publisher('expl_movement_state', Bool, queue_size=10)
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_movement_state', Bool, self.movement_state_callback)
+
+        # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
         self.execute_plan_state = -1
+
 
     def tf_callback(self, event):
         try:
@@ -129,6 +141,16 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
+    def state_callback(self, msg):
+        self.teammate_arrived_nominal_dest = msg.data
+
+    def movement_state_callback(self, msg):
+        self.teammate_moving_nominal_dest = msg.data
+
+    def reset_stuff(self):
+        self.arrived_nominal_dest = False
+        self.teammate_moving_nominal_dest = False
+        self.teammate_arrived_nominal_dest = False
 
     def go_to_pose(self, pos):
         rospy.loginfo(str(robot_id) + ' - moving to ' + str(pos))
@@ -140,6 +162,10 @@ class GenericRobot(object):
         goal.target_pose.pose.position = Point(pos[0], pos[1], 0.000)
         goal.target_pose.pose.orientation.w = 1
 
+        self.teammate_moving_nominal_dest = True
+        self.pub_state.publish(Bool(self.arrived_nominal_dest))
+        self.pub_movement.publish(Bool(self.teammate_moving_nominal_dest))
+
         # Start moving
         self.client_motion.send_goal(goal)
 
@@ -148,28 +174,45 @@ class GenericRobot(object):
 
         if success and state == GoalStatus.SUCCEEDED:
             rospy.loginfo(str(robot_id) + ' - position reached ')
-            pass
+            self.arrived_nominal_dest = True
+            self.pub_state.publish(Bool(self.arrived_nominal_dest))
+            #self.teammate_moving_nominal_dest = False
+            #self.pub_movement.publish(Bool(self.teammate_moving_nominal_dest))
         else:
             self.client_motion.cancel_goal()
 
     def move_robot(self):
         for plan in self.plans:
+            self.reset_stuff()
             if self.is_leader:
                 self.go_to_pose(plan[0][0])
                 # self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
             else:
                 self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
 
-        #self.execute_plan_state = 2
+            r = rospy.Rate(1)
+            while not self.teammate_arrived_nominal_dest:
+                rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
+                r.sleep()
+
+
+        while self.teammate_moving_nominal_dest:
+            rospy.loginfo(str(robot_id) + ' - waiting for my teammate to reach the final destination')
+            r.sleep
+
+        rospy.sleep(rospy.Duration(5.0))
+        self.execute_plan_state = 2
+
 
 
     # -1: plan, 0: plan_set
-    # 1-2 leader/follower arrived and they have to wait for their teammate
-    # 3: completed
+    # 1: leader/follower arrived and they have to wait for their teammate
+    #2: completed
     def execute_plan(self):
         r = rospy.Rate(self.replan_rate)
         while not rospy.is_shutdown():
             if self.execute_plan_state == -1:
+                #leader calculate plan
                 if self.is_leader:
                     self.calculate_plan()
                 else:
@@ -179,17 +222,17 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll(self.plans)
                 else:
-                    rospy.sleep(rospy.Duration(2.0))
+                    rospy.sleep(rospy.Duration(10.0))
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
                 self.move_robot()
             elif self.execute_plan_state == 2:
                 #plan completed
-                rospy.loginfo('Exploration completed!')
+                rospy.loginfo('Exploration completed! Shutting down...')
                 break
 
-            r.sleep()
+        r.sleep()
 
 
 
@@ -237,8 +280,8 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plans = ((([11,12],[25,18]), self.teammates_id,10),(([13,15],[31,13]),self.teammates_id,12),
-                     (([14,16],[15,15]),self.teammates_id,11))
+        self.plans = ((((11,12),(25,18)), self.teammates_id,10),(((13,15),(31,13)),self.teammates_id,12),
+                     (((14,16),(25,18)),self.teammates_id,11))
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
         self.execute_plan_state = 0
