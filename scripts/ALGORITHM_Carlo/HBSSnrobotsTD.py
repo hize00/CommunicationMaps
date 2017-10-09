@@ -1,4 +1,5 @@
 import math
+import random
 import time
 import numpy as np
 import sys
@@ -7,6 +8,8 @@ from igraph import *
 from operator import itemgetter
 from gurobipy import *
 from copy import deepcopy
+import cProfile
+import pstats
 
 #start the time
 start_time = time.time()
@@ -19,7 +22,10 @@ start_time = time.time()
 
 file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
-
+# Parse argument
+if len(sys.argv) < 3:
+    print("Usage: python filename.py datafile.dat obj_fun('time' or 'distance')")
+    exit(1)
 
 #returns N_ROBOTS, STARTING_POS, N_VERTEX, ROBOT_VELOCITY, POINTS_TO_EXPLORE and DISTANCE_MATRIX
 def parsing_file(datfile):
@@ -162,7 +168,6 @@ for i in range(0, N_VERTEXES):
 print "\nSHORTEST PATHS MATRIX - " + str(obj_fun)
 print shortest_matrix
 
-
 # |---------------------------|
 # |DATA AND PARAMETERS - END  |
 # |---------------------------|
@@ -172,13 +177,14 @@ print shortest_matrix
 # |ALGORITHM - START          |
 # |---------------------------|
 
-#Generic state of the tree. Parameters: idNumber,configuration, timeTable, depth level, points to visit, father, children
+#Generic state of the tree. Parameters: idNumber,configuration, timeTable, robots moving, depth level, points to visit, father, children
 class State(object):
 
-	def __init__(self, idNumber, configuration, timeTable, depth_level, points_to_visit, father, children):
+	def __init__(self, idNumber, configuration, timeTable, robotMoving, depth_level, points_to_visit, father, children):
 		self.idNumber = idNumber
 		self.configuration = configuration
 		self.timeTable = timeTable
+		self.robotMoving = robotMoving
 		self.depth_level = depth_level
 		self.points_to_visit = points_to_visit
 		self.father = father
@@ -193,6 +199,8 @@ class State(object):
 		print self.configuration
 		print "| TIMETABLE |"
 		print self.timeTable
+		print "| ROBOT MOVING |"
+		print self.robotMoving
 		print "| DEPTH LEVEL |"
 		print self.depth_level
 		print "| POINTS TO VISIT |"
@@ -219,6 +227,11 @@ class State(object):
 		return self.timeTable
 	def setTimeTable(self, ttable):
 		self.timeTable = ttable
+
+	def getRobotMoving(self):
+		return self.robotMoving
+	def setRobotMoving(self, rmoving):
+		self.robotMoving = rmoving
 
 	def getDepthLevel(self):
 		return self.depth_level
@@ -248,9 +261,10 @@ STATES = []
 
 #timeTable initialized at 0
 timeTable_ini =  np.zeros((N_ROBOTS, 1))
+robotMoving_ini =  [0]*N_ROBOTS
 
-#ROOT State. Id & dept_level = 0, STARTING_POS & POINTS_TO_EXPLORE are given by input, Children list is empty
-root = State(0, STARTING_POS, timeTable_ini, 0, POINTS_TO_EXPLORE, None, [])
+#ROOT State. Id , robots moving & depth_level = 0, STARTING_POS & POINTS_TO_EXPLORE are given by input, Children list is empty
+root = State(0, STARTING_POS, timeTable_ini, robotMoving_ini, 0, POINTS_TO_EXPLORE, None, [])
 STATES.append(root)
 
 root.infoState()
@@ -264,8 +278,8 @@ def maxId(stateList):
 	return maxNumber
 
 
-#return Moves sorted by time or distance: [ [t][C_ini][C_end] [moving robots] [visited pair] ]
-def computeMoves(configuration, points_to_visit):
+#return Moves by time or distance: [ [t][C_ini][C_end] [moving robots] [visited pair] ]
+def computeMoves(configuration, points_to_visit, timetable):
 	moves = []
 	sortedMoves = []
 	movingRobots = [0] * len(configuration) #1 for robots who are moving
@@ -277,6 +291,7 @@ def computeMoves(configuration, points_to_visit):
 				for k in range(0,len(points_to_visit)):
 					#t is the time
 					t = min( max(shortest_matrix[configuration[i]][points_to_visit[k][0]], shortest_matrix[configuration[j]][points_to_visit[k][1]]), max(shortest_matrix[configuration[i]][points_to_visit[k][1]], shortest_matrix[configuration[j]][points_to_visit[k][0]]))
+					#print "t is " + str(t)
 					if (max(shortest_matrix[configuration[i]][points_to_visit[k][0]], shortest_matrix[configuration[j]][points_to_visit[k][1]])) <= max(shortest_matrix[configuration[i]][points_to_visit[k][1]], shortest_matrix[configuration[j]][points_to_visit[k][0]]):
 						movingRobots = [0] * len(configuration)
 						cM = list(configuration)
@@ -286,6 +301,12 @@ def computeMoves(configuration, points_to_visit):
 						movingRobots[j] = 1
 						pair[0] = points_to_visit[k][0]
 						pair[1] = points_to_visit[k][1]
+						#saving in t the updated time
+						t1 = shortest_matrix[configuration[i]][points_to_visit[k][0]]
+						t2 = shortest_matrix[configuration[j]][points_to_visit[k][1]]
+						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
+						#print " t sum " + str(t)
+						#print t_to_sum
 						#-----CAREFUL WHAT TO APPEND: []: LIST----[[]]: NESTED LIST
 						moves.append((t,configuration,cM[:], movingRobots,[pair[:]]))
 
@@ -298,6 +319,10 @@ def computeMoves(configuration, points_to_visit):
 						movingRobots[j] = 1
 						pair[0] = points_to_visit[k][0]
 						pair[1] = points_to_visit[k][1]
+						t1 = shortest_matrix[configuration[i]][points_to_visit[k][1]]
+						t2 = shortest_matrix[configuration[j]][points_to_visit[k][0]]
+						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
+						#print " t sum " + str(t)
 						moves.append((t,configuration,cM[:], movingRobots, [pair[:]]))
 
 	elif obj_fun == "distance":
@@ -316,6 +341,9 @@ def computeMoves(configuration, points_to_visit):
 						movingRobots[j] = 1
 						pair[0] = points_to_visit[k][0]
 						pair[1] = points_to_visit[k][1]
+						t1 = shortest_matrix[configuration[i]][points_to_visit[k][0]]
+						t2 = shortest_matrix[configuration[j]][points_to_visit[k][1]]
+						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
 						#-----CAREFUL WHAT TO APPEND: []: LIST----[[]]: NESTED LIST
 						moves.append((t,configuration,cM[:], movingRobots,[pair[:]]))
 
@@ -328,68 +356,40 @@ def computeMoves(configuration, points_to_visit):
 						movingRobots[j] = 1
 						pair[0] = points_to_visit[k][0]
 						pair[1] = points_to_visit[k][1]
+						t1 = shortest_matrix[configuration[i]][points_to_visit[k][1]]
+						t2 = shortest_matrix[configuration[j]][points_to_visit[k][0]]
+						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
 						moves.append((t,configuration,cM[:], movingRobots, [pair[:]]))
+
 	return moves
+
 
 
 ###ESPANDI: given a State return the list calculated by computeMoves
 def EXPAND(state):
 	LEx = []
-	#print"\nMoves of state " + str(state.getidNumber())
-	LEx = computeMoves(state.getConfiguration(), state.getPointsToVisit())
-	#print "possibili mosse sono " + str(len(LEx))
-	#print LEx
+	LEx = computeMoves(state.getConfiguration(), state.getPointsToVisit(), state.getTimeTable())
 	return LEx
 
 
 ###CHOOSE: given a State and a heuristic chooses the move to make, so it returns an instance of the List calculated by computeMoves
 def CHOOSE(state, heuristic):
 	if heuristic == "greedy":
-		move = GREEDY(state)
-		#updateTimeTable(move)
+		move, move_index = GREEDY(state)
+		#print state.getTimeTable()
 		return move
 	else:
 		print "heuristic doesn't exist"
 
-###GREEDY HEURISTIC: greedy choice with min bottleneck time or min distance
 def GREEDY(state):
-	tt = np.full((N_ROBOTS,1), 0)
-	#auxiliary matrix
-	twork = np.full((N_ROBOTS,1), 9999999999999999)
-	#list with move computed by EXPAND
+	#list with moves computed by EXPAND
 	LGe = []
 	LGe = EXPAND(state)
-	if obj_fun == "time":
-		#computation of move with minimum bottleneck time
-		for i in range(0,len(LGe)):
-			#LGe[i][3] contains the robots that are moving (1 moving, 0 not)
-			for j in range(0,len(LGe[i][3])):
-				if LGe[i][3][j] == 1:
-					tt[j][0] =  tt[j][0] + LGe[i][0] + state.getTimeTable()[j][0] 
-
-			if tt.max() < twork.max():
-				twork = deepcopy(tt)
-				greedy_index = i
-			tt = np.full((N_ROBOTS,1), 0)
-
-	elif obj_fun == "distance":
-		#computation of move with minimum distance
-		for i in range(0,len(LGe)):
-			#LGe[i][3] contains the robots that are moving (1 moving, 0 not)
-			for j in range(0,len(LGe[i][3])):
-				if LGe[i][3][j] == 1:
-					tt[j][0] =  tt[j][0] + state.getTimeTable()[j][0] + shortest_matrix[LGe[i][1][j]][LGe[i][2][j]]
-
-			if tt.max() < twork.max():
-				twork = deepcopy(tt)
-				greedy_index = i
-			tt = np.full((N_ROBOTS,1), 0)
-
-	#print "index greedy " + str(greedy_index) + " : " + str(LGe[greedy_index])
-	#print "tt " + str(twork)
-	chosen = LGe[greedy_index]
-	return chosen
-
+	sList = []
+	sList = sorted(LGe, key=itemgetter(0))
+	greedy_index = 0
+	chosen = sList[greedy_index]
+	return chosen, greedy_index
 
 #given a state and a move updates the timetable (for the child)
 def updateTimeTable(state, move):
@@ -399,18 +399,17 @@ def updateTimeTable(state, move):
 		for i in range(0,len(move[3])):
 			#if 1 update the table
 			if move[3][i] == 1:
-				#move[0] contains the time
-				tt[i][0] = tt[i][0] + move[0]
+				tt[i][0] = move[0]
 
 	elif obj_fun == "distance":
 		#move[3] contains the robots moving
 		for i in range(0,len(move[3])):
 			#if 1 update the table
 			if move[3][i] == 1:
-				#move[0] contains the time
 				tt[i][0] = tt[i][0] + shortest_matrix[move[1][i]][move[2][i]]
 
 	return tt
+
 
 #given a state and a move updates the pointovisit (for the child)
 def updatePointToVisit(state, move):
@@ -426,9 +425,8 @@ def GENERATE(state, heuristic):
 	m = CHOOSE(state, heuristic)
 	ttable = updateTimeTable(state, m)
 	ptv = updatePointToVisit(state, m)
-	#m[2] is the configuration after a move
-	s = State(maxId(STATES)+1, m[2], ttable, state.getDepthLevel()+1, ptv, state, [])
-	#STATES.append(s)
+	#m[2] is the configuration after a move, m[3] robots moving
+	s = State(maxId(STATES)+1, m[2], ttable, m[3], state.getDepthLevel()+1, ptv, state, [])
 	state.addChild(s)
 	return s
 
@@ -438,10 +436,8 @@ def GENERATE(state, heuristic):
 
 state = deepcopy(root)
 for i in range(0, len(POINTS_TO_EXPLORE)):
-	#print "\n---> iteration " + str(i)
 	s = GENERATE(state, "greedy")
 	STATES.append(s)
-	#s.infoState()
 	state = deepcopy(s)
 #------------------------------------------------------
 
@@ -457,39 +453,227 @@ if obj_fun == "time":
 	maxTF = 0
 	for i in range(0,len(STARTING_POS)):
 		if shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] > maxTF:
-			maxTF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] 
-	tF = int(max(STATES[-1].getTimeTable())) + maxTF
+			maxTF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
+			maxTF_index = i
+	greedy_time = float(STATES[-1].getTimeTable()[maxTF_index]) + maxTF
 	print "\n\n\n----------------------------------------------------"
-	print "RECAP"
+	print "GREEDY RECAP"
 	print "STARTING POSITION: " + str(STARTING_POS)
 	print "\nFINAL CONFIGURATION LIST"
 	print CONFIGURATIONS
 	print "\nTIME ELAPSED"
-	print int(max(STATES[-1].getTimeTable()))
+	print float(max(STATES[-1].getTimeTable()))
 	print "\nFINAL MOVE: robots will go from " + str(STATES[-1].getConfiguration()) + " back to " + str(STARTING_POS)
 	print "\ntime for moving from last point of the tour to STARTING_POS"
 	print str(CONFIGURATIONS[-1]) + " ---> " + str(STARTING_POS) + " : " + str(maxTF)
-	print "\n\nFINAL TIMESTAMP: " + str(tF)
+	print "\n\nFINAL TIMESTAMP: " + str(greedy_time)
+	print "----------------------------------------------------------"
 
 elif obj_fun == "distance":
 	#distance in which robot complete exploration
 	maxDF = 0
 	for i in range(0,len(STARTING_POS)):
 		if shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] > maxDF:
-			maxDF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] 
-	dF = int(max(STATES[-1].getTimeTable())) + maxDF
+			maxDF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
+			maxDF_index = i
+	greedy_time = float((STATES[-1].getTimeTable()[maxDF_index])) + maxDF
 	print "\n\n\n----------------------------------------------------"
 	print "RECAP"
 	print "STARTING POSITION: " + str(STARTING_POS)
 	print "\nFINAL CONFIGURATION LIST"
 	print CONFIGURATIONS
 	print "\nMAX DISTANCE TRAVELED"
-	print int(max(STATES[-1].getTimeTable()))
+	print float(max(STATES[-1].getTimeTable()))
 	print "\nFINAL MOVE: robots will go from " + str(STATES[-1].getConfiguration()) + " back to " + str(STARTING_POS)
 	for i in range(0,len(CONFIGURATIONS[-1])):
 		d = STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
 		print "robot" + str(i) + " : " + str(CONFIGURATIONS[-1][i]) +  " ---> " + str(STARTING_POS[i]) + " : " +  str(d)
 
+print "\n\n\n----------------------------------------------------"
+print "|---HBBS GREEDY - START---|\n"
+
+HB_CONFIGURATIONS = []
+HB_CONFIGURATIONS_LIST = []
+HB_STATES = []
+HB_STATES_LIST = []
+TIME_HBSEARCH = []
+HB_TIME = []
+HB_TIME_LIST = []
+HB_MOVING = []
+HB_MOVING_LIST = []
+
+
+def HBBS(state0, heuristic, bias, bound, initialBest):
+	resultS, resultT = HBBS_Search(state0, heuristic, bias, 0, bound)
+	return resultS, resultT
+	
+def HBBS_Search(state, heuristic, bias, depth, bound):
+	scores = []
+	if state.getDepthLevel() < bound:
+		#ordered child based on heuristic
+		scores = SORT_heuristic(state, heuristic)
+		length = len(scores)
+		rank = [-1]*length
+		weight = [-1]*length
+		probability = [-1]*length
+		total_weight = 0
+		for i in range(0, len(scores)):
+			rank[i] = i+1
+			weight[i] = BIAS_FUNCTION(bias, rank[i])
+			total_weight = total_weight + weight[i]
+		for i in range(0, len(scores)):
+			probability[i] = weight[i]/total_weight
+		#probability selection
+		child_index = SELECT(probability)
+		#selected move according to BIAS and probability
+		m = scores[child_index]
+		ttable = updateTimeTable(state, m)
+		ptv = updatePointToVisit(state, m)
+		#create a child
+		child = State(maxId(HB_STATES)+1, m[2], ttable, m[3], state.getDepthLevel()+1, ptv, state, [])
+		state.addChild(child)
+		HB_STATES.append(child)
+		tt = deepcopy(child.getTimeTable())
+		TIME_HBSEARCH.append(tt)
+		depth = depth + 1
+		HBBS_Search(child, heuristic, bias, depth, bound)
+
+	return HB_STATES, TIME_HBSEARCH
+
+#sort the moves computed previously according to the heuristic
+def SORT_heuristic(state, heuristic):
+	sortedMoves = []
+	if heuristic == "GREEDY":
+		sortedMoves = SORT_Greedy(state)
+		return sortedMoves
+	else:
+		print "Heuristic doesn't exist"
+		return
+
+#Greedy sorting
+def SORT_Greedy(state):
+	LSG = []
+	#all possible moves
+	moves = EXPAND(state)
+	LSG = sorted(moves, key=itemgetter(0))
+	return LSG
+
+#weighted probability selection
+def SELECT(probabilityList):
+	randomN = random.uniform(0, 1)
+	found = 0
+	#select random number based on probabilty. If none is selected choose the most probable
+	for i in range(0,len(probabilityList)):
+		if probabilityList[i] - randomN <= 0:
+			found = 1
+			return i
+	if found != 1:
+		return 0
+
+#compute the BIAS
+def BIAS_FUNCTION(bias, rank):
+	w = 0
+	if bias == "LOG":
+		w = 1/math.log10(rank+1)
+	elif bias == "EXP":
+		w = math.exp(-rank)
+	elif bias == "POLY2":
+		w = math.pow(rank, -2)
+	elif bias == "POLY3":
+		w = math.pow(rank, -3)
+	elif bias == "POLY4":
+		w = math.pow(rank, -4)
+	else:
+		print "Unknown BIAS function"
+	return w
+	
+
+TIMES = []
+
+#run HBBS procedure N times
+N_ITERATIONS = 50
+for j in range (0, N_ITERATIONS):
+	#empty the lists
+	HB_STATES = [] 
+	TIME_HBSEARCH = []
+	HB_CONFIGURATIONS = []  
+	HB_MOVING = []
+	HBT = []
+	HB_TIME = []
+	HB_STATES.append(root)
+	HB_STATES, HBT = HBBS(root, "GREEDY", "LOG", len(POINTS_TO_EXPLORE), greedy_time)
+	HBT.insert(0, np.zeros((N_ROBOTS, 1)))
+	for i in range(0,len(HB_STATES)):
+		HB_CONFIGURATIONS.append(HB_STATES[i].getConfiguration())
+		HB_MOVING.append(HB_STATES[i].getRobotMoving())
+		HB_TIME.append(HBT[i])
+	T_exploration = 0
+	#find the maximum time/distance in which the HBSS computation ends and add it to TIMES list
+	for i in range(0,len(STARTING_POS)):
+		if shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i] > T_exploration:
+			T_exploration = shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]
+			T_exploration_index = i
+	T_final =  float(T_exploration)
+	TIMES.append(T_final)
+
+	#set timetable of root to 0
+	tt = np.full((N_ROBOTS,1), 0)
+	root.setTimeTable(tt)
+	#list of list with all computations
+	HB_CONFIGURATIONS_LIST.append(HB_CONFIGURATIONS)
+	HB_MOVING_LIST.append(HB_MOVING)
+	HB_STATES_LIST.append(HB_STATES)
+	HB_TIME_LIST.append(HB_TIME)
+
+print "HBBS RECAP\n"
+bestTime = min(TIMES)
+
+if obj_fun == "time":
+	print "Greedy solution time: " + str(greedy_time)
+	print "Times computed by different HBBS launches: \n" + str(TIMES)
+	print "\nThe best time found by HBBS is: " + str(bestTime)
+
+elif obj_fun == "distance":
+	print "Greedy solution distance: " + str(greedy_time)
+	print "Max distances computed by different HBBS launches: \n" + str(TIMES)
+	print "\nThe best max distance found by HBBS is: " + str(bestTime)
+
+bestTime = min(TIMES)
+bestIndex = TIMES.index(bestTime)
+print "The order of configuration is: "
+#append STARTING POS
+HB_CONFIGURATIONS_LIST[bestIndex].append(STARTING_POS)
+print HB_CONFIGURATIONS_LIST[bestIndex]
+#flatting timetable arraylist computed by HB_TIME_LIST
+T_LIST = []
+flat = []
+for i in range(0, len(HB_TIME_LIST[bestIndex])):
+	T_LIST.append(HB_TIME_LIST[bestIndex][i].tolist())
+for i in range(0,len(T_LIST)):
+	flattened = [val for sublist in T_LIST[i] for val in sublist]
+	flat.append(flattened)
+#adding the final robots that are moving and the final times
+final_robot_moving = [0]*N_ROBOTS
+final_times = [0]*N_ROBOTS
+for i in range(0,len(STARTING_POS)):
+	#at [-1] the configuration = START POS, at [-2] there's the 'real' last configuration
+	if HB_CONFIGURATIONS_LIST[bestIndex][-2][i] != STARTING_POS[i]:
+		final_robot_moving[i] = 1
+	final_times[i] = flat[-1][i] + shortest_matrix[HB_CONFIGURATIONS_LIST[bestIndex][-2][i]][STARTING_POS[i]] 
+print "Robot moving at each step:"
+HB_MOVING_LIST[bestIndex].append(final_robot_moving) 
+print HB_MOVING_LIST[bestIndex]
+print "Time list:"
+flat.append(final_times)
+print flat
+
+if bestTime < greedy_time:
+	print "\nHBBS has improved the solution"
+print "HBBS ended computation at " + str(bestTime)
 
 
 print("\n\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
+
+#cProfile.run('HBBS(root, "GREEDY", "LOG", len(POINTS_TO_EXPLORE), greedy_time)', 'myFunction.profile')
+#stats = pstats.Stats('myFunction.profile')
+#stats.strip_dirs().sort_stats('time').print_stats()

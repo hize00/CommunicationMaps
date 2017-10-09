@@ -16,6 +16,11 @@ file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
 SORTIING = str(sys.argv[3])
 
+# Parse argument
+if len(sys.argv) < 3:
+    print("Usage: python filename.py datafile.dat obj_fun('time' or 'distance') sorting_type('cardinaliy', 'heuristic' or 'objective')")
+    exit(1)
+
 print "\n------------PARSING THE FILE------------\n"
 #returns N_ROBOTS, N_VERTEX, ROBOT_VELOCITY, POINTS_TO_EXPLORE and DISTANCE_MATRIX
 def parsing_file(datfile):
