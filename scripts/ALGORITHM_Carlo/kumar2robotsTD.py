@@ -14,6 +14,11 @@ start_time = time.time()
 file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
 
+# Parse argument
+if len(sys.argv) < 3:
+    print("Usage: python filename.py datafile.dat obj_fun('time' or 'distance')")
+    exit(1)
+
 print "\n------------PARSING THE FILE------------\n"
 #returns N_ROBOTS, N_VERTEX, ROBOT_VELOCITY, POINTS_TO_EXPLORE and DISTANCE_MATRIX
 def parsing_file(datfile):
@@ -137,12 +142,13 @@ g.add_edges(EDGES)
 gEdgeList = g.get_edgelist()
 print "\nEDGES LIST"
 print g.get_edgelist()
-#print "ACCESSING STRUCTURE EXAMPLE:"
-# print gEdgeList[1][1]
-# print time_matrix[gEdgeList[1][0]][gEdgeList[1][1]]
-# print time_matrix[0][2]
-for i in range(0,len(gEdgeList)):
-	g.es[i]["weight"] = time_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
+
+if obj_fun == "time":
+	for i in range(0,len(gEdgeList)):
+		g.es[i]["weight"] = time_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
+elif obj_fun == "distance":
+	for i in range(0,len(gEdgeList)):
+		g.es[i]["weight"] = distance_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
 
 print "\nGRAPH\n"
 print g
@@ -150,17 +156,17 @@ for i in range (0, len(EDGES)):
 	print g.es[i].attributes()
 
 #LIST of the shortest distances between vertexes
-shortest_time_list = g.shortest_paths_dijkstra( weights="weight" )
-print "\nSHORTEST PATHS LIST - TIME"
-print shortest_time_list
+shortest_list = g.shortest_paths_dijkstra( weights="weight" )
+print "\nSHORTEST PATHS LIST - " + str(obj_fun)
+print shortest_list
 #LIST to MATRIX conversion
-shortest_time_matrix = np.zeros((N_VERTEXES, N_VERTEXES))
+shortest_matrix = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0, N_VERTEXES):
 	for j in range(0, N_VERTEXES):
-		shortest_time_matrix[i][j] = shortest_time_list[i][j]
+		shortest_matrix[i][j] = shortest_list[i][j]
 
-print "\nSHORTEST PATHS MATRIX - TIME"
-print shortest_time_matrix
+print "\nSHORTEST PATHS MATRIX - " + str(obj_fun)
+print shortest_matrix
 
 
 
@@ -180,7 +186,7 @@ for i in range (0,N_VERTEXES):
 		if adjacency_radio[i][j] == 1:
 			V2.append((z,[i,j]))
 			z=z+1
-print "\nV2: each nodes represents a link between two points"
+print "\nV2: each nodes represents a link between two points. Configurations not ordered"
 print V2
 	#accessing values of V2: [list index] | [vertex_id or pair] | [if pair, selects if first or second point]
 	#example1: V2[1][1][1] accesses 2nd element of list, pair of point, second point of the pair
@@ -189,7 +195,6 @@ length = len(V2)
 
 """DISTANCE COST MATRIX"""
 def distance_cost(adjacency_road, adjacency_radio):
-	
 	A2 = np.zeros((length, length))
 	D2 = np.zeros((length, length))
 	for i in range (0,length):
@@ -198,7 +203,7 @@ def distance_cost(adjacency_road, adjacency_radio):
 				A2[i][j]=1
 				#the cost is the MIN between d(ii')+d(jj') OR d(ij')+d(ji')
 				#TODO: old matrix
-				D2[i][j]=min( (distance_matrix[V2[i][1][0]][V2[j][1][0]] + distance_matrix[V2[i][1][1]][V2[j][1][1]]) , (distance_matrix[V2[i][1][0]][V2[j][1][1]]+distance_matrix[V2[i][1][1]][V2[j][1][0]]))
+				D2[i][j]=min( (shortest_matrix[V2[i][1][0]][V2[j][1][0]] + shortest_matrix[V2[i][1][1]][V2[j][1][1]]) , (shortest_matrix[V2[i][1][0]][V2[j][1][1]]+shortest_matrix[V2[i][1][1]][V2[j][1][0]]))
 	
 	#symmetric wrt diagonal				
 	print "\nCOST MATRIX for DISTANCES"
@@ -214,7 +219,7 @@ def time_cost(adjacency_road, adjacency_radio):
 			if V2[i][0]!=V2[j][0]: #control only on different nodes
 				A2[i][j]=1
 				#the cost is the MIN between the MAX of t(ii')+t(jj') OR t(ij')+t(ji') -- OK
-				T2[i][j]=min(max(shortest_time_matrix[V2[i][1][0]][V2[j][1][0]], shortest_time_matrix[V2[i][1][1]][V2[j][1][1]]) , max(shortest_time_matrix[V2[i][1][0]][V2[j][1][1]],shortest_time_matrix[V2[i][1][1]][V2[j][1][0]]))
+				T2[i][j]=min(max(shortest_matrix[V2[i][1][0]][V2[j][1][0]], shortest_matrix[V2[i][1][1]][V2[j][1][1]]) , max(shortest_matrix[V2[i][1][0]][V2[j][1][1]],shortest_matrix[V2[i][1][1]][V2[j][1][0]]))
 	#symmetric wrt diagonal				
 	print "\nCOST MATRIX for TIME"
 	print T2
@@ -255,11 +260,6 @@ def subtour(edges):
             cycle = thiscycle
     return cycle
 
-
-# Parse argument
-if len(sys.argv) < 3:
-    print("Usage: filename.py datafile.dat obj_fun('time' or 'distance')")
-    exit(1)
 
 
 # Cost matrixes (distance/time) between each pair of points
@@ -330,7 +330,6 @@ if obj_fun == "distance":
 		t = t + t1
 		tour_list.append([ V2[tour[i]][1][0], V2[tour[i]][1][1] ])
 		print tour_list
-	shortest_time_matrix = deepcopy(distance_matrix)
 
 #transforming the tour planned by GUROBI into a succession of points in tour_list (not in order of robots)
 elif obj_fun == "time":
@@ -348,17 +347,32 @@ tour_configuration = []
 
 #first append:  node of the GUROBI tour closest to STARTING_POS
 firstAppend = 9999999999999999999
-for i in range(0,len(tour)):
-	t1 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[i][0]] , shortest_time_matrix[STARTING_POS[1]][tour_list[i][1]])
-	t2 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[i][1]] , shortest_time_matrix[STARTING_POS[1]][tour_list[i][0]])
-	stfAp = min(t1, t2)
-	if stfAp < firstAppend:
-		firstAppend = stfAp
-		#index of tour_list of the closest point to STARTING_POS
-		fAp_index = i
+if obj_fun == "time":	
+	for i in range(0,len(tour)):
+		t1 = max(shortest_matrix[STARTING_POS[0]][tour_list[i][0]] , shortest_matrix[STARTING_POS[1]][tour_list[i][1]])
+		t2 = max(shortest_matrix[STARTING_POS[0]][tour_list[i][1]] , shortest_matrix[STARTING_POS[1]][tour_list[i][0]])
+		stfAp = min(t1, t2)
+		if stfAp < firstAppend:
+			firstAppend = stfAp
+			#index of tour_list of the closest point to STARTING_POS
+			fAp_index = i
 
-t1 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[fAp_index][0]] , shortest_time_matrix[STARTING_POS[1]][tour_list[fAp_index][1]])
-t2 = max(shortest_time_matrix[STARTING_POS[0]][tour_list[fAp_index][1]] , shortest_time_matrix[STARTING_POS[1]][tour_list[fAp_index][0]])	
+elif obj_fun == "distance":
+	for i in range(0,len(tour)):
+		t1 = shortest_matrix[STARTING_POS[0]][tour_list[i][0]] + shortest_matrix[STARTING_POS[1]][tour_list[i][1]]
+		t2 = shortest_matrix[STARTING_POS[0]][tour_list[i][1]] + shortest_matrix[STARTING_POS[1]][tour_list[i][0]]
+		stfAp = min(t1, t2)
+		if stfAp < firstAppend:
+			firstAppend = stfAp
+			#index of tour_list of the closest point to STARTING_POS
+			fAp_index = i
+
+if obj_fun == "time":
+	t1 = max(shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][0]] , shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][1]])
+	t2 = max(shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][1]] , shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][0]])
+elif obj_fun == "distance":
+	t1 = shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][0]] + shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][1]]
+	t2 = shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][1]] + shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][0]]
 if t1<=t2:
 	tour_configuration.append([ tour_list[fAp_index][0], tour_list[fAp_index][1] ])
 else:
@@ -394,43 +408,76 @@ else:
 	print "GUROBI TOUR STARTS FROM " + str(stpL[0]) + " " + str(stpL[1])
 
 
-#check that fAp_index is not the last element, otherwise it has been already added
-if fAp_index < len(tour_list)-1:
-#second half of the tour_list: from [fAp_index] to end
-	#the element [fAp_index] has been already taken, therefore the loop starts at [fAp_index+1]
-	for i in range(fAp_index+1,len(tour_list)):
-		if max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
+if obj_fun == "time":
+	#check that fAp_index is not the last element, otherwise it has been already added
+	if fAp_index < len(tour_list)-1:
+	#second half of the tour_list: from [fAp_index] to end
+		#the element [fAp_index] has been already taken, therefore the loop starts at [fAp_index+1]
+		for i in range(fAp_index+1,len(tour_list)):
+			if max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
+				tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+			else:
+				tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+	#first half of the tour_list: from 0 to [fAp_index]
+	for i in range(0,fAp_index):
+		if max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
 			tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
 		else:
 			tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
-#first half of the tour_list: from 0 to [fAp_index]
-for i in range(0,fAp_index):
-	if max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_time_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_time_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
-		tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
-	else:
-		tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
 
-	
+elif obj_fun == "distance":
+	#check that fAp_index is not the last element, otherwise it has been already added
+	if fAp_index < len(tour_list)-1:
+	#second half of the tour_list: from [fAp_index] to end
+		#the element [fAp_index] has been already taken, therefore the loop starts at [fAp_index+1]
+		for i in range(fAp_index+1,len(tour_list)):
+			if shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]] <= shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]:
+				tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+			else:
+				tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+	#first half of the tour_list: from 0 to [fAp_index]
+	for i in range(0,fAp_index):
+		if shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]] <= shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]:
+			tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+		else:
+			tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
 
-print "\nFINAL CONFIGURATION TOUR LIST:"
-print tour_configuration
+
+#print "\nFINAL CONFIGURATION TOUR LIST:"
+#print tour_configuration
 for i in range(0,len(tour_configuration)):
 	CONFIGURATIONS.append([tour_configuration[i][0], tour_configuration[i][1]])
+CONFIGURATIONS.append([STARTING_POS[0], STARTING_POS[1]])
 print "\nFINAL CONFIGURATION LIST:"
 print CONFIGURATIONS
 
+TIMETABLE = []
+TIMETABLE.append([0]*N_ROBOTS)
+tt = [0]*N_ROBOTS
+ttab = [0]*N_ROBOTS
+if obj_fun == "time":
+	for i in range(0,len(CONFIGURATIONS)-1):
+		t_bottleneck = max(shortest_matrix[CONFIGURATIONS[i][0]][CONFIGURATIONS[i+1][0]], shortest_matrix[CONFIGURATIONS[i][1]][CONFIGURATIONS[i+1][1]])
+		ttab[0] = TIMETABLE[-1][0] + t_bottleneck
+		ttab[1] = TIMETABLE[-1][1] + t_bottleneck
+		tt = deepcopy(ttab)
+		TIMETABLE.append(tt)
+	print "\n TIMETABLE - " + str(obj_fun)
+	print TIMETABLE
+
+elif obj_fun == "distance":
+	for i in range(0,len(CONFIGURATIONS)-1):
+		ttab[0] = TIMETABLE[-1][0] + shortest_matrix[CONFIGURATIONS[i][0]][CONFIGURATIONS[i+1][0]]
+		ttab[1] = TIMETABLE[-1][1] + shortest_matrix[CONFIGURATIONS[i][1]][CONFIGURATIONS[i+1][1]]
+		tt = deepcopy(ttab)
+		TIMETABLE.append(tt)
+	print "\n TIMETABLE - " + str(obj_fun)
+	print TIMETABLE
+
+
+
 #final move
-print "\nFINAL MOVE: robots will move from " + str(tour_configuration[-1]) + " back to " + str(STARTING_POS)
-#adding the time from STARTING_POS to FIRST
-tS = min(max(shortest_time_matrix[STARTING_POS[0]][stpL[0]] , shortest_time_matrix[STARTING_POS[1]][stpL[1]]), max(shortest_time_matrix[STARTING_POS[0]][stpL[1]] , shortest_time_matrix[STARTING_POS[1]][stpL[0]]))
-print "\ntime for moving from STARTING_POS to first point of the tour " 
-print str(STARTING_POS) + " ---> " + str(tour_configuration[0])+ " : " + str(tS)
-#adding the time from LAST to STARTING_POS
-tF = min(max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[-1][0]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[-1][1]]), max(shortest_time_matrix[STARTING_POS[0]][tour_configuration[-1][1]] , shortest_time_matrix[STARTING_POS[1]][tour_configuration[-1][0]]))
-print "time for moving from last point of the tour to STARTING_POS " 
-print str(tour_configuration[-1]) + " ---> " + str(STARTING_POS)+ " : " + str(tF)
+#print "\nFINAL MOVE: robots will move from " + str(tour_configuration[-1]) + " back to " + str(STARTING_POS)
+print"\nKUMAR2 last timestamp is " + str(max(TIMETABLE[-1]))
 
-tEND = t + tS + tF
-print "\n\nFINAL TIMESTAMP: " + str(tEND)
-
-print("\n\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
+print("\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
