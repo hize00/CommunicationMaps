@@ -13,12 +13,6 @@ import pstats
 
 #start the time
 start_time = time.time()
-# |---------------------------|
-# |DATA AND PARAMETERS - START|
-# |---------------------------|
-
-#VERSION WITH INDEX OF GRAPH FROM 0 TO n_vertex-1
-#IT ALSO PARSES FILES .dat
 
 file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
@@ -127,7 +121,6 @@ print"\nRadiomap MATRIX - Pairs to be measured"
 print adjacency_radio
 
 g = Graph()
-#indexing will go from 0 to N_VERTEXES-1 
 g.add_vertices(N_VERTEXES)
 
 EDGES = []
@@ -139,10 +132,7 @@ g.add_edges(EDGES)
 gEdgeList = g.get_edgelist()
 print "\nEDGES LIST"
 print g.get_edgelist()
-#print "ACCESSING STRUCTURE EXAMPLE:"
-# print gEdgeList[1][1]
-# print time_matrix[gEdgeList[1][0]][gEdgeList[1][1]]
-# print time_matrix[0][2]
+
 if obj_fun == "time":
 	for i in range(0,len(gEdgeList)):
 		g.es[i]["weight"] = time_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
@@ -291,7 +281,6 @@ def computeMoves(configuration, points_to_visit, timetable):
 				for k in range(0,len(points_to_visit)):
 					#t is the time
 					t = min( max(shortest_matrix[configuration[i]][points_to_visit[k][0]], shortest_matrix[configuration[j]][points_to_visit[k][1]]), max(shortest_matrix[configuration[i]][points_to_visit[k][1]], shortest_matrix[configuration[j]][points_to_visit[k][0]]))
-					#print "t is " + str(t)
 					if (max(shortest_matrix[configuration[i]][points_to_visit[k][0]], shortest_matrix[configuration[j]][points_to_visit[k][1]])) <= max(shortest_matrix[configuration[i]][points_to_visit[k][1]], shortest_matrix[configuration[j]][points_to_visit[k][0]]):
 						movingRobots = [0] * len(configuration)
 						cM = list(configuration)
@@ -305,9 +294,6 @@ def computeMoves(configuration, points_to_visit, timetable):
 						t1 = shortest_matrix[configuration[i]][points_to_visit[k][0]]
 						t2 = shortest_matrix[configuration[j]][points_to_visit[k][1]]
 						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
-						#print " t sum " + str(t)
-						#print t_to_sum
-						#-----CAREFUL WHAT TO APPEND: []: LIST----[[]]: NESTED LIST
 						moves.append((t,configuration,cM[:], movingRobots,[pair[:]]))
 
 					else:
@@ -322,7 +308,6 @@ def computeMoves(configuration, points_to_visit, timetable):
 						t1 = shortest_matrix[configuration[i]][points_to_visit[k][1]]
 						t2 = shortest_matrix[configuration[j]][points_to_visit[k][0]]
 						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
-						#print " t sum " + str(t)
 						moves.append((t,configuration,cM[:], movingRobots, [pair[:]]))
 
 	elif obj_fun == "distance":
@@ -330,7 +315,7 @@ def computeMoves(configuration, points_to_visit, timetable):
 		for i in range(0,len(configuration)-1):
 			for j in range(i+1,len(configuration)):
 				for k in range(0,len(points_to_visit)):
-					#t is the time
+					#t is the distance
 					t = min( (shortest_matrix[configuration[i]][points_to_visit[k][0]] + shortest_matrix[configuration[j]][points_to_visit[k][1]]), (shortest_matrix[configuration[i]][points_to_visit[k][1]] + shortest_matrix[configuration[j]][points_to_visit[k][0]]))
 					if (shortest_matrix[configuration[i]][points_to_visit[k][0]] + shortest_matrix[configuration[j]][points_to_visit[k][1]]) <= (shortest_matrix[configuration[i]][points_to_visit[k][1]] + shortest_matrix[configuration[j]][points_to_visit[k][0]]):
 						movingRobots = [0] * len(configuration)
@@ -344,7 +329,6 @@ def computeMoves(configuration, points_to_visit, timetable):
 						t1 = shortest_matrix[configuration[i]][points_to_visit[k][0]]
 						t2 = shortest_matrix[configuration[j]][points_to_visit[k][1]]
 						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
-						#-----CAREFUL WHAT TO APPEND: []: LIST----[[]]: NESTED LIST
 						moves.append((t,configuration,cM[:], movingRobots,[pair[:]]))
 
 					else:
@@ -365,7 +349,7 @@ def computeMoves(configuration, points_to_visit, timetable):
 
 
 
-###ESPANDI: given a State return the list calculated by computeMoves
+###EXPAND: given a State returns the list calculated by computeMoves
 def EXPAND(state):
 	LEx = []
 	LEx = computeMoves(state.getConfiguration(), state.getPointsToVisit(), state.getTimeTable())
@@ -420,7 +404,7 @@ def updatePointToVisit(state, move):
 	ppp = [x for x in ppp if x not in pToDelete]
 	return ppp
 
-###GENERATE: 
+###GENERATE: given a state creates the child
 def GENERATE(state, heuristic):
 	m = CHOOSE(state, heuristic)
 	ttable = updateTimeTable(state, m)
@@ -608,7 +592,7 @@ for j in range (0, N_ITERATIONS):
 		HB_MOVING.append(HB_STATES[i].getRobotMoving())
 		HB_TIME.append(HBT[i])
 	T_exploration = 0
-	#find the maximum time/distance in which the HBSS computation ends and add it to TIMES list
+	#find the maximum time or distance in which the HBSS computation ends and add it to TIMES list
 	for i in range(0,len(STARTING_POS)):
 		if shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i] > T_exploration:
 			T_exploration = shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]

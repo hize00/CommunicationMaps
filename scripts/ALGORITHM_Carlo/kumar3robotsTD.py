@@ -10,8 +10,6 @@ from gurobipy import *
 #start the time
 start_time = time.time()
 
-#VERSION WITH INDEX OF GRAPH FROM 0 TO n_vertex-1
-#IT ALSO PARSES FILES .dat
 file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
 SORTIING = str(sys.argv[3])
@@ -131,7 +129,6 @@ print"\nRadiomap MATRIX - Pairs to be measured"
 print adjacency_radio
 
 g = Graph()
-#indexing will go from 0 to N_VERTEXES-1 
 g.add_vertices(N_VERTEXES)
 
 EDGES = []
@@ -231,9 +228,6 @@ def compute_times(configuration, vertex3, i):
 	return min_index, min_value
 
 
-####algoritmo greeedy: the next configuration is chosen as the one that increases the number of points explored 
-####                    and requires the least amount of moves to reach
-
 #initialization
 CONFIGURATIONS = []
 CONFIGURATIONS.append(STARTING_POS)
@@ -244,6 +238,7 @@ MEASURING_ROBOTS.append([0]*N_ROBOTS)
 MOVING_ROBOTS = []
 MOVING_ROBOTS.append([0]*N_ROBOTS)
 #POINTS_TO_EXPLORE already computed
+EXPLORED_POINT = []
 
 #ID COMBINATIONS: 0: 0,1,2 | 1: 0,2,1 | 2: 2,0,1 | 3: 2,1,0 | 4: 1,0,2 | 5:1,2,0
 def combination(V3item, index):
@@ -256,7 +251,7 @@ def combination(V3item, index):
 	combinations.append([V3item[index][1][1], V3item[index][1][2], V3item[index][1][0]])
 	return combinations
 
-
+#returns points explored given a configuration
 def exploring(configuration):
 	explored = []
 	for k in range(0, len(POINTS_TO_EXPLORE)):
@@ -264,6 +259,7 @@ def exploring(configuration):
 			explored.append(POINTS_TO_EXPLORE[k])
 	return explored 
 
+#returns the robots who moved from config1 to config2
 def robots_moving(config1, config2):
 	r_mov = [0]*len(config1)
 	for i in range(0, len(config1)):
@@ -271,6 +267,7 @@ def robots_moving(config1, config2):
 			r_mov[i]=1
 	return r_mov
 
+#returns the robots who measure the connection between points
 def robots_measuring(configuration, p_explored):
 	r_meas = [0]*len(configuration)
 	for i in range(0,len(configuration)):
@@ -280,12 +277,12 @@ def robots_measuring(configuration, p_explored):
 				continue
 	return r_meas
 
-
+#compute the timetables for distance and time
 #all parameters have the same length
 def compute_timetable(config1, config2, r_measuring, r_moving, timetable):
 	tt = deepcopy(timetable)
 	t_measure = 0
-	#update time after moving robots
+	#update time/distance after moving robots
 	for i in range(0,len(config1)):
 		if r_moving[i]==1:
 			tt[i] = tt[i] + shortest_matrix[config1[i]][config2[i]]
@@ -345,7 +342,7 @@ def sort_objective(moveList):
 	filtered = [item for item in sort if len(item[4]) > 0]
 	return filtered
 
-#sort first by cardinality of p_explored, then by time/distance
+#sort first by cardinality of p_explored, then by time or distance
 def sort_cardinality(moveList):
 	sortPTE = []
 	sortPTE = sorted(moveList, key=lambda x: (len(x[4]), -x[3], -max(x[2])), reverse=True)
@@ -372,14 +369,11 @@ def choose(moveList, sorting_type):
 		S = sort_heuristic(moveList)
 	chosen = S[0]
 	#removing explored points from POINTS_TO_EXPLORE
+	EXPLORED_POINT.append(chosen[4])
 	for i in range(0,len(chosen[4])):
-		EXPLORED_POINT.append(chosen[4][i])
 		POINTS_TO_EXPLORE.remove(chosen[4][i])
-
 	return chosen
 
-
-EXPLORED_POINT = []
 
 
 #FIRST MOVE
@@ -396,7 +390,6 @@ TIMETABLE.append(mC1[2])
 MEASURING_ROBOTS.append(mC1[5])
 MOVING_ROBOTS.append(mC1[6])
 
-
 move_list = []
 
 #check moves until we explored every point
@@ -409,13 +402,13 @@ while len(POINTS_TO_EXPLORE) > 0 :
 		move_chosen = choose(move_list, "heuristic")
 	elif SORTIING == "objective":	
 		move_chosen = choose(move_list, "objective")
-	#appendo configuration of move_chosen
+	#append configuration of move_chosen
 	CONFIGURATIONS.append(move_chosen[1])
-	#appendo timetable of move_chosen
+	#append timetable of move_chosen
 	TIMETABLE.append(move_chosen[2])
-	#appendo measuring robots of move_chosen
+	#append measuring robots of move_chosen
 	MEASURING_ROBOTS.append(move_chosen[5])
-	#appendo moving robots of move_chosen
+	#append moving robots of move_chosen
 	MOVING_ROBOTS.append(move_chosen[6])
 
 #LAST MOVE

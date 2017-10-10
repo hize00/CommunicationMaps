@@ -9,8 +9,7 @@ from gurobipy import *
 #start the time
 start_time = time.time()
 
-#VERSION WITH INDEX OF GRAPH FROM 0 TO n_vertex-1
-#IT ALSO PARSES FILES .dat
+
 file_to_open = sys.argv[1]
 obj_fun = str(sys.argv[2])
 
@@ -31,7 +30,6 @@ def parsing_file(datfile):
 		data = f.readlines()
 		for line in data:
 			words = line.split()
-			#print words
 			if len(words)>0:
 
 				if words[0]=='N_ROBOTS':
@@ -130,7 +128,6 @@ print adjacency_radio
 
 
 g = Graph()
-#indexing will go from 0 to N_VERTEXES-1 
 g.add_vertices(N_VERTEXES)
 
 EDGES = []
@@ -202,9 +199,7 @@ def distance_cost(adjacency_road, adjacency_radio):
 			if V2[i][0]!=V2[j][0]:
 				A2[i][j]=1
 				#the cost is the MIN between d(ii')+d(jj') OR d(ij')+d(ji')
-				#TODO: old matrix
 				D2[i][j]=min( (shortest_matrix[V2[i][1][0]][V2[j][1][0]] + shortest_matrix[V2[i][1][1]][V2[j][1][1]]) , (shortest_matrix[V2[i][1][0]][V2[j][1][1]]+shortest_matrix[V2[i][1][1]][V2[j][1][0]]))
-	
 	#symmetric wrt diagonal				
 	print "\nCOST MATRIX for DISTANCES"
 	print D2
@@ -320,7 +315,6 @@ print "|------------GUROBI TSP COMPUTATION ENDED------------|\n\n\n"
 tour_list = []
 tour_list.append([ V2[tour[0]][1][0], V2[tour[0]][1][1] ])
 
-#obsolete
 if obj_fun == "distance":
 	t = 0
 	for i in range(1,len(tour)):
@@ -389,16 +383,10 @@ CONFIGURATIONS.append(STARTING_POS)
 
 #computation of the starting position of the GUROBI tour. It has already been computed with fAp_index
 stp = 0
-if (STARTING_POS[0]==tour_configuration[0][0] and STARTING_POS[1]==tour_configuration[0][1]) or (STARTING_POS[0]==tour_configuration[0][1] and STARTING_POS[1]==tour_configuration[0][0]):
+if (STARTING_POS[0]==tour_configuration[0][0] and STARTING_POS[1]==tour_configuration[0][1]):
 	stp = 1
-if stp == 1:
-	stpL = []
-	stpL.append(-1)
-	stpL.append(-1)
-	stpL[0] = STARTING_POS[0]
-	stpL[1] = STARTING_POS[1]
-	print "GUROBI TOUR STARTS FROM: " + str(STARTING_POS[0]) + " " + str(STARTING_POS[1])
-
+elif (STARTING_POS[0]==tour_configuration[0][1] and STARTING_POS[1]==tour_configuration[0][0]):
+	stp = 2
 else:
 	stpL = []
 	stpL.append(-1)
@@ -406,6 +394,12 @@ else:
 	stpL[0] = tour_configuration[0][0]
 	stpL[1] = tour_configuration[0][1]
 	print "GUROBI TOUR STARTS FROM " + str(stpL[0]) + " " + str(stpL[1])
+
+if stp == 1:
+	print "GUROBI TOUR STARTS FROM: " + str(STARTING_POS[0]) + " " + str(STARTING_POS[1])
+elif stp == 2:
+	print "GUROBI TOUR STARTS FROM: " + str(STARTING_POS[1]) + " " + str(STARTING_POS[0])	
+
 
 
 if obj_fun == "time":
@@ -475,9 +469,6 @@ elif obj_fun == "distance":
 	print TIMETABLE
 
 
-
-#final move
-#print "\nFINAL MOVE: robots will move from " + str(tour_configuration[-1]) + " back to " + str(STARTING_POS)
 print"\nKUMAR2 last timestamp is " + str(max(TIMETABLE[-1]))
 
 print("\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
