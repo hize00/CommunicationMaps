@@ -26,7 +26,7 @@ from GPmodel import GPmodel
 import utils
 from utils import conv_to_hash, eucl_dist
 from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, SignalMappingGoal, \
-                         SignalMappingFeedback, SignalMappingResult, GoalWithBackup, GoalDest, Plan
+                         SignalMappingFeedback, SignalMappingResult, Plan
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
 TIME_STUCK = 3.0
@@ -176,7 +176,7 @@ class GenericRobot(object):
             else:
                 self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
 
-            r = rospy.Rate(1)
+            r = rospy.Rate(1.0)
             while not self.teammate_arrived_nominal_dest:
                 rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
                 r.sleep()
