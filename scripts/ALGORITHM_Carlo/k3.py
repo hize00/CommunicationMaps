@@ -81,11 +81,10 @@ def parsing_file(datfile):
 				
 		return N_ROBOTS, START_POS, N_VERT, R_VELOCITY, P_EXPLORE, distance_matrix
 
-if len(STARTING_POS) != 3:
-	exit(1)
 		
 N_ROBOTS, STARTING_POS, N_VERTEXES, ROBOT_VELOCITY, POINTS_TO_EXPLORE, distance_matrix = parsing_file(file_to_open)
-
+if len(STARTING_POS) != 3:
+	exit(1)
 
 #time matrix initialization
 time_matrix =  np.zeros((N_VERTEXES, N_VERTEXES))
@@ -163,17 +162,17 @@ for i in range(0, N_VERTEXES):
 #return minumum distance and ID COMBINATION of config2 after moving there from config1
 def compute_distance(configuration, vertex3, i):
 	values = []
-	d1 = max(shortest_matrix[configuration[0]][vertex3[i][1][0]], shortest_matrix[configuration[1]][vertex3[i][1][1]], shortest_matrix[configuration[2]][vertex3[i][1][2]])
+	d1 = shortest_matrix[configuration[0]][vertex3[i][1][0]] + shortest_matrix[configuration[1]][vertex3[i][1][1]] + shortest_matrix[configuration[2]][vertex3[i][1][2]]
 	values.append(d1)
-	d2 = max(shortest_matrix[configuration[0]][vertex3[i][1][0]], shortest_matrix[configuration[1]][vertex3[i][1][2]], shortest_matrix[configuration[2]][vertex3[i][1][1]])
+	d2 = shortest_matrix[configuration[0]][vertex3[i][1][0]] + shortest_matrix[configuration[1]][vertex3[i][1][2]] + shortest_matrix[configuration[2]][vertex3[i][1][1]]
 	values.append(d2)
-	d3 = max(shortest_matrix[configuration[0]][vertex3[i][1][2]], shortest_matrix[configuration[1]][vertex3[i][1][0]], shortest_matrix[configuration[2]][vertex3[i][1][1]])
+	d3 = shortest_matrix[configuration[0]][vertex3[i][1][2]] + shortest_matrix[configuration[1]][vertex3[i][1][0]] + shortest_matrix[configuration[2]][vertex3[i][1][1]]
 	values.append(d3)
-	d4 = max(shortest_matrix[configuration[0]][vertex3[i][1][2]], shortest_matrix[configuration[1]][vertex3[i][1][1]], shortest_matrix[configuration[2]][vertex3[i][1][0]])
+	d4 = shortest_matrix[configuration[0]][vertex3[i][1][2]] + shortest_matrix[configuration[1]][vertex3[i][1][1]] + shortest_matrix[configuration[2]][vertex3[i][1][0]]
 	values.append(d4)
-	d5 = max(shortest_matrix[configuration[0]][vertex3[i][1][1]], shortest_matrix[configuration[1]][vertex3[i][1][0]], shortest_matrix[configuration[2]][vertex3[i][1][2]])
+	d5 = shortest_matrix[configuration[0]][vertex3[i][1][1]] + shortest_matrix[configuration[1]][vertex3[i][1][0]] + shortest_matrix[configuration[2]][vertex3[i][1][2]]
 	values.append(d5)
-	d6 = max(shortest_matrix[configuration[0]][vertex3[i][1][1]], shortest_matrix[configuration[1]][vertex3[i][1][2]], shortest_matrix[configuration[2]][vertex3[i][1][0]])
+	d6 = shortest_matrix[configuration[0]][vertex3[i][1][1]] + shortest_matrix[configuration[1]][vertex3[i][1][2]] + shortest_matrix[configuration[2]][vertex3[i][1][0]]
 	values.append(d6)
 	min_index, min_value = min(enumerate(values), key=operator.itemgetter(1))
 	return min_index, min_value
@@ -293,7 +292,7 @@ def compute_moves(configuration, timetable):
 
 	elif obj_fun == "distance":
 			for i in range(0,len(V3)):
-				index_combination, t_matrix = compute_times(configuration, V3, i)
+				index_combination, t_matrix = compute_distance(configuration, V3, i)
 				config2_combinations = combination(V3, i)
 				config2 = config2_combinations[index_combination]
 				p_explored = exploring(config2)

@@ -12,9 +12,12 @@ gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretizat
 
 comm_discr_types = ['range']
 
-datfiles = ['6nodes2robotsPTE.dat', '6nodes3robotsPTE.dat', 'provaC_parsed.dat']
+datfiles = ['offices0_15r_11gd_19v_2robots_0.dat', 'offices0_15r_11gd_19v_2robots_1.dat', 'offices0_15r_11gd_19v_2robots_2.dat', 
+			'offices0_15r_11gd_19v_2robots_3.dat', 'offices0_15r_11gd_19v_2robots_4.dat', 'offices0_15r_11gd_19v_3robots_0.dat',
+			'offices0_15r_11gd_19v_3robots_1.dat', 'offices0_15r_11gd_19v_3robots_2.dat', 'offices0_15r_11gd_19v_3robots_3.dat',
+			'offices0_15r_11gd_19v_3robots_4.dat']
 obj_functions = ['time', 'distance']
-algorithms = ['k2.py', 'k3.py', 'HBSSnoprint.py']
+algorithms = ['k2.py', 'k3.py', 'HBSS.py']
 sorting = ['cardinality' , 'heuristic', 'objective']
 
 
