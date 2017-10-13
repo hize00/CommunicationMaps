@@ -176,7 +176,7 @@ class GenericRobot(object):
             else:
                 self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
 
-            r = rospy.Rate(1.0)
+            r = rospy.Rate(0.5)
             while not self.teammate_arrived_nominal_dest:
                 rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
                 r.sleep()
