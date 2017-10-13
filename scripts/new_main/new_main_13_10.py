@@ -13,7 +13,7 @@ import tf
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseFeedback
 from actionlib_msgs.msg import *
-from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped
+from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, PoseStamped, Pose
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
@@ -25,8 +25,8 @@ import exploration_strategies
 from GPmodel import GPmodel
 import utils
 from utils import conv_to_hash, eucl_dist
-from strategy.msg import GoalWithBackup, SignalData, RobotInfo, AllInfo, SignalMappingAction, \
-                               SignalMappingGoal, SignalMappingFeedback, SignalMappingResult
+from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, SignalMappingGoal, \
+                         SignalMappingFeedback, SignalMappingResult, Plan
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
 TIME_STUCK = 3.0
@@ -80,10 +80,6 @@ class GenericRobot(object):
         self.comm_module = communication.CommunicationModule(sim, seed, robot_id, n_robots, comm_range, ref_dist,
                                                              map_filename, resize_factor)
 
-        # estimated position
-        self.listener = tf.TransformListener()
-        rospy.Timer(rospy.Duration(0.1), self.tf_callback)
-
         # for logging
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
@@ -93,6 +89,10 @@ class GenericRobot(object):
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
+
+        #estimated position
+        self.listener = tf.TransformListener()
+        rospy.Timer(rospy.Duration(0.1), self.tf_callback)
         self.robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
 
         self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
@@ -103,6 +103,19 @@ class GenericRobot(object):
             exec (s)
             exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/updated_pose', Point, self.pos_teammate" + str(i) + ", queue_size = 100)")
+
+        #plan for navigation
+        self.plans = []
+        self.teammate_arrived_nominal_dest = False
+        self.arrived_nominal_dest = False
+
+        # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
+        self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
+
+        # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
+        self.replan_rate = REPLAN_RATE
+        self.execute_plan_state = -1
 
 
     def tf_callback(self, event):
@@ -123,8 +136,16 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
+    def state_callback(self, msg):
+        self.teammate_arrived_nominal_dest = msg.data
+
+    def reset_stuff(self):
+        self.arrived_nominal_dest = False
+        self.teammate_arrived_nominal_dest = False
+
     def go_to_pose(self, pos):
-        rospy.loginfo("Robot " + str(robot_id) + " goes to " + str(pos))
+        rospy.loginfo(str(robot_id) + ' - moving to ' + str(pos))
+        success = False
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = '/map'
         goal.target_pose.header.stamp = rospy.Time.now()
@@ -135,14 +156,64 @@ class GenericRobot(object):
         # Start moving
         self.client_motion.send_goal(goal)
 
-        # Allow TurtleBot up to 60 seconds to complete task
         success = self.client_motion.wait_for_result()
         state = self.client_motion.get_state()
 
         if success and state == GoalStatus.SUCCEEDED:
-            pass
+            rospy.loginfo(str(robot_id) + ' - position reached ')
+            self.arrived_nominal_dest = True
         else:
             self.client_motion.cancel_goal()
+
+        self.pub_state.publish(Bool(self.arrived_nominal_dest))
+
+    def move_robot(self):
+        for plan in self.plans:
+            self.reset_stuff()
+            if self.is_leader:
+                self.go_to_pose(plan[0][0])
+                #dovrebbe essere: self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
+            else:
+                self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
+
+            r = rospy.Rate(1.0)
+            while not self.teammate_arrived_nominal_dest:
+                rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
+                r.sleep()
+
+        rospy.sleep(rospy.Duration(5.0))
+        self.execute_plan_state = 2
+
+
+
+    # -1: plan, 0: plan_set
+    # 1: leader/follower arrived and they have to wait for their teammate
+    #2: completed
+    def execute_plan(self):
+        r = rospy.Rate(self.replan_rate)
+        while not rospy.is_shutdown():
+            if self.execute_plan_state == -1:
+                #leader calculate plan
+                if self.is_leader:
+                    self.calculate_plan()
+                else:
+                    self.execute_plan_state = 0
+            elif self.execute_plan_state == 0:
+                #leader sends plans to follower
+                if self.is_leader:
+                    self.send_plans_to_foll(self.plans)
+                else:
+                    rospy.sleep(rospy.Duration(10.0))
+                    self.execute_plan_state = 1
+            elif self.execute_plan_state == 1:
+                #follower has received plan, robots can move
+                self.move_robot()
+            elif self.execute_plan_state == 2:
+                #plan completed
+                rospy.loginfo(str(robot_id) + ' - exploration completed! Shutting down...')
+                break
+        r.sleep()
+
 
 
 
@@ -172,7 +243,6 @@ class Leader(GenericRobot):
                                      duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
                                      ref_dist, resize_factor, errors_filename)
 
-        print 'created environment variable'
         rospy.loginfo(str(robot_id) + ' - Created environment variable')
 
 
@@ -188,17 +258,81 @@ class Leader(GenericRobot):
             self.clients_signal[teammate_id].wait_for_server()
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
+    def calculate_plan(self):
+        self.plans = ((((11.0,12.0),(25.0,18.0)), self.teammates_id,10),(((13.0,15.0),(31.0,13.0)),self.teammates_id,12),
+                     (((14.0,16.0),(25.0,18.0)),self.teammates_id,11))
+        rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
+
+        self.execute_plan_state = 0
+
+    def send_plans_to_foll(self,plans):
+        clients_messages = []
+        for plan in plans:
+            points = plan[0]
+            plans_follower = []
+
+            plan_follower = Plan()
+
+            #first_robot_dest
+            plan_follower.first_robot_dest = Pose()
+            plan_follower.first_robot_dest.position.x = points[0][0]
+            plan_follower.first_robot_dest.position.y = points[0][1]
+            #print 'LEADER_DEST: ' + str(plan_follower.leader_dest)
+
+            #second_robot_dest
+            plan_follower.second_robot_dest = Pose()
+            plan_follower.second_robot_dest.position.x = points[1][0]
+            plan_follower.second_robot_dest.position.y = points[1][1]
+            #print 'FOLLOWER_DEST: ' + str(plan_follower.follower_dest)
+
+            #teammate_id
+            plan_follower.teammate_id = Float32
+            plan_follower.teammate_id = plan[1][0]
+            #print 'TEAMMATE_ID: ' + str(plan_follower.teammate_id)
+
+            #timestep
+            plan_follower.timestep = Float32
+            plan_follower.timestep = plan[2]
+            #print 'TIMESTEP: ' + str(plan_follower.timestep)
+
+            plans_follower.append(plan_follower)
+            goal = SignalMappingGoal(plans_follower=plans_follower)
+            clients_messages.append((plan_follower.teammate_id,goal))
+
+        goal_threads = []
+
+        for (plan_follower.teammate_id, goal) in clients_messages:
+            t = threading.Thread(target=self.send_and_wait_goal, args=(plan_follower.teammate_id, goal))
+            rospy.sleep(rospy.Duration(2.0))
+            t.start()
+            goal_threads.append(t)
+
+        for t in goal_threads:
+            t.join()
+
+        self.execute_plan_state = 1
+
+
+    def send_and_wait_goal(self, teammate_id, goal):
+        rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
+        self.clients_signal[teammate_id].send_goal(goal)
+
+        self.clients_signal[teammate_id].wait_for_result()
+        rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+
+
 
 
 class Follower(GenericRobot):
+    _result   = SignalMappingResult()
+
     def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                  resize_factor, errors_filename):
 
         rospy.loginfo(str(robot_id) + ' - Follower - starting!')
-        # Load Environment for follower to filter readings.
-        environment_not_loaded = True
 
+        environment_not_loaded = True
         while environment_not_loaded:
             try:
                 f = open(env_filename, "rb")
@@ -214,15 +348,26 @@ class Follower(GenericRobot):
                                        resize_factor, errors_filename)
 
         self._action_name = rospy.get_name()
-
-        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction, auto_start=False)
-
-        print 'created environment variable'
+        self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction,
+                                                execute_cb=self.execute_callback, auto_start=False)
 
         rospy.loginfo(str(robot_id) + ' - Follower - created environment variable!')
 
         self._as.start()
 
+    def execute_callback(self,goal):
+        rospy.loginfo(str(self.robot_id) + ' - Follower - has received new goal ')
+
+        for plan in goal.plans_follower:
+            success = True
+            self.plans.append(plan)
+
+        if not success:
+            rospy.loginfo(str(self.robot_id) + ' - Follower failed last point.')
+
+        rospy.loginfo(str(self.robot_id) + ' - Follower - action succeded')
+
+        self._as.set_succeeded(self._result)
 
 if __name__ == '__main__':
     rospy.init_node('robot')
@@ -272,18 +417,19 @@ if __name__ == '__main__':
     errors_filename = log_folder + 'errors.log'
     print "Logging possible errors to: " + errors_filename
 
-    position = [11.50,12.50]
 
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
-        lead.go_to_pose(position)
-        rospy.spin()
+        lead.execute_plan()
 
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
-        foll.go_to_pose(position)
+        foll.execute_plan()
+        rospy.spin()
+
+
 
