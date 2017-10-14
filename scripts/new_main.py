@@ -90,6 +90,14 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
+        # recovery
+        self.last_feedback_pose = None
+        self.stuck = False
+        self.last_motion_time = None
+        self.pub_motion_rec = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
+        self.front_range = 0.0
+
         #estimated position
         self.listener = tf.TransformListener()
         rospy.Timer(rospy.Duration(0.1), self.tf_callback)
@@ -142,28 +150,121 @@ class GenericRobot(object):
     def reset_stuff(self):
         self.arrived_nominal_dest = False
         self.teammate_arrived_nominal_dest = False
+        self.last_feedback_pose = None
+        self.last_motion_time = None
+
+    def scan_callback(self, scan):
+        min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
+        max_index = int(math.floor((MAX_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
+        self.front_range = min(scan.ranges[min_index: max_index])
+
+    def feedback_motion_cb(self, feedback):
+        rospy.loginfo(str(robot_id) + ' - calling cb')
+        if (self.last_feedback_pose is not None and abs(
+                    feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
+                    abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
+            if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
+                rospy.loginfo(str(robot_id) + ' - DENTRO IF - time: ' + str(rospy.Time.now() - self.last_motion_time))
+
+                self.error_count += 1
+                if self.error_count == MAX_NUM_ERRORS:
+                    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
+                    f = open(self.errors_filename, mode)
+                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" + str(
+                        self.n_robots) + "--->" + self.strategy_error_log + "\n")
+                    f.close()
+                    if self.sim:
+                        # sim too biased by nav errors!
+                        os.system("pkill -f ros")
+                    else:
+                        self.client_motion.cancel_goal()
+
+                self.stuck = True
+            else:
+                self.stuck = False
+        else:
+            self.last_motion_time = rospy.Time.now()
+            self.stuck = False
+
+        # rospy.loginfo('Stuck: ' + str(self.stuck))
+        if (self.stuck):
+            # rospy.loginfo('Sending cancel goal.')
+            self.client_motion.cancel_goal()
+
+        self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
+        rospy.loginfo(str(robot_id) + ' - last pose: ' + str(self.last_feedback_pose))
+
+    def bump_fwd(self):
+        for i in range(10):
+            msg = Twist(Vector3(0.7, 0, 0), Vector3(0, 0, 0))
+            self.pub_motion_rec.publish(msg)
+            rospy.sleep(rospy.Duration(0.1))
+
+    def bump_bkw(self):
+        for i in range(10):
+            msg = Twist(Vector3(-0.7, 0, 0), Vector3(0, 0, 0))
+            self.pub_motion_rec.publish(msg)
+            rospy.sleep(rospy.Duration(0.1))
+
+    def motion_recovery(self):
+        if self.sim:
+            # simpy move forward the robot
+            # rospy.loginfo(str(self.robot_id) + ' in motion recovery.')
+            start = rospy.Time.now()
+            while self.front_range < MIN_FRONT_RANGE_DIST:
+                # rospy.loginfo(str(self.robot_id) + ' rotating to avoid obstacle')
+                msg = Twist(Vector3(0, 0, 0), Vector3(0, 0, 1.0))
+                self.pub_motion_rec.publish(msg)
+                rospy.sleep(rospy.Duration(0.2))
+
+                if (rospy.Time.now() - start) > rospy.Duration(TIME_AGAINST_WALL):  # against wall
+                    self.bump_bkw()
+                    start = rospy.Time.now()
+
+            # rospy.loginfo(str(self.robot_id) + ' now the space is free. Sending x speed.')
+            self.bump_fwd()
+        else:
+            msg = Twist(Vector3(0, 0, 0), Vector3(0, 0, 1.0))
+            self.pub_motion_rec.publish(msg)
+            rospy.sleep(rospy.Duration(0.2))
+            self.clear_costmap_service()
 
     def go_to_pose(self, pos):
         rospy.loginfo(str(robot_id) + ' - moving to ' + str(pos))
         success = False
-        goal = MoveBaseGoal()
-        goal.target_pose.header.frame_id = '/map'
-        goal.target_pose.header.stamp = rospy.Time.now()
+        count = 0
 
-        goal.target_pose.pose.position = Point(pos[0], pos[1], 0.000)
-        goal.target_pose.pose.orientation.w = 1
+        while not success:
+            goal = MoveBaseGoal()
+            goal.target_pose.header.frame_id = '/map'
 
-        # Start moving
-        self.client_motion.send_goal(goal)
+            goal.target_pose.pose.position = Point(pos[0], pos[1], 0.000)
+            goal.target_pose.pose.orientation.w = 1
+            self.last_feedback_pose = None
+            self.last_motion_time = rospy.Time.now()
+            count =+1
 
-        success = self.client_motion.wait_for_result()
-        state = self.client_motion.get_state()
+            # Start moving
+            self.client_motion.send_goal(goal, feedback_cb = self.feedback_motion_cb)
+            self.client_motion.wait_for_result()
+            state = self.client_motion.get_state()
 
-        if success and state == GoalStatus.SUCCEEDED:
-            rospy.loginfo(str(robot_id) + ' - position reached ')
-            self.arrived_nominal_dest = True
-        else:
-            self.client_motion.cancel_goal()
+            if state == GoalStatus.SUCCEEDED:
+                rospy.loginfo(str(robot_id) + ' - position reached ')
+                self.arrived_nominal_dest = True
+                success = True
+            elif state == GoalStatus.PREEMPTED:
+                rospy.loginfo(str(robot_id) + ' - preempted')
+                success = False
+                if count >=3:
+                    rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
+                    self.clear_costmap_service()
+                    self.motion_recovery()
+                    self.clear_costmap_service()
+                    success = False
+
+
+        rospy.loginfo(str(robot_id) + ' success: ' + str(success))
 
         self.pub_state.publish(Bool(self.arrived_nominal_dest))
 
@@ -176,7 +277,7 @@ class GenericRobot(object):
             else:
                 self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
 
-            r = rospy.Rate(1.0)
+            r = rospy.Rate(0.5)
             while not self.teammate_arrived_nominal_dest:
                 rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
                 r.sleep()
@@ -259,7 +360,7 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plans = ((((11.0,12.0),(25.0,18.0)), self.teammates_id,10),(((13.0,15.0),(31.0,13.0)),self.teammates_id,12),
+        self.plans = ((((14.0,12.0),(25.0,18.0)), self.teammates_id,10),(((13.0,15.0),(31.0,13.0)),self.teammates_id,12),
                      (((14.0,16.0),(25.0,18.0)),self.teammates_id,11))
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
