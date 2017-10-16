@@ -29,7 +29,7 @@ from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, Si
                          SignalMappingFeedback, SignalMappingResult, Plan
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
-TIME_STUCK = 3.0
+TIME_STUCK = 6.0
 TIME_AGAINST_WALL = 5.0
 SPEED = 0.45 # TODO It should depend on the settings of the planner.
 TIME_TOL_PERC = 0.04 # TODO It should depend on the settings of the planner and velocity.
@@ -98,6 +98,9 @@ class GenericRobot(object):
         rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
 
+        self.iam_moving = False
+        #rospy.Timer(rospy.Duration(0.05), self.monitor_stop_motion_callback)
+
         #estimated position
         self.listener = tf.TransformListener()
         rospy.Timer(rospy.Duration(0.1), self.tf_callback)
@@ -116,6 +119,8 @@ class GenericRobot(object):
         self.plans = []
         self.teammate_arrived_nominal_dest = False
         self.arrived_nominal_dest = False
+        self.path_timeout_elapsed = False
+        self.moving_nominal_dest = False
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
@@ -152,20 +157,22 @@ class GenericRobot(object):
         self.teammate_arrived_nominal_dest = False
         self.last_feedback_pose = None
         self.last_motion_time = None
+        self.moving_nominal_dest = False
+        self.iam_moving = False
+        self.path_timeout_elapsed = False
 
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
         max_index = int(math.floor((MAX_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
         self.front_range = min(scan.ranges[min_index: max_index])
 
+
+
     def feedback_motion_cb(self, feedback):
-        rospy.loginfo(str(robot_id) + ' - calling cb')
         if (self.last_feedback_pose is not None and abs(
                     feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
                     abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
             if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
-                rospy.loginfo(str(robot_id) + ' - DENTRO IF - time: ' + str(rospy.Time.now() - self.last_motion_time))
-
                 self.error_count += 1
                 if self.error_count == MAX_NUM_ERRORS:
                     mode = 'a' if os.path.exists(self.errors_filename) else 'w'
@@ -178,7 +185,7 @@ class GenericRobot(object):
                         os.system("pkill -f ros")
                     else:
                         self.client_motion.cancel_goal()
-
+                rospy.loginfo(str(robot_id) + ' - STUCK')
                 self.stuck = True
             else:
                 self.stuck = False
@@ -188,11 +195,10 @@ class GenericRobot(object):
 
         # rospy.loginfo('Stuck: ' + str(self.stuck))
         if (self.stuck):
-            # rospy.loginfo('Sending cancel goal.')
+            rospy.loginfo('Sending cancel goal.')
             self.client_motion.cancel_goal()
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
-        rospy.loginfo(str(robot_id) + ' - last pose: ' + str(self.last_feedback_pose))
 
     def bump_fwd(self):
         for i in range(10):
@@ -221,7 +227,6 @@ class GenericRobot(object):
                     self.bump_bkw()
                     start = rospy.Time.now()
 
-            # rospy.loginfo(str(self.robot_id) + ' now the space is free. Sending x speed.')
             self.bump_fwd()
         else:
             msg = Twist(Vector3(0, 0, 0), Vector3(0, 0, 1.0))
@@ -232,7 +237,6 @@ class GenericRobot(object):
     def go_to_pose(self, pos):
         rospy.loginfo(str(robot_id) + ' - moving to ' + str(pos))
         success = False
-        count = 0
 
         while not success:
             goal = MoveBaseGoal()
@@ -242,10 +246,11 @@ class GenericRobot(object):
             goal.target_pose.pose.orientation.w = 1
             self.last_feedback_pose = None
             self.last_motion_time = rospy.Time.now()
-            count =+1
 
             # Start moving
+            self.iam_moving = True
             self.client_motion.send_goal(goal, feedback_cb = self.feedback_motion_cb)
+            self.iam_moving = False
             self.client_motion.wait_for_result()
             state = self.client_motion.get_state()
 
@@ -254,23 +259,18 @@ class GenericRobot(object):
                 self.arrived_nominal_dest = True
                 success = True
             elif state == GoalStatus.PREEMPTED:
-                rospy.loginfo(str(robot_id) + ' - preempted')
+                rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
                 success = False
-                if count >=3:
-                    rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
-                    self.clear_costmap_service()
-                    self.motion_recovery()
-                    self.clear_costmap_service()
-                    success = False
-
-
-        rospy.loginfo(str(robot_id) + ' success: ' + str(success))
+                self.clear_costmap_service()
+                self.motion_recovery()
+                self.clear_costmap_service()
 
         self.pub_state.publish(Bool(self.arrived_nominal_dest))
 
     def move_robot(self):
         for plan in self.plans:
             self.reset_stuff()
+            self.moving_nominal_dest = True
             if self.is_leader:
                 self.go_to_pose(plan[0][0])
                 #dovrebbe essere: self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
@@ -282,7 +282,7 @@ class GenericRobot(object):
                 rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
                 r.sleep()
 
-        rospy.sleep(rospy.Duration(5.0))
+        rospy.sleep(rospy.Duration(2.0))
         self.execute_plan_state = 2
 
 
