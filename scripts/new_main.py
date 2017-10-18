@@ -269,23 +269,26 @@ class GenericRobot(object):
 
     def move_robot(self):
         for plan in self.plans:
+            starting_pose = False
             self.reset_stuff()
             self.moving_nominal_dest = True
-            if self.is_leader:
+            if self.robot_id == plan[1][0]:
                 self.go_to_pose(plan[0][0])
                 #dovrebbe essere: self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
-            else:
+            elif self.robot_id == plan[1][1]:
                 self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
+            else:
+                rospy.loginfo(str(robot_id) + ' - starting position, does not move')
+                starting_pose = True
+                continue
 
             r = rospy.Rate(0.5)
-            while not self.teammate_arrived_nominal_dest:
+            while not self.teammate_arrived_nominal_dest and not starting_pose:
                 rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
                 r.sleep()
 
         rospy.sleep(rospy.Duration(2.0))
         self.execute_plan_state = 2
-
-
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
@@ -360,15 +363,101 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.plans = ((((14.0,12.0),(25.0,18.0)), self.teammates_id,10),(((13.0,15.0),(31.0,13.0)),self.teammates_id,12),
-                     (((14.0,16.0),(25.0,18.0)),self.teammates_id,11))
+        self.parse_plans_file()
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
         self.execute_plan_state = 0
 
+    def parse_plans_file(self):
+        coord = []
+        plan_coordinates = []
+        robot_moving = []
+        id_robot_moving = []
+        plans_id_robot_moving = []
+        plan = []
+
+        reading_coords = 0
+        reading_RM = 0
+
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+            data = file.readlines()
+            for line in data:
+                words = line.split()
+                if len(words) > 0:
+                    if words[0] == "N_ROBOTS:":
+                        N_ROBOTS = int(words[1])
+                        line_lenght = N_ROBOTS * 2 + N_ROBOTS - 1
+                    elif words[0] == "COORDINATES_LIST:":
+                        reading_coords = 1
+                        continue
+                    if reading_coords == 1:
+                        coordinate = []
+                        if words[0] != ';':
+                            for i in range(0, line_lenght):
+                                if words[i] != '|':
+                                    coord.append(int(words[i]))
+                        else:
+                            reading_coords = 0
+                    elif words[0] == "ROBOT_MOVING:":
+                        reading_RM = 1
+                        continue
+                    if reading_RM == 1:
+                        min_list_RM = []
+                        if words[0] != ';':
+                            for i in range(0, N_ROBOTS):
+                                min_list_RM.append(int(words[i]))
+                            robot_moving.append(min_list_RM)
+                        else:
+                            reading_RM = 0
+
+        file.close()
+
+        # coordinates
+        coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
+        nested_tuple_coords = [tuple(l) for l in coords]
+
+        plan_coordinates = [nested_tuple_coords[i:i + N_ROBOTS] for i in
+                            range(0, len(nested_tuple_coords), N_ROBOTS)]  # create a plan of coordinates
+
+        # creating a tuples of coordinates
+        tuple_plan_coordinates = tuple(plan_coordinates)
+        nested_tuple_plan_coordinates = [tuple(l) for l in tuple_plan_coordinates]
+
+        #robot moving
+        for config in robot_moving:
+            count = 0
+            position = 0
+            count_moving = 0
+            for j in config:
+                if j != 0:
+                    id_robot_moving.append(count)
+                    position = count
+                    count_moving +=1
+                count += 1
+
+            if count_moving !=0 and count_moving < 2 and position!= N_ROBOTS: #if I have to move the first robot: (1,-1)
+                id_robot_moving.append(-1)
+            elif count_moving != 0 and count_moving < 2 and position == N_ROBOTS - 1: #if I have to move the second robot: (-1,1)
+                id_robot_moving.insert(-1, -1)
+
+        plans_id_robot_moving = [id_robot_moving[i:i + 2] for i in range(0, len(id_robot_moving), 2)]
+        tuple_id__robot_moving = [tuple(l) for l in plans_id_robot_moving]
+
+        # in the first configuration no robot is moving
+        tuple_id__robot_moving.insert(0, (-1, -1))
+
+        # Generating the complete plan
+        plan = zip(nested_tuple_plan_coordinates, tuple_id__robot_moving)
+        tuple_plan = tuple(plan)
+
+        # assegna al leader il piano corretto e completo (anche i robot che non si muovono)
+        self.plans= tuple_plan
+
     def send_plans_to_foll(self,plans):
+        rospy.loginfo(str(robot_id) + ' invio i piani')
         clients_messages = []
         for plan in plans:
+            print plan
             points = plan[0]
             plans_follower = []
 
@@ -378,32 +467,37 @@ class Leader(GenericRobot):
             plan_follower.first_robot_dest = Pose()
             plan_follower.first_robot_dest.position.x = points[0][0]
             plan_follower.first_robot_dest.position.y = points[0][1]
-            #print 'LEADER_DEST: ' + str(plan_follower.leader_dest)
+            #print 'FIRST_ROBOT_DEST: ' + str(plan_follower.first_robot_dest)
 
             #second_robot_dest
             plan_follower.second_robot_dest = Pose()
             plan_follower.second_robot_dest.position.x = points[1][0]
             plan_follower.second_robot_dest.position.y = points[1][1]
-            #print 'FOLLOWER_DEST: ' + str(plan_follower.follower_dest)
+            #print 'SECOND_ROBOT_DEST: ' + str(plan_follower.second_robot_dest)
 
-            #teammate_id
-            plan_follower.teammate_id = Float32
-            plan_follower.teammate_id = plan[1][0]
-            #print 'TEAMMATE_ID: ' + str(plan_follower.teammate_id)
+            #first_robot_id
+            plan_follower.first_robot_id = Float32
+            plan_follower.first_robot_id = plan[1][0]
+            #print 'FIRST_ROBOT_ID: ' + str(plan_follower.first_robot_id)
+
+            #second_robot_id
+            plan_follower.second_robot_id = Float32
+            plan_follower.second_robot_id = plan[1][1]
+            #print 'SECOND_ROBOT_ID: ' + str(plan_follower.second_robot_id)
 
             #timestep
-            plan_follower.timestep = Float32
-            plan_follower.timestep = plan[2]
+            #plan_follower.timestep = Float32
+            #plan_follower.timestep = plan[2]
             #print 'TIMESTEP: ' + str(plan_follower.timestep)
 
             plans_follower.append(plan_follower)
             goal = SignalMappingGoal(plans_follower=plans_follower)
-            clients_messages.append((plan_follower.teammate_id,goal))
+            clients_messages.append((plan_follower.second_robot_id,goal))
 
         goal_threads = []
 
-        for (plan_follower.teammate_id, goal) in clients_messages:
-            t = threading.Thread(target=self.send_and_wait_goal, args=(plan_follower.teammate_id, goal))
+        for (plan_follower.second_robot_id, goal) in clients_messages:
+            t = threading.Thread(target=self.send_and_wait_goal, args=(plan_follower.second_robot_id, goal))
             rospy.sleep(rospy.Duration(2.0))
             t.start()
             goal_threads.append(t)
@@ -417,6 +511,7 @@ class Leader(GenericRobot):
     def send_and_wait_goal(self, teammate_id, goal):
         rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
         self.clients_signal[teammate_id].send_goal(goal)
+        print goal
 
         self.clients_signal[teammate_id].wait_for_result()
         rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
