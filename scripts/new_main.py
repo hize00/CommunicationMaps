@@ -272,15 +272,13 @@ class GenericRobot(object):
             starting_pose = False
             self.reset_stuff()
             self.moving_nominal_dest = True
-            if self.robot_id == plan[1][0]:
+
+            if self.is_leader:
                 self.go_to_pose(plan[0][0])
-                #dovrebbe essere: self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
-            elif self.robot_id == plan[1][1]:
+            elif self.robot_id == plan.first_robot_id: #if the first robot that is going to move is a follower
+                self.go_to_pose((plan.first_robot_dest.position.x, plan.first_robot_dest.position.y))
+            elif self.robot_id == plan.second_robot_id: #if the second robot that is going to move is a follower
                 self.go_to_pose((plan.second_robot_dest.position.x,plan.second_robot_dest.position.y))
-            else:
-                rospy.loginfo(str(robot_id) + ' - starting position, does not move')
-                starting_pose = True
-                continue
 
             r = rospy.Rate(0.5)
             while not self.teammate_arrived_nominal_dest and not starting_pose:
@@ -307,7 +305,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll(self.plans)
                 else:
-                    rospy.sleep(rospy.Duration(10.0))
+                    rospy.sleep(rospy.Duration(10))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
@@ -363,7 +361,11 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        self.parse_plans_file()
+        #self.parse_plans_file()
+
+        self.plans = ((((14.0, 12.0), (25.0, 18.0)), (0,1), 10), (((13.0, 15.0), (31.0, 13.0)), (0,1), 12),
+        (((14.0, 16.0), (25.0, 18.0)), (0,1), 11))
+
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
         self.execute_plan_state = 0
@@ -435,9 +437,9 @@ class Leader(GenericRobot):
                 count += 1
 
             if count_moving !=0 and count_moving < 2 and position!= N_ROBOTS: #if I have to move the first robot: (1,-1)
-                id_robot_moving.append(-1)
+                id_robot_moving.append(position)
             elif count_moving != 0 and count_moving < 2 and position == N_ROBOTS - 1: #if I have to move the second robot: (-1,1)
-                id_robot_moving.insert(-1, -1)
+                id_robot_moving.insert(-1, position)
 
         plans_id_robot_moving = [id_robot_moving[i:i + 2] for i in range(0, len(id_robot_moving), 2)]
         tuple_id__robot_moving = [tuple(l) for l in plans_id_robot_moving]
@@ -449,14 +451,12 @@ class Leader(GenericRobot):
         plan = zip(nested_tuple_plan_coordinates, tuple_id__robot_moving)
         tuple_plan = tuple(plan)
 
-        # assegna al leader il piano corretto e completo (anche i robot che non si muovono)
         self.plans= tuple_plan
 
     def send_plans_to_foll(self,plans):
-        rospy.loginfo(str(robot_id) + ' invio i piani')
+        rospy.loginfo(str(robot_id) + ' sending plans to other robots')
         clients_messages = []
         for plan in plans:
-            print plan
             points = plan[0]
             plans_follower = []
 
@@ -510,7 +510,6 @@ class Leader(GenericRobot):
     def send_and_wait_goal(self, teammate_id, goal):
         rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
         self.clients_signal[teammate_id].send_goal(goal)
-        print goal
 
         self.clients_signal[teammate_id].wait_for_result()
         rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))

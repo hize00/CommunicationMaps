@@ -45,10 +45,8 @@ file.close()
 
 print coord
 
-for i in xrange(N_ROBOTS*2):
-    coord.pop(0)
-
-print coord
+#for i in xrange(N_ROBOTS*2):
+#    coord.pop(0)
 
 #coordinates
 coords = [coord[i:i+2] for i in range(0, len(coord), 2)] #group x and y of a single robot
@@ -72,9 +70,9 @@ for config in robot_moving:
         count += 1
 
     if count_moving != 0 and count_moving < 2 and position == N_ROBOTS-1:
-        id_robot_moving.insert(-1, -1)
-    elif count_moving != 0 and count_moving < 2 and position != N_ROBOTS:
-        id_robot_moving.append(-1)
+        id_robot_moving.insert(-1, position)
+    elif count_moving != 0 and count_moving < 2 and position != N_ROBOTS-1:
+        id_robot_moving.append(position)
 
 print id_robot_moving
 
@@ -87,7 +85,6 @@ tuple_id_robot_moving = [tuple(l) for l in plans_id_robot_moving]
 #in the first configuration no robot is moving
 #tuple_id_robot_moving.insert(0,(-1,-1))
 #print tuple_id_robot_moving
-
 
 #Generating the complete plan
 plan = zip(nested_tuple_plan_coordinates,tuple_id_robot_moving)
