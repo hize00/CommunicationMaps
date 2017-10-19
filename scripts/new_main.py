@@ -370,11 +370,8 @@ class Leader(GenericRobot):
 
     def parse_plans_file(self):
         coord = []
-        plan_coordinates = []
         robot_moving = []
         id_robot_moving = []
-        plans_id_robot_moving = []
-        plan = []
 
         reading_coords = 0
         reading_RM = 0
@@ -413,11 +410,13 @@ class Leader(GenericRobot):
         file.close()
 
         # coordinates
-        coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
-        nested_tuple_coords = [tuple(l) for l in coords]
+        for i in xrange(N_ROBOTS*2):
+            coord.pop(0) #I remove the first row of coordinates since robots begin to move in the second row
 
+        coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
+        nested_tuple_coords = [tuple(l) for l in coords] #each coordinates [x,y] become (x,y)
         plan_coordinates = [nested_tuple_coords[i:i + N_ROBOTS] for i in
-                            range(0, len(nested_tuple_coords), N_ROBOTS)]  # create a plan of coordinates
+                            range(0, len(nested_tuple_coords), N_ROBOTS)]  #create a plan of coordinates
 
         # creating a tuples of coordinates
         tuple_plan_coordinates = tuple(plan_coordinates)
@@ -444,7 +443,7 @@ class Leader(GenericRobot):
         tuple_id__robot_moving = [tuple(l) for l in plans_id_robot_moving]
 
         # in the first configuration no robot is moving
-        tuple_id__robot_moving.insert(0, (-1, -1))
+        #tuple_id__robot_moving.insert(0, (-1, -1)) #useless if I remove the first row of coordinates
 
         # Generating the complete plan
         plan = zip(nested_tuple_plan_coordinates, tuple_id__robot_moving)

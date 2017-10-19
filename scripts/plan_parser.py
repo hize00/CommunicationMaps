@@ -3,19 +3,14 @@
 import sys
 
 coord = []
-plan_coords = []
-plan_coordinates = []
 robot_moving = []
 id_robot_moving = []
-robots = []
-plans_id_robot_moving = []
-plan = []
 
 reading_coords = 0
 reading_RM = 0
 
 
-with open('../data/solution_plan_2_robots.txt', 'r') as file:
+with open('solution_plan_2_robots.txt', 'r') as file:
     data = file.readlines()
     for line in data:
         words = line.split()
@@ -48,10 +43,16 @@ with open('../data/solution_plan_2_robots.txt', 'r') as file:
 
 file.close()
 
+print coord
+
+for i in xrange(N_ROBOTS*2):
+    coord.pop(0)
+
+print coord
+
 #coordinates
 coords = [coord[i:i+2] for i in range(0, len(coord), 2)] #group x and y of a single robot
 nested_tuple_coords = [tuple(l) for l in coords]
-
 plan_coordinates = [nested_tuple_coords[i:i+N_ROBOTS] for i in range(0, len(nested_tuple_coords), N_ROBOTS)] #create a plan of coordinates
 
 #creating a tuples of coordinates
@@ -60,7 +61,6 @@ nested_tuple_plan_coordinates = [tuple(l) for l in tuple_plan_coordinates]
 
 #robot moving
 for config in robot_moving:
-    print config
     count = 0
     position = 0
     count_moving = 0
@@ -76,18 +76,23 @@ for config in robot_moving:
     elif count_moving != 0 and count_moving < 2 and position != N_ROBOTS:
         id_robot_moving.append(-1)
 
+print id_robot_moving
 
 plans_id_robot_moving = [id_robot_moving[i:i+2] for i in range(0, len(id_robot_moving), 2)]
-tuple_id__robot_moving = [tuple(l) for l in plans_id_robot_moving]
+print plans_id_robot_moving
+
+tuple_id_robot_moving = [tuple(l) for l in plans_id_robot_moving]
 
 
 #in the first configuration no robot is moving
-tuple_id__robot_moving.insert(0,(-1,-1))
-print tuple_id__robot_moving
+#tuple_id_robot_moving.insert(0,(-1,-1))
+#print tuple_id_robot_moving
 
 
 #Generating the complete plan
-plan = zip(nested_tuple_plan_coordinates,tuple_id__robot_moving)
-tuple_plan = tuple(plan)
+plan = zip(nested_tuple_plan_coordinates,tuple_id_robot_moving)
+print plan
 
+tuple_plan = tuple(plan)
+print tuple_plan
 #stampa il piano corretto e completo (anche i robot che non si muovono)
