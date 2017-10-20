@@ -85,25 +85,12 @@ def parsing_file(datfile):
 
 N_ROBOTS, STARTING_POS, N_VERTEXES, ROBOT_VELOCITY, POINTS_TO_EXPLORE, distance_matrix = parsing_file(file_to_open)
 
-print "\n---> NUMBER OF ROBOTS = " + str(N_ROBOTS)
-print "\n---> STARTING POSITIONS "
-print STARTING_POS
-print "\n---> NUMBER OF VERTEXES = " + str(N_VERTEXES)
-print "\n---> ROBOT VELOCITY = " + str(ROBOT_VELOCITY)
-print "\n---> POINTS TO EXPLORE "
-print POINTS_TO_EXPLORE
-print "\n"
-
 #time matrix initialization
 time_matrix =  np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0,N_VERTEXES):
 	for j in range(0,N_VERTEXES):
 		time_matrix[i][j] = distance_matrix[i][j] / ROBOT_VELOCITY
 
-print "DISTANCE Matrix"
-print distance_matrix
-print "\nTIME Matrix"
-print time_matrix
 		
 n_to_explore = len(POINTS_TO_EXPLORE)
 #RADIO MATRIX. Values are 1 for points where we need to measure connection
@@ -112,8 +99,6 @@ for i in range(0,n_to_explore):
 	adjacency_radio[POINTS_TO_EXPLORE[i][0]][POINTS_TO_EXPLORE[i][1]] = 1
 	adjacency_radio[POINTS_TO_EXPLORE[i][1]][POINTS_TO_EXPLORE[i][0]] = 1
 
-print"\nRadiomap MATRIX - Pairs to be measured"
-print adjacency_radio
 
 g = Graph()
 g.add_vertices(N_VERTEXES)
@@ -125,8 +110,6 @@ for i in range(0,N_VERTEXES-1):
 
 g.add_edges(EDGES)
 gEdgeList = g.get_edgelist()
-print "\nEDGES LIST"
-print g.get_edgelist()
 
 if obj_fun == "time":
 	for i in range(0,len(gEdgeList)):
@@ -135,23 +118,16 @@ elif obj_fun == "distance":
 	for i in range(0,len(gEdgeList)):
 		g.es[i]["weight"] = distance_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
 
-print "\nGRAPH\n"
-print g
-for i in range (0, len(EDGES)):
-	print g.es[i].attributes()
 
 #LIST of the shortest distances between vertexes
 shortest_list = g.shortest_paths_dijkstra( weights="weight" )
-print "\nSHORTEST PATHS LIST - " + str(obj_fun)
-print shortest_list
+
 #LIST to MATRIX conversion
 shortest_matrix = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0, N_VERTEXES):
 	for j in range(0, N_VERTEXES):
 		shortest_matrix[i][j] = shortest_list[i][j]
 
-print "\nSHORTEST PATHS MATRIX - " + str(obj_fun)
-print shortest_matrix
 
 # |---------------------------|
 # |DATA AND PARAMETERS - END  |
@@ -252,7 +228,7 @@ robotMoving_ini =  [0]*N_ROBOTS
 root = State(0, STARTING_POS, timeTable_ini, robotMoving_ini, 0, POINTS_TO_EXPLORE, None, [])
 STATES.append(root)
 
-root.infoState()
+#root.infoState()
 
 #return the maximum identification number of the already created states.
 def maxId(stateList):
@@ -413,12 +389,8 @@ for i in range(0, len(POINTS_TO_EXPLORE)):
 	state = deepcopy(s)
 
 for i in range(0,len(STATES)):
-	print "\n|--- STEP "+str(i)+"---|"
-	print "Id State: " + str(STATES[i].getidNumber())
-	print "Configuration: " + str(STATES[i].getConfiguration())
 	CONFIGURATIONS.append(STATES[i].getConfiguration())
-	print "Time Table:\n" + str(STATES[i].getTimeTable())
-
+	
 if obj_fun == "time":
 	#time in which robot complete exploration
 	maxTF = 0
@@ -427,35 +399,38 @@ if obj_fun == "time":
 			maxTF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
 			maxTF_index = i
 	greedy_time = float(STATES[-1].getTimeTable()[maxTF_index]) + maxTF
-	print "\n\n\n----------------------------------------------------"
-	print "GREEDY RECAP"
-	print "STARTING POSITION: " + str(STARTING_POS)
-	print "\nFINAL CONFIGURATION LIST"
 	CONFIGURATIONS.append(STARTING_POS)
-	print CONFIGURATIONS
-	print "\nTIME ELAPSED"
-	print float(max(STATES[-1].getTimeTable()))
-	print "\nFINAL MOVE: robots will go from " + str(STATES[-1].getConfiguration()) + " back to " + str(STARTING_POS)
-	print "\ntime for moving from last point of the tour to STARTING_POS"
-	print str(CONFIGURATIONS[-2]) + " ---> " + str(STARTING_POS) + " : " + str(maxTF)
-	print "\n\nFINAL TIMESTAMP: " + str(greedy_time)
-	print "----------------------------------------------------------"
+	#print CONFIGURATIONS
 
 elif obj_fun == "distance":
-	print "\n\n\n----------------------------------------------------"
-	print "RECAP"
-	print "STARTING POSITION: " + str(STARTING_POS)
-	print "\nFINAL CONFIGURATION LIST"
 	CONFIGURATIONS.append(STARTING_POS)
-	print CONFIGURATIONS
-	print "\nFINAL MOVE: robots will go from " + str(STATES[-1].getConfiguration()) + " back to " + str(STARTING_POS)
-	for i in range(0,len(CONFIGURATIONS[-1])):
-		d = STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
-		print "robot" + str(i) + " : " + str(CONFIGURATIONS[-1][i]) +  " ---> " + str(STARTING_POS[i]) + " : " +  str(d)
-	print "\nSUM DISTANCE TRAVELED"
-	greedy_time = 0
-	for i in range(0, N_ROBOTS):
-		greedy_time = greedy_time + STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-2][i]][STARTING_POS[i]]
-	print greedy_time
 
-print("\n\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
+
+
+print "DATFILE : " + str(file_to_open)
+
+env = file_to_open[0:6]
+print "ENVIRONMENT : " + str(env)
+
+print "ALGORITHM : GREEDY"
+
+if file_to_open[14] == "_":
+	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
+else:
+	RANGE = RANGE = file_to_open[11:15]
+print "RANGE : " + str(RANGE)
+
+print "STARTING_POS : " + str(STARTING_POS[0])
+
+print "N_ROBOTS : " + str(N_ROBOTS)
+
+if obj_fun == "time":
+	print"GREEDY T : " + str(greedy_time)
+elif obj_fun == "distance":
+	sumdist = 0
+	for i in range(0, N_ROBOTS):
+		sumdist = sumdist + STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-2][i]][STARTING_POS[i]]
+	print"GREEDY sumD : " + str(sumdist)
+
+print("EXECUTION TIME: %s seconds \n" % (time.time() - start_time))
+print "-------------------------------------------------------------------"

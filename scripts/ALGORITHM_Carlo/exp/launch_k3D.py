@@ -23,11 +23,9 @@ for i in range(MIN_ROBOTS, MAX_ROBOTS+1):
     datfiles.append(name_of_file)
 
 
-obj_functions = ['time', 'distance']
-#algorithms = ['k2.py', 'k3.py', 'HBSS.py']
-#sorting = ['cardinality' , 'heuristic', 'objective']
-alg = 'GREEDY.py'
-
+obj_functions = 'distance'
+sorting = ['cardinality' , 'heuristic', 'objective']
+alg = 'k3.py'
 
 if __name__ == "__main__":
     """
@@ -37,12 +35,8 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
-    file_to_open = "resultsT_greedy_"+ gflags.FLAGS.env_name + "_" + str(RANGE) +".txt"
+    file_to_open = "resultsD_k3_"+ gflags.FLAGS.env_name + "_" + str(RANGE) + ".txt"
     file = open(file_to_open, "w")
-    obj_f = obj_functions[0]
-    #file_to_open = "resultsD_greedy_"+ gflags.FLAGS.env_name + "_" + str(RANGE) + ".txt"
-    #file = open(file_to_open, "w")
-    #obj_f = obj_functions[1]
 
     for dat in datfiles:
         d = str(dat)
