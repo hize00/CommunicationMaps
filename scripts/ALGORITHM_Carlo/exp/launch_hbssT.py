@@ -23,7 +23,7 @@ for i in range(MIN_ROBOTS, MAX_ROBOTS+1):
     datfiles.append(name_of_file)
 
 
-obj_functions = 'time'
+obj_f = 'time'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'HBSS.py'
 
