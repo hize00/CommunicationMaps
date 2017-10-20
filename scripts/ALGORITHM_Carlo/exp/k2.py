@@ -6,6 +6,7 @@ import itertools
 from igraph import *
 from gurobipy import *
 
+sys.setrecursionlimit(1000000)
 #start the time
 start_time = time.time()
 
@@ -149,9 +150,11 @@ for i in range (0,N_VERTEXES):
 		if adjacency_radio[i][j] == 1:
 			V2.append((z,[i,j]))
 			z=z+1
-	#accessing values of V2: [list index] | [vertex_id or pair] | [if pair, selects if first or second point]
-	#example1: V2[1][1][1] accesses 2nd element of list, pair of point, second point of the pair
-	#example2: V2[2][0] accesses 3rd element of list and vertex_id.
+#adding START_POS
+V2.append((z, [STARTING_POS[0], STARTING_POS[1]]))
+#accessing values of V2: [list index] | [vertex_id or pair] | [if pair, selects if first or second point]
+#example1: V2[1][1][1] accesses 2nd element of list, pair of point, second point of the pair
+#example2: V2[2][0] accesses 3rd element of list and vertex_id.
 length = len(V2)
 
 """DISTANCE COST MATRIX"""
@@ -244,7 +247,7 @@ else:
 	print "Error in calling the file. Usage: file.py datafile.dat obj_fun('time' or 'distance')"
 	sys.exit()
 
-n = len(POINTS_TO_EXPLORE)
+n = len(POINTS_TO_EXPLORE)+1
 # Add degree-2 constraint
 m.addConstrs(vars.sum(i,'*') == 2 for i in range(n))
 
@@ -285,98 +288,65 @@ elif obj_fun == "time":
 		t = t + t1
 		tour_list.append([ V2[tour[i]][1][0], V2[tour[i]][1][1] ])
 
+#getting tour_index of STARTING_POS
+for i in range(0,len(tour_list)):
+	if tour_list[i][0]==STARTING_POS[0] and tour_list[i][1]==STARTING_POS[1]:
+		fAp_index = i 
+
+
 #list to order the tour points to visit
-tour_configuration = []
-
-#first append:  node of the GUROBI tour closest to STARTING_POS
-firstAppend = 9999999999999999999
-if obj_fun == "time":	
-	for i in range(0,len(tour)):
-		t1 = max(shortest_matrix[STARTING_POS[0]][tour_list[i][0]] , shortest_matrix[STARTING_POS[1]][tour_list[i][1]])
-		t2 = max(shortest_matrix[STARTING_POS[0]][tour_list[i][1]] , shortest_matrix[STARTING_POS[1]][tour_list[i][0]])
-		stfAp = min(t1, t2)
-		if stfAp < firstAppend:
-			firstAppend = stfAp
-			#index of tour_list of the closest point to STARTING_POS
-			fAp_index = i
-
-elif obj_fun == "distance":
-	for i in range(0,len(tour)):
-		t1 = shortest_matrix[STARTING_POS[0]][tour_list[i][0]] + shortest_matrix[STARTING_POS[1]][tour_list[i][1]]
-		t2 = shortest_matrix[STARTING_POS[0]][tour_list[i][1]] + shortest_matrix[STARTING_POS[1]][tour_list[i][0]]
-		stfAp = min(t1, t2)
-		if stfAp < firstAppend:
-			firstAppend = stfAp
-			#index of tour_list of the closest point to STARTING_POS
-			fAp_index = i
-
-if obj_fun == "time":
-	t1 = max(shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][0]] , shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][1]])
-	t2 = max(shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][1]] , shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][0]])
-elif obj_fun == "distance":
-	t1 = shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][0]] + shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][1]]
-	t2 = shortest_matrix[STARTING_POS[0]][tour_list[fAp_index][1]] + shortest_matrix[STARTING_POS[1]][tour_list[fAp_index][0]]
-if t1<=t2:
-	tour_configuration.append([ tour_list[fAp_index][0], tour_list[fAp_index][1] ])
-else:
-	tour_configuration.append([ tour_list[fAp_index][1], tour_list[fAp_index][0] ])
-
-
 CONFIGURATIONS = []
-CONFIGURATIONS.append(STARTING_POS)
-
-#computation of the starting position of the GUROBI tour. It has already been computed with fAp_index
-stp = 0
-if (STARTING_POS[0]==tour_configuration[0][0] and STARTING_POS[1]==tour_configuration[0][1]):
-	stp = 1
-elif (STARTING_POS[0]==tour_configuration[0][1] and STARTING_POS[1]==tour_configuration[0][0]):
-	stp = 2
-else:
-	stpL = []
-	stpL.append(-1)
-	stpL.append(-1)
-	stpL[0] = tour_configuration[0][0]
-	stpL[1] = tour_configuration[0][1]
-	
+CONFIGURATIONS.append([STARTING_POS[0], STARTING_POS[1]])
 
 if obj_fun == "time":
-	#check that fAp_index is not the last element, otherwise it has been already added
+	#check that fAp_index is not the last element, otherwise starts from beginning
 	if fAp_index < len(tour_list)-1:
 	#second half of the tour_list: from [fAp_index] to end
-		#the element [fAp_index] has been already taken, therefore the loop starts at [fAp_index+1]
-		for i in range(fAp_index+1,len(tour_list)):
-			if max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
-				tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+		#the element [fAp_index] is STARTING_POS, therefore the loop starts at [fAp_index+1]
+		for i in range(fAp_index,len(tour_list)-1):
+			if max(shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][0]] , shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][1]]) <= max(shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][1]] , shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][0]]):
+				CONFIGURATIONS.append([tour_list[i+1][0] , tour_list[i+1][1]])
 			else:
-				tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
-	#first half of the tour_list: from 0 to [fAp_index]
-	for i in range(0,fAp_index):
-		if max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]]) <= max(shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] , shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]):
-			tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+				CONFIGURATIONS.append([tour_list[i+1][1] , tour_list[i+1][0]])
+	
+	#check between last element and first element of tour
+	if max(shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[0][0]] , shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[0][1]]) <= max(shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[0][1]] , shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[0][0]]):
+			CONFIGURATIONS.append([tour_list[0][0] , tour_list[0][1]])
+	else:
+			CONFIGURATIONS.append([tour_list[0][1] , tour_list[0][0]])
+
+	#first half of the tour_list: from 0 to [fAp_index-1]
+	for i in range(0,fAp_index-1):
+		if max(shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][0]] , shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][1]]) <= max(shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][1]] , shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][0]]):
+			CONFIGURATIONS.append([tour_list[i+1][0] , tour_list[i+1][1]])
 		else:
-			tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+			CONFIGURATIONS.append([tour_list[i+1][1] , tour_list[i+1][0]])
 
 elif obj_fun == "distance":
-	#check that fAp_index is not the last element, otherwise it has been already added
+	#check that fAp_index is not the last element
 	if fAp_index < len(tour_list)-1:
 	#second half of the tour_list: from [fAp_index] to end
-		#the element [fAp_index] has been already taken, therefore the loop starts at [fAp_index+1]
-		for i in range(fAp_index+1,len(tour_list)):
-			if shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]] <= shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]:
-				tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+		for i in range(fAp_index,len(tour_list)-1):
+			if shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][0]] + shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][1]] <= shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][1]] + shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][0]]:
+				CONFIGURATIONS.append([tour_list[i+1][0] , tour_list[i+1][1]])
 			else:
-				tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+				CONFIGURATIONS.append([tour_list[i+1][1] , tour_list[i+1][0]])
+	
+	#check between last element and first element of tour
+	if shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[0][0]] + shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[0][1]] <= shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[0][1]] + shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[0][0]]:
+			CONFIGURATIONS.append([tour_list[0][0] , tour_list[0][1]])
+	else:
+			CONFIGURATIONS.append([tour_list[0][1] , tour_list[0][0]])
+
 	#first half of the tour_list: from 0 to [fAp_index]
-	for i in range(0,fAp_index):
-		if shortest_matrix[tour_configuration[-1][0]][tour_list[i][0]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][1]] <= shortest_matrix[tour_configuration[-1][0]][tour_list[i][1]] + shortest_matrix[tour_configuration[-1][1]][tour_list[i][0]]:
-			tour_configuration.append([tour_list[i][0] , tour_list[i][1]])
+	for i in range(0,fAp_index-1):
+		if shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][0]] + shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][1]] <= shortest_matrix[CONFIGURATIONS[-1][0]][tour_list[i+1][1]] + shortest_matrix[CONFIGURATIONS[-1][1]][tour_list[i+1][0]]:
+			CONFIGURATIONS.append([tour_list[i+1][0] , tour_list[i+1][1]])
 		else:
-			tour_configuration.append([tour_list[i][1] , tour_list[i][0]])
+			CONFIGURATIONS.append([tour_list[i+1][1] , tour_list[i+1][0]])
 
 
-for i in range(0,len(tour_configuration)):
-	CONFIGURATIONS.append([tour_configuration[i][0], tour_configuration[i][1]])
-CONFIGURATIONS.append([STARTING_POS[0], STARTING_POS[1]])
+CONFIGURATIONS.append(STARTING_POS)
 
 
 TIMETABLE = []
@@ -398,8 +368,28 @@ elif obj_fun == "distance":
 		tt = deepcopy(ttab)
 		TIMETABLE.append(tt)
 
+print "DATFILE : " + str(file_to_open)
 
-print "DATFILE: " + str(file_to_open)
-print"KUMAR2 last timestamp for " + str(obj_fun) + " is " + str(max(TIMETABLE[-1]))
-print("KUMAR2 EXECUTION TIME: %s seconds\n" % (time.time() - start_time))
+env = file_to_open[0:6]
+print "ENVIRONMENT : " + str(env)
+
+print "ALGORITHM : KUMAR2"
+
+if file_to_open[14] == "_":
+	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
+else:
+	RANGE = RANGE = file_to_open[11:15]
+print "RANGE : " + str(RANGE)
+
+print "STARTING_POS : " + str(STARTING_POS[0])
+
+print "N_ROBOTS : " + str(N_ROBOTS)
+
+if obj_fun == "time":
+	print"KUMAR2 T : " + str(max(TIMETABLE[-1]))
+elif obj_fun == "distance":
+	sumdist = TIMETABLE[-1][0] + TIMETABLE[-1][1]
+	print"KUMAR2 sumD : " + str(sumdist)
+
+print("EXECUTION TIME KUMAR2: %s seconds\n" % (time.time() - start_time))
 print "-------------------------------------------------------------------"

@@ -7,6 +7,7 @@ from operator import *
 from igraph import *
 from gurobipy import *
 
+sys.setrecursionlimit(1000000)
 #start the time
 start_time = time.time()
 
@@ -269,7 +270,7 @@ def compute_timetable(config1, config2, r_measuring, r_moving, timetable):
 		return tt, t_measure
 
 	elif obj_fun == "distance":
-		t_measure = max(tt)
+		t_measure = tt[0]+tt[1]+tt[2]
 		return tt, t_measure
 	
 
@@ -396,7 +397,27 @@ MOVING_ROBOTS.append(r_moving_final)
 
 
 T_FINAL = max(TIMETABLE[-1])
-print "DATFILE: " + str(file_to_open)
-print "Kumar3 for " + str(obj_fun) + "/ " + SORTIING + " ended computation at: " + str(T_FINAL)
-print("KUMAR 3 EXECUTION TIME: %s seconds\n" % (time.time() - start_time))
+print "DATFILE : " + str(file_to_open)
+
+env = file_to_open[0:6]
+print "ENVIRONMENT : " + str(env)
+
+print "ALGORITHM : KUMAR3"
+
+if file_to_open[14] == "_":
+	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
+else:
+	RANGE = RANGE = file_to_open[11:15]
+print "RANGE : " + str(RANGE)
+
+print "STARTING_POS : " + str(STARTING_POS[0])
+
+print "N_ROBOTS : " + str(N_ROBOTS)
+if obj_fun == "time":
+	print "KUMAR3 T " + "/ " + SORTIING + " : " + str(T_FINAL)
+elif obj_fun == "distance":
+	sumdist = TIMETABLE[-1][0] + TIMETABLE[-1][1] + TIMETABLE[-1][2]
+	print"KUMAR3 sumD " + "/ " + SORTIING + " : " + str(sumdist)
+
+print("EXECUTION TIME KUMAR3: %s seconds\n" % (time.time() - start_time))
 print "-------------------------------------------------------------------"

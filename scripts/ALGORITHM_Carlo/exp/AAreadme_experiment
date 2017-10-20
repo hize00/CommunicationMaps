@@ -1,0 +1,6 @@
+In this folder we can launch experiments with launch_experiment.py
+Prepare the .dat files and put their names in the 'datfiles' list inside the script.
+Open the terminal and type: "python launch_experiment.py > results.txt"
+The script will run the 3 algorithms (if possible) on the .dat files specified in the list and will save the results in a .txt file (results.txt by default)
+In this phase, script, .dat and .txt files need to be in the same folder
+After the experiment is done , move everything in results

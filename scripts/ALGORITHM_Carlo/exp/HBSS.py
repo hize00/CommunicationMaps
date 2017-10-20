@@ -8,9 +8,8 @@ from igraph import *
 from operator import itemgetter
 from gurobipy import *
 from copy import deepcopy
-import cProfile
-import pstats
 
+sys.setrecursionlimit(1000000)
 #start the time
 start_time = time.time()
 
@@ -294,7 +293,7 @@ def computeMoves(configuration, points_to_visit, timetable):
 						pair[1] = points_to_visit[k][1]
 						t1 = shortest_matrix[configuration[i]][points_to_visit[k][0]]
 						t2 = shortest_matrix[configuration[j]][points_to_visit[k][1]]
-						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
+						t = (timetable[i][0]+t1) + (timetable[j][0]+t2)
 						moves.append((t,configuration,cM[:], movingRobots,[pair[:]]))
 
 					else:
@@ -308,7 +307,7 @@ def computeMoves(configuration, points_to_visit, timetable):
 						pair[1] = points_to_visit[k][1]
 						t1 = shortest_matrix[configuration[i]][points_to_visit[k][1]]
 						t2 = shortest_matrix[configuration[j]][points_to_visit[k][0]]
-						t = max(timetable[i][0]+t1, timetable[j][0]+t2)
+						t = (timetable[i][0]+t1) + (timetable[j][0]+t2)
 						moves.append((t,configuration,cM[:], movingRobots, [pair[:]]))
 
 	return moves
@@ -399,12 +398,9 @@ if obj_fun == "time":
 
 elif obj_fun == "distance":
 	#distance in which robot complete exploration
-	maxDF = 0
-	for i in range(0,len(STARTING_POS)):
-		if shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]] > maxDF:
-			maxDF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
-			maxDF_index = i
-	greedy_time = float((STATES[-1].getTimeTable()[maxDF_index])) + maxDF
+	greedy_time = 0
+	for i in range(0, N_ROBOTS):
+		greedy_time = greedy_time + STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
 
 # |---------------------------|
 # |		 HBSS ALGORITHM       |
@@ -442,7 +438,7 @@ def HBBS_Search(state, heuristic, bias, depth, bound):
 		for i in range(0, len(scores)):
 			probability[i] = weight[i]/total_weight
 		#probability selection
-		child_index = SELECT(probability)
+		child_index = np.random.choice(range(0, length), None, False, probability)
 		#selected move according to BIAS and probability
 		m = scores[child_index]
 		ttable = updateTimeTable(state, m)
@@ -476,17 +472,6 @@ def SORT_Greedy(state):
 	LSG = sorted(moves, key=itemgetter(0))
 	return LSG
 
-#weighted probability selection
-def SELECT(probabilityList):
-	randomN = random.uniform(0, 1)
-	found = 0
-	#select random number based on probabilty. If none is selected choose the most probable
-	for i in range(0,len(probabilityList)):
-		if probabilityList[i] - randomN <= 0:
-			found = 1
-			return i
-	if found != 1:
-		return 0
 
 #compute the BIAS
 def BIAS_FUNCTION(bias, rank):
@@ -495,12 +480,20 @@ def BIAS_FUNCTION(bias, rank):
 		w = 1/math.log10(rank+1)
 	elif bias == "EXP":
 		w = math.exp(-rank)
+	elif bias == "POLY1":
+		w = math.pow(rank, -1)
 	elif bias == "POLY2":
 		w = math.pow(rank, -2)
 	elif bias == "POLY3":
 		w = math.pow(rank, -3)
 	elif bias == "POLY4":
 		w = math.pow(rank, -4)
+	elif bias == "POLY5":
+		w = math.pow(rank, -5)
+	elif bias == "POLY6":
+		w = math.pow(rank, -6)
+	elif bias == "POLY7":
+		w = math.pow(rank, -7)
 	else:
 		print "Unknown BIAS function"
 	return w
@@ -519,7 +512,7 @@ for j in range (0, N_ITERATIONS):
 	HBT = []
 	HB_TIME = []
 	HB_STATES.append(root)
-	HB_STATES, HBT = HBBS(root, "GREEDY", "LOG", len(POINTS_TO_EXPLORE), greedy_time)
+	HB_STATES, HBT = HBBS(root, "GREEDY", "POLY4", len(POINTS_TO_EXPLORE), greedy_time)
 	HBT.insert(0, np.zeros((N_ROBOTS, 1)))
 	for i in range(0,len(HB_STATES)):
 		HB_CONFIGURATIONS.append(HB_STATES[i].getConfiguration())
@@ -527,12 +520,19 @@ for j in range (0, N_ITERATIONS):
 		HB_TIME.append(HBT[i])
 	T_exploration = 0
 	#find the maximum time or distance in which the HBSS computation ends and add it to TIMES list
-	for i in range(0,len(STARTING_POS)):
-		if shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i] > T_exploration:
-			T_exploration = shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]
-			T_exploration_index = i
-	T_final =  float(T_exploration)
-	TIMES.append(T_final)
+	if obj_fun == "time":
+		for i in range(0,len(STARTING_POS)):
+			if shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i] > T_exploration:
+				T_exploration = shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]
+				T_exploration_index = i
+		T_final =  float(T_exploration)
+		TIMES.append(T_final)
+	elif obj_fun == "distance":
+		sumtime = 0
+		for i in range(0,len(STARTING_POS)):
+			sumtime = sumtime + shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]
+		TIMES.append(int(sumtime))
+
 
 	#set timetable of root to 0
 	tt = np.full((N_ROBOTS,1), 0)
@@ -569,8 +569,33 @@ for i in range(0,len(STARTING_POS)):
 HB_MOVING_LIST[bestIndex].append(final_robot_moving) 
 flat.append(final_times)
 
-print "DATFILE: " + str(file_to_open)
-print "Greedy solution " + str(greedy_time)
-print "HBBS " + str(obj_fun) + " ended computation at " + str(bestTime)
+print "DATFILE : " + str(file_to_open)
+
+env = file_to_open[0:6]
+print "ENVIRONMENT : " + str(env)
+
+print "ALGORITHM : HBSS"
+
+if file_to_open[14] == "_":
+	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
+else:
+	RANGE = RANGE = file_to_open[11:15]
+print "RANGE : " + str(RANGE)
+
+print "STARTING_POS : " + str(STARTING_POS[0])
+
+print "N_ROBOTS : " + str(N_ROBOTS)
+
+print "GREEDY SOLUTION : " + str(greedy_time)
+
+print "COMPUTATIONS :"
+for i in range(0, len(TIMES)):
+	print TIMES[i]
+
+if obj_fun == "time":
+	print "HBBS bestT : " + str(bestTime)
+elif obj_fun == "distance":
+	print "HBBS sumD : " + str(bestTime)
+
 print("EXECUTION TIME HBSS: %s seconds \n" % (time.time() - start_time))
 print "-------------------------------------------------------------------"

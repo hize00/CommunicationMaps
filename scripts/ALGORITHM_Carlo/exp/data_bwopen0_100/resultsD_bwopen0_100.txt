@@ -1,0 +1,11962 @@
+DATFILE : bwopen0_2r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 2
+KUMAR2 sumD : 454.0
+EXECUTION TIME KUMAR2: 0.0351791381836 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 454.]
+COMPUTATIONS :
+454
+466
+588
+472
+848
+632
+618
+470
+576
+526
+756
+590
+492
+454
+494
+728
+454
+592
+632
+478
+492
+474
+476
+466
+474
+454
+454
+454
+506
+496
+578
+494
+506
+466
+454
+454
+454
+474
+562
+526
+474
+454
+664
+454
+488
+550
+644
+454
+482
+476
+HBBS sumD : 454
+EXECUTION TIME HBSS: 0.178292989731 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 2
+KUMAR2 sumD : 440.0
+EXECUTION TIME KUMAR2: 0.0303370952606 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 482.]
+COMPUTATIONS :
+558
+660
+450
+482
+612
+554
+576
+524
+618
+482
+524
+688
+600
+692
+496
+626
+500
+462
+522
+692
+496
+560
+452
+520
+482
+496
+446
+506
+482
+450
+554
+506
+506
+502
+550
+800
+506
+586
+568
+450
+500
+576
+610
+616
+482
+450
+500
+478
+502
+482
+HBBS sumD : 446
+EXECUTION TIME HBSS: 0.152045965195 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 2
+KUMAR2 sumD : 446.0
+EXECUTION TIME KUMAR2: 0.0490138530731 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 494.]
+COMPUTATIONS :
+464
+508
+494
+598
+552
+732
+512
+516
+508
+638
+486
+494
+690
+494
+570
+494
+552
+494
+516
+570
+446
+494
+494
+494
+682
+494
+512
+600
+600
+508
+622
+584
+494
+494
+622
+570
+494
+552
+552
+494
+648
+508
+606
+508
+494
+508
+502
+516
+494
+512
+HBBS sumD : 446
+EXECUTION TIME HBSS: 0.12084197998 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 2
+KUMAR2 sumD : 442.0
+EXECUTION TIME KUMAR2: 0.0435638427734 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 452.]
+COMPUTATIONS :
+560
+568
+470
+562
+454
+546
+452
+452
+742
+476
+480
+452
+452
+608
+584
+452
+970
+452
+452
+454
+604
+452
+598
+460
+466
+488
+464
+470
+600
+500
+586
+460
+512
+574
+560
+634
+452
+452
+558
+476
+566
+462
+452
+644
+452
+454
+452
+494
+546
+788
+HBBS sumD : 452
+EXECUTION TIME HBSS: 0.110651016235 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 2
+KUMAR2 sumD : 454.0
+EXECUTION TIME KUMAR2: 0.0360419750214 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 454.]
+COMPUTATIONS :
+576
+474
+572
+580
+478
+454
+584
+476
+502
+492
+490
+562
+472
+454
+454
+550
+472
+478
+454
+474
+474
+454
+506
+474
+494
+774
+474
+472
+498
+494
+522
+454
+454
+522
+488
+644
+558
+478
+522
+636
+584
+678
+454
+454
+518
+546
+520
+478
+572
+704
+HBBS sumD : 454
+EXECUTION TIME HBSS: 0.0746970176697 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 2
+KUMAR2 sumD : 448.0
+EXECUTION TIME KUMAR2: 0.0259599685669 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 452.]
+COMPUTATIONS :
+538
+452
+454
+564
+626
+612
+564
+452
+472
+654
+702
+452
+846
+586
+584
+584
+660
+586
+452
+474
+600
+626
+766
+584
+642
+564
+564
+452
+574
+566
+702
+584
+612
+452
+480
+650
+546
+584
+454
+624
+452
+452
+452
+584
+452
+658
+454
+566
+634
+584
+HBBS sumD : 452
+EXECUTION TIME HBSS: 0.132364988327 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 2
+KUMAR2 sumD : 450.0
+EXECUTION TIME KUMAR2: 0.0238449573517 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 456.]
+COMPUTATIONS :
+574
+662
+500
+466
+580
+486
+488
+456
+456
+578
+752
+550
+456
+578
+486
+574
+456
+578
+548
+456
+578
+550
+596
+462
+456
+506
+456
+456
+478
+456
+550
+598
+550
+460
+456
+456
+456
+456
+548
+456
+578
+456
+598
+548
+472
+550
+456
+550
+570
+456
+HBBS sumD : 456
+EXECUTION TIME HBSS: 0.102960109711 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 2
+KUMAR2 sumD : 474.0
+EXECUTION TIME KUMAR2: 0.0278208255768 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 492.]
+COMPUTATIONS :
+740
+492
+492
+640
+526
+558
+492
+624
+536
+492
+640
+638
+554
+474
+508
+662
+488
+526
+640
+638
+522
+624
+596
+558
+474
+520
+618
+624
+638
+644
+474
+526
+492
+638
+688
+492
+624
+526
+620
+492
+474
+492
+804
+492
+824
+572
+492
+492
+492
+624
+HBBS sumD : 474
+EXECUTION TIME HBSS: 0.106401920319 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 2
+KUMAR2 sumD : 482.0
+EXECUTION TIME KUMAR2: 0.0269401073456 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 482.]
+COMPUTATIONS :
+482
+482
+482
+698
+482
+620
+552
+506
+496
+482
+576
+482
+510
+574
+482
+510
+712
+664
+664
+662
+552
+482
+576
+532
+776
+532
+590
+560
+648
+594
+496
+544
+588
+558
+688
+566
+482
+482
+600
+496
+776
+502
+786
+618
+576
+502
+530
+620
+482
+572
+HBBS sumD : 482
+EXECUTION TIME HBSS: 0.0637807846069 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 2
+KUMAR2 sumD : 442.0
+EXECUTION TIME KUMAR2: 0.0167498588562 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 442.]
+COMPUTATIONS :
+452
+676
+624
+580
+644
+442
+442
+690
+538
+442
+442
+442
+504
+598
+458
+576
+856
+598
+584
+458
+770
+490
+448
+544
+442
+726
+442
+588
+642
+608
+606
+458
+486
+442
+534
+464
+702
+442
+442
+606
+614
+564
+574
+700
+606
+448
+514
+442
+668
+556
+HBBS sumD : 442
+EXECUTION TIME HBSS: 0.040589094162 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 2
+KUMAR2 sumD : 442.0
+EXECUTION TIME KUMAR2: 0.0277581214905 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 452.]
+COMPUTATIONS :
+608
+560
+482
+452
+560
+654
+536
+452
+578
+482
+550
+452
+452
+598
+522
+556
+596
+452
+448
+442
+448
+476
+560
+578
+582
+550
+640
+452
+560
+476
+442
+564
+722
+482
+582
+454
+572
+442
+454
+560
+458
+638
+702
+624
+454
+542
+452
+482
+484
+536
+HBBS sumD : 442
+EXECUTION TIME HBSS: 0.0377399921417 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 2
+KUMAR2 sumD : 456.0
+EXECUTION TIME KUMAR2: 0.0424659252167 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 460.]
+COMPUTATIONS :
+460
+460
+480
+508
+600
+456
+460
+592
+506
+542
+480
+464
+464
+456
+704
+460
+456
+460
+460
+510
+460
+460
+508
+528
+466
+642
+740
+466
+564
+586
+464
+496
+594
+456
+456
+542
+630
+578
+464
+568
+508
+508
+578
+456
+630
+478
+462
+792
+460
+482
+HBBS sumD : 456
+EXECUTION TIME HBSS: 0.0435841083527 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 2
+KUMAR2 sumD : 458.0
+EXECUTION TIME KUMAR2: 0.01615691185 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 458.]
+COMPUTATIONS :
+492
+554
+482
+620
+554
+622
+504
+540
+558
+546
+526
+582
+458
+512
+458
+486
+562
+458
+554
+572
+458
+568
+562
+458
+592
+642
+486
+546
+540
+566
+486
+458
+458
+682
+576
+552
+458
+478
+634
+458
+580
+482
+622
+478
+510
+610
+458
+482
+558
+486
+HBBS sumD : 458
+EXECUTION TIME HBSS: 0.13756608963 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 2
+KUMAR2 sumD : 448.0
+EXECUTION TIME KUMAR2: 0.0309400558472 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 454.]
+COMPUTATIONS :
+454
+454
+552
+474
+454
+454
+454
+478
+454
+550
+462
+602
+454
+570
+474
+706
+498
+472
+562
+454
+454
+480
+490
+454
+474
+488
+492
+574
+566
+590
+488
+526
+462
+468
+496
+488
+474
+454
+454
+526
+474
+792
+570
+454
+500
+448
+472
+478
+472
+496
+HBBS sumD : 448
+EXECUTION TIME HBSS: 0.037563085556 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 2
+KUMAR2 sumD : 452.0
+EXECUTION TIME KUMAR2: 0.0211589336395 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 456.]
+COMPUTATIONS :
+456
+654
+664
+556
+456
+456
+588
+478
+456
+458
+766
+674
+588
+576
+584
+456
+638
+584
+564
+456
+452
+598
+560
+588
+458
+456
+456
+454
+678
+456
+584
+456
+664
+456
+640
+454
+458
+564
+484
+560
+654
+550
+456
+586
+638
+616
+456
+556
+456
+590
+HBBS sumD : 452
+EXECUTION TIME HBSS: 0.0391068458557 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 2
+KUMAR2 sumD : 452.0
+EXECUTION TIME KUMAR2: 0.0220940113068 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 456.]
+COMPUTATIONS :
+456
+490
+570
+570
+740
+512
+478
+504
+476
+456
+456
+468
+588
+734
+726
+456
+456
+592
+528
+722
+728
+596
+452
+752
+504
+554
+476
+478
+476
+588
+460
+480
+456
+478
+478
+456
+476
+478
+624
+474
+482
+456
+474
+478
+490
+748
+452
+636
+576
+482
+HBBS sumD : 452
+EXECUTION TIME HBSS: 0.114891052246 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 2
+KUMAR2 sumD : 450.0
+EXECUTION TIME KUMAR2: 0.0159268379211 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 450.]
+COMPUTATIONS :
+462
+526
+560
+450
+472
+526
+450
+494
+558
+560
+640
+526
+668
+526
+450
+580
+456
+576
+732
+540
+568
+568
+554
+450
+472
+788
+526
+526
+456
+578
+456
+456
+450
+562
+480
+554
+546
+554
+694
+472
+554
+462
+450
+568
+450
+472
+466
+450
+526
+548
+HBBS sumD : 450
+EXECUTION TIME HBSS: 0.154404163361 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 2
+KUMAR2 sumD : 446.0
+EXECUTION TIME KUMAR2: 0.0193581581116 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 508.]
+COMPUTATIONS :
+696
+574
+590
+498
+532
+558
+574
+508
+602
+508
+508
+596
+508
+562
+548
+508
+504
+552
+536
+498
+504
+570
+594
+526
+508
+508
+508
+536
+508
+560
+536
+590
+508
+570
+740
+508
+504
+498
+508
+508
+532
+532
+508
+508
+446
+510
+518
+522
+696
+534
+HBBS sumD : 446
+EXECUTION TIME HBSS: 0.067223072052 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 2
+KUMAR2 sumD : 460.0
+EXECUTION TIME KUMAR2: 0.396951913834 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 460.]
+COMPUTATIONS :
+460
+526
+646
+526
+492
+736
+460
+712
+664
+596
+566
+460
+482
+460
+654
+460
+644
+466
+504
+472
+630
+630
+460
+482
+654
+466
+460
+460
+460
+672
+668
+466
+630
+494
+654
+612
+664
+652
+630
+472
+688
+540
+540
+460
+732
+460
+492
+460
+730
+518
+HBBS sumD : 460
+EXECUTION TIME HBSS: 0.133307933807 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 2
+KUMAR2 sumD : 442.0
+EXECUTION TIME KUMAR2: 0.0216841697693 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_2r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 2
+GREEDY SOLUTION : [ 472.]
+COMPUTATIONS :
+472
+680
+472
+538
+462
+472
+472
+472
+462
+472
+500
+556
+536
+472
+462
+442
+672
+462
+464
+556
+556
+558
+690
+468
+558
+806
+556
+500
+502
+538
+468
+462
+472
+500
+638
+556
+556
+582
+556
+462
+624
+472
+578
+496
+462
+472
+468
+556
+556
+654
+HBBS sumD : 442
+EXECUTION TIME HBSS: 0.106461048126 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 542.0
+EXECUTION TIME KUMAR3: 0.129996061325 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 566.0
+EXECUTION TIME KUMAR3: 0.236737012863 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 478.0
+EXECUTION TIME KUMAR3: 0.0781240463257 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 642.]
+COMPUTATIONS :
+642
+612
+642
+648
+680
+648
+632
+666
+642
+642
+658
+670
+610
+670
+642
+642
+648
+598
+612
+642
+640
+642
+652
+642
+640
+642
+642
+642
+642
+662
+642
+632
+658
+660
+652
+642
+644
+670
+642
+612
+648
+618
+642
+670
+648
+636
+666
+632
+642
+642
+HBBS sumD : 598
+EXECUTION TIME HBSS: 0.0902400016785 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 610.0
+EXECUTION TIME KUMAR3: 0.123558044434 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 674.0
+EXECUTION TIME KUMAR3: 0.126558065414 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 482.0
+EXECUTION TIME KUMAR3: 0.157274961472 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 678.]
+COMPUTATIONS :
+690
+668
+708
+682
+674
+706
+678
+640
+678
+626
+634
+662
+678
+732
+666
+678
+678
+688
+638
+688
+622
+678
+710
+666
+670
+706
+690
+626
+724
+682
+670
+678
+678
+678
+678
+640
+688
+688
+678
+678
+644
+670
+688
+680
+678
+678
+688
+634
+668
+628
+HBBS sumD : 622
+EXECUTION TIME HBSS: 0.157272100449 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 518.0
+EXECUTION TIME KUMAR3: 0.118759870529 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 518.0
+EXECUTION TIME KUMAR3: 0.116991043091 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 508.0
+EXECUTION TIME KUMAR3: 0.189029932022 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 602.]
+COMPUTATIONS :
+658
+616
+618
+616
+610
+612
+632
+602
+646
+676
+602
+602
+638
+626
+642
+602
+602
+602
+618
+602
+574
+602
+602
+612
+628
+602
+650
+602
+610
+618
+674
+546
+626
+636
+626
+602
+638
+618
+602
+668
+610
+602
+626
+602
+618
+602
+582
+626
+598
+618
+HBBS sumD : 546
+EXECUTION TIME HBSS: 0.155953884125 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 762.0
+EXECUTION TIME KUMAR3: 0.123180866241 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 618.0
+EXECUTION TIME KUMAR3: 0.147258996964 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 472.0
+EXECUTION TIME KUMAR3: 0.25599694252 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 598.]
+COMPUTATIONS :
+610
+598
+652
+704
+626
+650
+624
+598
+622
+598
+796
+634
+612
+620
+606
+598
+622
+620
+626
+598
+598
+598
+598
+620
+602
+598
+620
+598
+664
+606
+602
+602
+598
+606
+606
+684
+682
+598
+648
+646
+620
+598
+598
+620
+598
+598
+676
+694
+602
+676
+HBBS sumD : 598
+EXECUTION TIME HBSS: 0.143618822098 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 520.0
+EXECUTION TIME KUMAR3: 0.188282012939 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 520.0
+EXECUTION TIME KUMAR3: 0.12596487999 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 484.0
+EXECUTION TIME KUMAR3: 0.11144900322 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 636.]
+COMPUTATIONS :
+646
+664
+660
+606
+628
+636
+654
+652
+616
+664
+632
+636
+646
+632
+636
+654
+646
+646
+636
+636
+620
+616
+628
+636
+592
+636
+652
+638
+636
+646
+630
+646
+636
+628
+628
+636
+592
+642
+654
+650
+630
+640
+636
+612
+640
+636
+636
+636
+636
+664
+HBBS sumD : 592
+EXECUTION TIME HBSS: 0.0826349258423 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 464.0
+EXECUTION TIME KUMAR3: 0.0596089363098 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 464.0
+EXECUTION TIME KUMAR3: 0.117285966873 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 586.0
+EXECUTION TIME KUMAR3: 0.158596992493 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 598.]
+COMPUTATIONS :
+602
+602
+612
+602
+630
+598
+618
+598
+620
+708
+622
+598
+598
+598
+620
+650
+620
+598
+620
+612
+628
+610
+570
+630
+546
+540
+602
+620
+618
+604
+598
+618
+608
+668
+598
+620
+604
+598
+598
+612
+628
+618
+618
+580
+618
+598
+614
+616
+602
+602
+HBBS sumD : 540
+EXECUTION TIME HBSS: 0.158999919891 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 636.0
+EXECUTION TIME KUMAR3: 0.111485004425 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 512.0
+EXECUTION TIME KUMAR3: 0.105037927628 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 466.0
+EXECUTION TIME KUMAR3: 0.145393848419 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 596.]
+COMPUTATIONS :
+632
+664
+596
+596
+616
+604
+596
+596
+614
+632
+530
+604
+596
+646
+596
+596
+596
+526
+638
+596
+596
+596
+596
+604
+596
+596
+596
+610
+596
+604
+704
+604
+596
+604
+624
+602
+602
+624
+704
+596
+624
+596
+640
+518
+596
+596
+646
+604
+636
+604
+HBBS sumD : 518
+EXECUTION TIME HBSS: 0.185924053192 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 494.0
+EXECUTION TIME KUMAR3: 0.286911964417 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 494.0
+EXECUTION TIME KUMAR3: 0.215656995773 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 492.0
+EXECUTION TIME KUMAR3: 0.183950901031 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 634.]
+COMPUTATIONS :
+640
+650
+648
+630
+630
+698
+702
+634
+634
+736
+640
+634
+630
+634
+634
+634
+640
+650
+650
+638
+634
+808
+688
+634
+654
+634
+634
+658
+664
+634
+662
+666
+634
+560
+710
+648
+650
+630
+634
+654
+634
+638
+678
+650
+630
+658
+632
+640
+664
+634
+HBBS sumD : 560
+EXECUTION TIME HBSS: 0.229272127151 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 570.0
+EXECUTION TIME KUMAR3: 0.165631055832 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 570.0
+EXECUTION TIME KUMAR3: 0.197872877121 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 508.0
+EXECUTION TIME KUMAR3: 0.141302108765 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 584.]
+COMPUTATIONS :
+584
+624
+614
+582
+584
+630
+600
+592
+584
+624
+640
+656
+610
+702
+704
+584
+598
+634
+606
+624
+594
+802
+584
+592
+626
+584
+584
+592
+598
+588
+584
+584
+584
+620
+628
+584
+606
+574
+662
+582
+632
+604
+606
+622
+600
+582
+770
+598
+620
+600
+HBBS sumD : 574
+EXECUTION TIME HBSS: 0.109941005707 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 636.0
+EXECUTION TIME KUMAR3: 0.118534088135 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 518.0
+EXECUTION TIME KUMAR3: 0.06290102005 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 512.0
+EXECUTION TIME KUMAR3: 0.116103887558 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 582.]
+COMPUTATIONS :
+590
+590
+660
+540
+582
+638
+582
+596
+622
+620
+590
+590
+582
+584
+582
+590
+582
+584
+734
+668
+646
+590
+520
+600
+622
+598
+590
+600
+594
+582
+704
+582
+616
+590
+520
+596
+590
+794
+584
+648
+582
+582
+582
+582
+582
+600
+590
+588
+582
+582
+HBBS sumD : 520
+EXECUTION TIME HBSS: 0.277333021164 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 680.0
+EXECUTION TIME KUMAR3: 0.265563964844 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 662.0
+EXECUTION TIME KUMAR3: 0.13810801506 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 542.0
+EXECUTION TIME KUMAR3: 0.105554103851 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 608.]
+COMPUTATIONS :
+644
+608
+608
+634
+618
+618
+608
+620
+608
+722
+620
+642
+608
+584
+654
+636
+620
+608
+608
+638
+644
+628
+608
+608
+608
+628
+608
+646
+636
+684
+608
+608
+608
+642
+664
+608
+644
+662
+620
+718
+620
+620
+608
+608
+638
+674
+608
+608
+584
+634
+HBBS sumD : 584
+EXECUTION TIME HBSS: 0.240322113037 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 552.0
+EXECUTION TIME KUMAR3: 0.0891399383545 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 670.0
+EXECUTION TIME KUMAR3: 0.069482088089 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 460.0
+EXECUTION TIME KUMAR3: 0.100596904755 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 670.]
+COMPUTATIONS :
+674
+696
+672
+654
+654
+710
+654
+696
+670
+696
+662
+680
+670
+678
+684
+670
+610
+670
+670
+670
+646
+662
+670
+652
+674
+670
+696
+680
+696
+670
+674
+620
+682
+708
+670
+616
+698
+646
+670
+670
+670
+674
+620
+654
+722
+644
+696
+690
+670
+670
+HBBS sumD : 610
+EXECUTION TIME HBSS: 0.224205970764 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 498.0
+EXECUTION TIME KUMAR3: 0.219684839249 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 498.0
+EXECUTION TIME KUMAR3: 0.238857030869 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 482.0
+EXECUTION TIME KUMAR3: 0.184139966965 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 590.]
+COMPUTATIONS :
+534
+582
+590
+608
+586
+596
+586
+590
+566
+590
+580
+586
+590
+590
+566
+570
+626
+580
+590
+606
+586
+552
+590
+586
+570
+534
+548
+590
+590
+590
+590
+596
+716
+634
+590
+592
+586
+590
+634
+600
+570
+538
+602
+590
+586
+614
+588
+588
+586
+626
+HBBS sumD : 534
+EXECUTION TIME HBSS: 0.0831959247589 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 558.0
+EXECUTION TIME KUMAR3: 0.118901014328 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 550.0
+EXECUTION TIME KUMAR3: 0.16969203949 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 478.0
+EXECUTION TIME KUMAR3: 0.169552087784 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 650.]
+COMPUTATIONS :
+650
+650
+650
+650
+650
+618
+648
+650
+678
+658
+648
+650
+678
+650
+622
+660
+650
+616
+650
+632
+618
+650
+592
+650
+660
+648
+628
+592
+650
+648
+650
+650
+678
+650
+650
+650
+650
+652
+674
+652
+636
+604
+648
+608
+650
+608
+676
+650
+678
+648
+HBBS sumD : 592
+EXECUTION TIME HBSS: 0.175719022751 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 476.0
+EXECUTION TIME KUMAR3: 0.19984292984 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 476.0
+EXECUTION TIME KUMAR3: 0.200366973877 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 562.0
+EXECUTION TIME KUMAR3: 0.241720914841 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 596.]
+COMPUTATIONS :
+652
+598
+590
+596
+596
+596
+588
+596
+596
+596
+588
+588
+588
+596
+598
+596
+596
+596
+604
+610
+596
+668
+602
+596
+602
+596
+588
+722
+596
+596
+630
+600
+596
+592
+588
+576
+608
+606
+588
+606
+602
+590
+588
+652
+596
+598
+588
+606
+594
+628
+HBBS sumD : 576
+EXECUTION TIME HBSS: 0.135303974152 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 508.0
+EXECUTION TIME KUMAR3: 0.117674827576 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 588.0
+EXECUTION TIME KUMAR3: 0.0544481277466 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 586.0
+EXECUTION TIME KUMAR3: 0.150171041489 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 678.]
+COMPUTATIONS :
+626
+684
+678
+668
+678
+678
+670
+628
+678
+664
+618
+678
+626
+678
+678
+634
+730
+678
+668
+638
+636
+678
+660
+652
+666
+692
+678
+672
+668
+678
+722
+722
+652
+660
+624
+632
+678
+678
+668
+678
+628
+626
+678
+688
+678
+652
+748
+686
+684
+712
+HBBS sumD : 618
+EXECUTION TIME HBSS: 0.106848955154 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 616.0
+EXECUTION TIME KUMAR3: 0.0776269435883 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 510.0
+EXECUTION TIME KUMAR3: 0.140350103378 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 450.0
+EXECUTION TIME KUMAR3: 0.118363142014 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 592.]
+COMPUTATIONS :
+610
+610
+592
+624
+592
+592
+592
+616
+584
+634
+592
+604
+620
+592
+612
+600
+588
+634
+620
+592
+592
+530
+624
+602
+592
+706
+592
+592
+586
+630
+592
+600
+604
+592
+604
+606
+584
+584
+592
+594
+592
+598
+594
+586
+586
+598
+592
+698
+594
+514
+HBBS sumD : 514
+EXECUTION TIME HBSS: 0.0831770896912 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 702.0
+EXECUTION TIME KUMAR3: 0.124096155167 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 648.0
+EXECUTION TIME KUMAR3: 0.192110061646 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 512.0
+EXECUTION TIME KUMAR3: 0.184782981873 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 632.]
+COMPUTATIONS :
+632
+648
+632
+650
+644
+638
+664
+674
+632
+542
+666
+654
+650
+632
+636
+650
+624
+632
+664
+666
+632
+640
+626
+600
+644
+632
+692
+632
+660
+632
+648
+632
+632
+632
+634
+636
+648
+644
+640
+630
+656
+634
+636
+632
+640
+632
+660
+648
+624
+632
+HBBS sumD : 542
+EXECUTION TIME HBSS: 0.0705440044403 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 616.0
+EXECUTION TIME KUMAR3: 0.127879142761 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 544.0
+EXECUTION TIME KUMAR3: 0.23614192009 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 492.0
+EXECUTION TIME KUMAR3: 0.284476995468 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 600.]
+COMPUTATIONS :
+600
+602
+596
+598
+654
+600
+588
+620
+600
+702
+600
+604
+600
+600
+610
+578
+630
+656
+600
+558
+602
+600
+592
+602
+632
+602
+578
+600
+584
+594
+600
+602
+600
+592
+604
+656
+614
+592
+592
+626
+562
+606
+600
+600
+600
+600
+632
+598
+656
+600
+HBBS sumD : 558
+EXECUTION TIME HBSS: 0.210577964783 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 730.0
+EXECUTION TIME KUMAR3: 0.187237024307 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 626.0
+EXECUTION TIME KUMAR3: 0.168007135391 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR3
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 476.0
+EXECUTION TIME KUMAR3: 0.207206010818 seconds
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 3
+GREEDY SOLUTION : [ 588.]
+COMPUTATIONS :
+626
+588
+654
+588
+588
+588
+588
+798
+588
+616
+626
+588
+648
+626
+660
+588
+604
+610
+588
+600
+626
+588
+588
+624
+588
+630
+588
+668
+620
+626
+608
+626
+626
+636
+626
+588
+616
+602
+630
+602
+626
+660
+634
+660
+588
+626
+588
+588
+588
+626
+HBBS sumD : 588
+EXECUTION TIME HBSS: 0.140880823135 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 562.]
+COMPUTATIONS :
+562
+660
+562
+562
+584
+562
+732
+630
+562
+656
+562
+584
+562
+562
+690
+718
+562
+638
+562
+650
+686
+664
+562
+562
+612
+562
+726
+562
+748
+700
+730
+562
+562
+600
+660
+604
+562
+562
+562
+584
+682
+598
+612
+650
+562
+562
+616
+562
+562
+562
+HBBS sumD : 562
+EXECUTION TIME HBSS: 0.377733945847 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 706.]
+COMPUTATIONS :
+706
+716
+720
+706
+706
+720
+716
+632
+716
+728
+706
+740
+772
+716
+702
+698
+706
+724
+768
+706
+706
+720
+706
+738
+696
+716
+660
+706
+706
+748
+714
+702
+706
+742
+720
+706
+706
+706
+710
+706
+730
+706
+706
+696
+706
+730
+724
+706
+706
+706
+HBBS sumD : 632
+EXECUTION TIME HBSS: 0.350109100342 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 684.]
+COMPUTATIONS :
+720
+624
+734
+652
+722
+754
+684
+644
+672
+684
+722
+634
+634
+684
+610
+684
+752
+684
+666
+624
+720
+684
+682
+684
+684
+624
+658
+684
+684
+720
+654
+624
+602
+684
+638
+610
+702
+684
+684
+684
+684
+684
+716
+684
+666
+712
+684
+684
+634
+610
+HBBS sumD : 602
+EXECUTION TIME HBSS: 0.378631830215 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 696.]
+COMPUTATIONS :
+696
+696
+696
+780
+810
+786
+832
+790
+696
+790
+696
+770
+696
+810
+696
+788
+810
+696
+696
+696
+784
+696
+810
+794
+696
+678
+784
+700
+790
+784
+696
+780
+696
+800
+770
+696
+696
+696
+724
+696
+696
+800
+696
+788
+696
+696
+696
+696
+810
+696
+HBBS sumD : 678
+EXECUTION TIME HBSS: 0.339397907257 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 538.]
+COMPUTATIONS :
+618
+566
+538
+588
+546
+538
+546
+538
+538
+538
+538
+560
+558
+588
+538
+618
+618
+562
+618
+546
+538
+538
+720
+538
+538
+586
+546
+560
+538
+610
+538
+588
+538
+538
+538
+538
+598
+558
+538
+538
+538
+584
+538
+538
+590
+646
+600
+546
+538
+538
+HBBS sumD : 538
+EXECUTION TIME HBSS: 0.332715988159 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 712.]
+COMPUTATIONS :
+712
+732
+712
+712
+752
+716
+712
+706
+712
+712
+712
+712
+706
+732
+674
+710
+712
+732
+712
+712
+752
+712
+712
+712
+718
+712
+712
+706
+712
+684
+696
+732
+712
+712
+790
+712
+712
+712
+712
+706
+782
+710
+712
+706
+712
+712
+674
+698
+712
+712
+HBBS sumD : 674
+EXECUTION TIME HBSS: 0.387065887451 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 652.]
+COMPUTATIONS :
+660
+652
+652
+766
+652
+652
+752
+766
+652
+652
+768
+652
+644
+766
+652
+652
+750
+644
+660
+742
+702
+652
+660
+652
+652
+660
+660
+784
+710
+654
+766
+652
+652
+666
+652
+652
+652
+654
+766
+652
+652
+652
+558
+652
+668
+558
+652
+654
+776
+660
+HBBS sumD : 558
+EXECUTION TIME HBSS: 0.374606847763 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 690.]
+COMPUTATIONS :
+726
+760
+782
+700
+728
+690
+748
+668
+690
+690
+690
+702
+728
+722
+742
+690
+690
+690
+730
+682
+690
+690
+730
+690
+690
+700
+678
+678
+730
+690
+690
+682
+730
+778
+690
+690
+760
+762
+690
+718
+690
+760
+696
+686
+730
+690
+690
+696
+690
+726
+HBBS sumD : 668
+EXECUTION TIME HBSS: 0.520387172699 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 666.]
+COMPUTATIONS :
+666
+666
+670
+670
+700
+666
+666
+704
+672
+666
+644
+666
+666
+666
+666
+666
+656
+666
+666
+666
+666
+706
+666
+666
+716
+666
+688
+646
+666
+666
+666
+670
+658
+726
+666
+672
+636
+646
+636
+650
+726
+636
+666
+666
+708
+674
+666
+636
+666
+722
+HBBS sumD : 636
+EXECUTION TIME HBSS: 0.162872076035 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 744.]
+COMPUTATIONS :
+760
+668
+726
+744
+744
+744
+760
+744
+674
+744
+744
+678
+744
+678
+744
+744
+744
+750
+744
+744
+744
+678
+744
+744
+744
+678
+738
+744
+744
+684
+744
+678
+744
+762
+744
+744
+678
+744
+744
+744
+670
+744
+744
+678
+670
+674
+744
+744
+740
+660
+HBBS sumD : 660
+EXECUTION TIME HBSS: 0.345023155212 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 552.]
+COMPUTATIONS :
+566
+552
+576
+552
+552
+628
+552
+552
+628
+552
+552
+566
+654
+562
+608
+604
+628
+622
+640
+608
+552
+752
+552
+628
+622
+552
+552
+562
+552
+714
+690
+552
+562
+552
+702
+552
+644
+662
+552
+552
+566
+656
+552
+658
+552
+642
+552
+552
+552
+666
+HBBS sumD : 552
+EXECUTION TIME HBSS: 0.271094083786 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 742.]
+COMPUTATIONS :
+754
+792
+770
+742
+714
+698
+660
+732
+772
+742
+742
+742
+760
+788
+742
+742
+742
+782
+860
+774
+732
+742
+742
+742
+698
+678
+742
+742
+618
+734
+778
+782
+738
+698
+742
+742
+742
+742
+742
+678
+696
+740
+742
+696
+722
+742
+672
+742
+742
+774
+HBBS sumD : 618
+EXECUTION TIME HBSS: 0.281787872314 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 642.]
+COMPUTATIONS :
+642
+642
+642
+698
+642
+676
+612
+608
+608
+642
+626
+666
+642
+702
+642
+600
+608
+600
+642
+676
+642
+646
+608
+758
+642
+642
+642
+640
+668
+676
+642
+608
+672
+642
+636
+614
+658
+642
+642
+618
+736
+644
+642
+642
+636
+608
+642
+642
+642
+650
+HBBS sumD : 600
+EXECUTION TIME HBSS: 0.337884902954 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 690.]
+COMPUTATIONS :
+692
+638
+690
+648
+742
+724
+690
+690
+690
+690
+690
+732
+690
+690
+690
+634
+690
+710
+690
+720
+686
+626
+690
+634
+690
+690
+800
+690
+616
+702
+680
+690
+626
+698
+690
+644
+692
+780
+708
+690
+708
+732
+784
+690
+720
+706
+690
+690
+710
+690
+HBBS sumD : 616
+EXECUTION TIME HBSS: 0.281477212906 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 690.]
+COMPUTATIONS :
+710
+690
+664
+710
+690
+690
+724
+690
+664
+682
+682
+690
+690
+690
+688
+690
+690
+666
+690
+690
+690
+678
+676
+690
+720
+690
+642
+664
+690
+688
+690
+662
+710
+710
+690
+690
+688
+690
+698
+664
+690
+704
+690
+644
+690
+676
+690
+654
+740
+682
+HBBS sumD : 642
+EXECUTION TIME HBSS: 0.232039213181 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 612.]
+COMPUTATIONS :
+706
+614
+630
+696
+612
+642
+630
+612
+612
+626
+612
+612
+612
+634
+630
+612
+634
+634
+716
+616
+612
+630
+612
+752
+612
+612
+706
+752
+742
+612
+630
+634
+612
+764
+612
+612
+612
+612
+612
+736
+642
+612
+612
+640
+612
+624
+634
+650
+614
+630
+HBBS sumD : 612
+EXECUTION TIME HBSS: 0.363846063614 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 676.]
+COMPUTATIONS :
+676
+678
+676
+732
+634
+648
+676
+676
+676
+676
+676
+764
+676
+674
+676
+596
+676
+676
+676
+684
+662
+742
+730
+676
+676
+676
+676
+742
+676
+676
+634
+648
+676
+676
+568
+676
+676
+682
+676
+676
+742
+676
+740
+724
+596
+676
+676
+634
+676
+676
+HBBS sumD : 568
+EXECUTION TIME HBSS: 0.208138942719 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 740.]
+COMPUTATIONS :
+740
+682
+740
+764
+740
+740
+740
+740
+704
+758
+740
+740
+750
+710
+740
+766
+740
+758
+764
+764
+720
+682
+728
+740
+740
+744
+740
+740
+740
+740
+764
+740
+740
+734
+716
+812
+740
+740
+740
+734
+740
+766
+736
+782
+740
+760
+740
+772
+740
+764
+HBBS sumD : 682
+EXECUTION TIME HBSS: 0.179976940155 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 538.]
+COMPUTATIONS :
+674
+716
+572
+648
+566
+538
+626
+538
+538
+556
+538
+538
+538
+538
+718
+626
+538
+538
+556
+538
+642
+538
+618
+538
+538
+548
+562
+538
+768
+538
+538
+538
+538
+538
+538
+538
+538
+538
+538
+654
+650
+668
+656
+538
+730
+626
+538
+548
+678
+538
+HBBS sumD : 538
+EXECUTION TIME HBSS: 0.363824129105 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 4
+GREEDY SOLUTION : [ 738.]
+COMPUTATIONS :
+738
+738
+756
+754
+738
+790
+790
+738
+738
+738
+770
+738
+762
+738
+750
+738
+766
+738
+738
+738
+738
+770
+738
+738
+738
+738
+738
+738
+738
+738
+738
+738
+738
+738
+604
+784
+738
+738
+762
+738
+766
+738
+738
+738
+768
+750
+768
+762
+738
+762
+HBBS sumD : 604
+EXECUTION TIME HBSS: 0.384948968887 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 586.]
+COMPUTATIONS :
+678
+694
+586
+622
+586
+586
+586
+586
+586
+586
+702
+586
+608
+640
+586
+586
+692
+586
+586
+586
+776
+692
+586
+586
+586
+748
+702
+586
+586
+586
+586
+586
+586
+608
+586
+684
+684
+586
+586
+840
+608
+586
+664
+682
+664
+586
+586
+586
+710
+608
+HBBS sumD : 586
+EXECUTION TIME HBSS: 0.537401199341 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 850.]
+COMPUTATIONS :
+782
+790
+838
+850
+850
+850
+850
+850
+838
+776
+850
+850
+876
+850
+844
+850
+776
+850
+850
+850
+838
+850
+772
+844
+850
+838
+850
+838
+818
+860
+850
+844
+850
+850
+850
+850
+846
+850
+816
+850
+886
+850
+850
+846
+850
+816
+850
+776
+850
+850
+HBBS sumD : 772
+EXECUTION TIME HBSS: 0.592591047287 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 684.]
+COMPUTATIONS :
+744
+684
+684
+684
+684
+684
+684
+684
+684
+684
+736
+684
+684
+684
+704
+684
+728
+736
+684
+742
+684
+684
+550
+684
+736
+736
+684
+722
+736
+738
+708
+684
+684
+758
+684
+684
+684
+684
+684
+758
+742
+750
+684
+736
+684
+684
+762
+746
+684
+684
+HBBS sumD : 550
+EXECUTION TIME HBSS: 0.532076835632 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 770.]
+COMPUTATIONS :
+774
+770
+850
+770
+752
+770
+770
+864
+770
+770
+770
+846
+770
+770
+770
+752
+770
+770
+770
+864
+770
+766
+770
+770
+766
+770
+770
+752
+770
+770
+770
+780
+770
+770
+766
+770
+850
+864
+770
+864
+752
+770
+850
+850
+770
+782
+770
+770
+770
+770
+HBBS sumD : 752
+EXECUTION TIME HBSS: 0.473169088364 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 622.]
+COMPUTATIONS :
+646
+622
+622
+622
+622
+622
+604
+690
+622
+632
+786
+628
+646
+622
+622
+630
+622
+608
+700
+708
+622
+652
+672
+622
+622
+622
+622
+622
+622
+622
+670
+622
+640
+622
+622
+618
+626
+622
+622
+614
+568
+622
+678
+634
+622
+622
+622
+622
+622
+608
+HBBS sumD : 568
+EXECUTION TIME HBSS: 0.383809089661 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 744.]
+COMPUTATIONS :
+744
+806
+744
+790
+744
+744
+744
+744
+816
+812
+794
+794
+744
+888
+744
+744
+800
+744
+744
+744
+812
+818
+812
+818
+744
+744
+794
+790
+794
+744
+744
+800
+790
+744
+744
+744
+812
+790
+744
+790
+810
+744
+744
+794
+812
+788
+788
+744
+822
+744
+HBBS sumD : 744
+EXECUTION TIME HBSS: 0.326678991318 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 718.]
+COMPUTATIONS :
+718
+718
+688
+718
+744
+820
+732
+814
+718
+638
+688
+734
+734
+718
+670
+730
+724
+718
+718
+718
+760
+718
+752
+718
+718
+718
+848
+718
+688
+718
+718
+718
+760
+766
+814
+718
+758
+742
+718
+718
+742
+734
+848
+718
+718
+718
+718
+742
+718
+718
+HBBS sumD : 638
+EXECUTION TIME HBSS: 0.587589979172 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 800.]
+COMPUTATIONS :
+826
+800
+800
+800
+800
+812
+800
+804
+806
+800
+804
+804
+870
+800
+800
+800
+800
+840
+804
+816
+804
+800
+804
+804
+786
+804
+804
+800
+800
+804
+800
+800
+804
+808
+804
+800
+800
+800
+800
+846
+800
+800
+776
+800
+800
+804
+800
+722
+824
+800
+HBBS sumD : 722
+EXECUTION TIME HBSS: 0.663089990616 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 706.]
+COMPUTATIONS :
+706
+750
+712
+706
+706
+706
+740
+706
+706
+706
+706
+706
+706
+706
+730
+730
+742
+706
+706
+706
+706
+706
+752
+706
+706
+706
+726
+706
+706
+706
+706
+706
+728
+782
+690
+728
+706
+706
+706
+730
+712
+706
+706
+706
+706
+712
+706
+706
+706
+706
+HBBS sumD : 690
+EXECUTION TIME HBSS: 0.559459209442 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 760.]
+COMPUTATIONS :
+748
+750
+772
+814
+760
+838
+760
+760
+748
+760
+760
+760
+838
+760
+760
+760
+766
+776
+760
+760
+760
+760
+766
+786
+760
+814
+754
+732
+760
+760
+814
+750
+748
+760
+760
+760
+760
+760
+760
+754
+760
+760
+842
+754
+748
+760
+764
+760
+772
+760
+HBBS sumD : 732
+EXECUTION TIME HBSS: 0.651516914368 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 672.]
+COMPUTATIONS :
+672
+660
+672
+672
+686
+672
+686
+672
+672
+672
+662
+686
+672
+662
+672
+732
+672
+672
+596
+672
+672
+672
+672
+672
+672
+672
+672
+672
+672
+672
+672
+672
+686
+806
+672
+672
+672
+672
+642
+672
+662
+700
+654
+700
+672
+672
+716
+672
+672
+682
+HBBS sumD : 596
+EXECUTION TIME HBSS: 0.617650032043 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 794.]
+COMPUTATIONS :
+776
+754
+814
+794
+794
+802
+794
+794
+794
+776
+794
+794
+794
+794
+746
+794
+716
+794
+794
+780
+882
+738
+794
+794
+794
+814
+780
+804
+794
+816
+788
+860
+794
+794
+794
+780
+814
+794
+716
+804
+882
+794
+862
+794
+822
+794
+794
+822
+794
+828
+HBBS sumD : 716
+EXECUTION TIME HBSS: 0.39729309082 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 680.]
+COMPUTATIONS :
+700
+712
+736
+704
+680
+666
+680
+720
+712
+702
+680
+680
+694
+680
+708
+680
+680
+680
+680
+712
+712
+680
+680
+680
+680
+680
+680
+680
+720
+680
+698
+698
+680
+680
+680
+702
+656
+738
+712
+680
+680
+680
+680
+680
+684
+754
+698
+610
+648
+680
+HBBS sumD : 610
+EXECUTION TIME HBSS: 0.655135154724 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 740.]
+COMPUTATIONS :
+800
+804
+740
+694
+740
+806
+740
+740
+752
+694
+740
+740
+760
+760
+804
+800
+740
+740
+804
+760
+848
+740
+752
+816
+740
+826
+722
+804
+740
+740
+732
+740
+740
+772
+740
+740
+740
+740
+740
+804
+740
+772
+726
+740
+740
+722
+822
+740
+740
+822
+HBBS sumD : 694
+EXECUTION TIME HBSS: 0.49785900116 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 726.]
+COMPUTATIONS :
+726
+726
+726
+718
+726
+726
+780
+718
+760
+726
+770
+792
+726
+726
+774
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+726
+692
+726
+726
+726
+716
+726
+738
+726
+774
+726
+726
+720
+726
+726
+726
+726
+726
+726
+726
+HBBS sumD : 692
+EXECUTION TIME HBSS: 0.267756938934 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 690.]
+COMPUTATIONS :
+698
+690
+686
+690
+716
+690
+690
+754
+690
+720
+708
+690
+690
+750
+690
+690
+690
+690
+688
+690
+792
+738
+690
+716
+690
+716
+690
+690
+702
+690
+698
+688
+690
+690
+726
+690
+734
+716
+690
+710
+690
+782
+690
+716
+882
+690
+690
+688
+786
+684
+HBBS sumD : 684
+EXECUTION TIME HBSS: 0.463914871216 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 690.]
+COMPUTATIONS :
+738
+736
+690
+690
+690
+690
+646
+646
+690
+738
+690
+690
+690
+690
+690
+646
+646
+646
+646
+756
+646
+690
+724
+654
+738
+690
+736
+736
+708
+738
+690
+640
+690
+690
+736
+720
+690
+690
+640
+690
+736
+690
+690
+774
+732
+690
+646
+704
+690
+710
+HBBS sumD : 640
+EXECUTION TIME HBSS: 0.528586149216 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 790.]
+COMPUTATIONS :
+910
+790
+790
+790
+790
+790
+910
+790
+790
+790
+912
+790
+906
+912
+790
+870
+790
+944
+790
+790
+936
+790
+790
+790
+790
+790
+790
+790
+790
+790
+780
+930
+790
+968
+790
+898
+790
+790
+790
+790
+790
+790
+762
+790
+790
+790
+790
+790
+778
+790
+HBBS sumD : 762
+EXECUTION TIME HBSS: 0.770885944366 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 630.]
+COMPUTATIONS :
+764
+632
+630
+640
+630
+642
+630
+640
+640
+728
+630
+644
+642
+640
+630
+716
+630
+648
+630
+696
+642
+630
+632
+642
+630
+630
+634
+630
+642
+630
+642
+630
+722
+630
+630
+630
+630
+630
+630
+632
+630
+630
+642
+630
+646
+646
+624
+630
+630
+630
+HBBS sumD : 624
+EXECUTION TIME HBSS: 0.325232982635 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 5
+GREEDY SOLUTION : [ 772.]
+COMPUTATIONS :
+772
+772
+772
+772
+864
+772
+772
+880
+772
+934
+864
+772
+892
+934
+800
+772
+772
+820
+772
+800
+772
+772
+962
+772
+900
+810
+924
+772
+772
+772
+810
+772
+772
+772
+772
+772
+890
+932
+882
+958
+772
+772
+836
+814
+772
+864
+772
+890
+828
+828
+HBBS sumD : 772
+EXECUTION TIME HBSS: 0.401658058167 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 684.]
+COMPUTATIONS :
+684
+684
+684
+684
+684
+724
+684
+742
+684
+740
+740
+804
+854
+684
+684
+684
+858
+684
+684
+702
+684
+684
+854
+684
+684
+684
+684
+684
+684
+706
+706
+698
+684
+698
+684
+702
+684
+804
+706
+726
+730
+684
+684
+754
+684
+684
+684
+684
+684
+684
+HBBS sumD : 684
+EXECUTION TIME HBSS: 0.616729021072 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 958.]
+COMPUTATIONS :
+958
+976
+958
+958
+986
+958
+958
+958
+958
+958
+958
+958
+958
+898
+958
+958
+958
+958
+958
+958
+952
+898
+958
+876
+976
+958
+958
+958
+960
+958
+958
+982
+958
+958
+880
+982
+880
+958
+958
+958
+958
+980
+1016
+986
+958
+976
+958
+982
+986
+958
+HBBS sumD : 876
+EXECUTION TIME HBSS: 0.512657880783 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 716.]
+COMPUTATIONS :
+638
+716
+716
+736
+716
+716
+716
+716
+716
+730
+716
+716
+638
+716
+754
+716
+716
+716
+716
+740
+754
+716
+718
+716
+748
+716
+720
+716
+716
+720
+716
+716
+718
+716
+716
+716
+716
+716
+716
+754
+716
+716
+716
+716
+718
+754
+720
+716
+716
+716
+HBBS sumD : 638
+EXECUTION TIME HBSS: 0.831666946411 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 860.]
+COMPUTATIONS :
+938
+860
+938
+1038
+860
+860
+860
+860
+896
+860
+860
+860
+860
+860
+860
+860
+860
+938
+920
+920
+860
+896
+916
+860
+860
+860
+974
+1056
+860
+860
+860
+958
+860
+922
+860
+940
+860
+860
+920
+860
+860
+860
+860
+860
+860
+860
+860
+860
+860
+860
+HBBS sumD : 860
+EXECUTION TIME HBSS: 0.871671915054 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 684.]
+COMPUTATIONS :
+712
+684
+684
+684
+684
+718
+684
+684
+712
+684
+718
+712
+712
+710
+684
+684
+716
+670
+706
+684
+724
+684
+684
+718
+684
+684
+684
+684
+838
+678
+680
+688
+684
+684
+716
+684
+684
+684
+684
+684
+684
+684
+702
+684
+688
+684
+684
+684
+684
+688
+HBBS sumD : 670
+EXECUTION TIME HBSS: 0.403295040131 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 724.]
+COMPUTATIONS :
+724
+720
+732
+724
+724
+732
+724
+724
+684
+724
+724
+724
+702
+724
+780
+724
+722
+724
+724
+724
+748
+872
+724
+804
+856
+724
+724
+684
+724
+724
+706
+858
+724
+732
+724
+858
+706
+724
+724
+724
+724
+724
+722
+724
+724
+724
+724
+724
+814
+724
+HBBS sumD : 684
+EXECUTION TIME HBSS: 0.617339134216 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 774.]
+COMPUTATIONS :
+774
+774
+794
+774
+774
+774
+782
+774
+774
+810
+782
+774
+774
+774
+774
+774
+774
+774
+774
+788
+788
+774
+774
+798
+782
+774
+774
+774
+774
+816
+790
+750
+774
+774
+774
+774
+774
+774
+832
+774
+774
+774
+790
+730
+798
+774
+704
+774
+774
+774
+HBBS sumD : 704
+EXECUTION TIME HBSS: 0.763854026794 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 830.]
+COMPUTATIONS :
+830
+886
+852
+830
+830
+830
+830
+802
+828
+830
+830
+830
+830
+830
+850
+802
+830
+830
+830
+882
+830
+830
+830
+904
+848
+852
+802
+830
+842
+848
+830
+830
+826
+830
+830
+830
+830
+830
+830
+830
+830
+760
+830
+830
+830
+830
+830
+830
+830
+830
+HBBS sumD : 760
+EXECUTION TIME HBSS: 0.646143913269 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 768.]
+COMPUTATIONS :
+768
+746
+768
+768
+768
+768
+786
+768
+768
+768
+772
+768
+768
+800
+768
+768
+792
+768
+768
+780
+768
+792
+768
+768
+768
+768
+768
+768
+792
+772
+768
+768
+768
+768
+768
+768
+768
+768
+782
+768
+768
+842
+768
+768
+768
+768
+790
+768
+768
+768
+HBBS sumD : 746
+EXECUTION TIME HBSS: 0.374858856201 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 760.]
+COMPUTATIONS :
+746
+760
+760
+760
+760
+770
+760
+760
+866
+760
+760
+744
+760
+760
+736
+786
+780
+726
+760
+746
+760
+780
+848
+742
+760
+760
+826
+760
+760
+760
+760
+760
+760
+760
+760
+760
+746
+770
+770
+760
+746
+760
+760
+760
+760
+854
+760
+760
+760
+760
+HBBS sumD : 726
+EXECUTION TIME HBSS: 0.679138183594 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 628.]
+COMPUTATIONS :
+806
+752
+628
+628
+628
+628
+628
+746
+628
+628
+628
+628
+628
+628
+628
+628
+788
+628
+806
+628
+628
+746
+716
+628
+628
+628
+628
+746
+628
+628
+788
+628
+742
+628
+788
+628
+628
+628
+742
+628
+642
+746
+832
+628
+748
+628
+628
+720
+802
+698
+HBBS sumD : 628
+EXECUTION TIME HBSS: 0.508996009827 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 938.]
+COMPUTATIONS :
+884
+938
+938
+938
+938
+860
+844
+860
+878
+938
+860
+938
+938
+860
+938
+938
+938
+862
+938
+846
+938
+938
+938
+938
+938
+862
+938
+938
+938
+938
+938
+938
+894
+880
+938
+938
+938
+938
+862
+862
+938
+938
+878
+922
+938
+878
+880
+938
+938
+862
+HBBS sumD : 844
+EXECUTION TIME HBSS: 0.600676774979 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 718.]
+COMPUTATIONS :
+764
+740
+718
+750
+718
+718
+718
+746
+634
+752
+742
+750
+756
+718
+750
+718
+718
+718
+746
+718
+718
+718
+718
+718
+718
+762
+718
+718
+718
+718
+754
+718
+742
+718
+750
+750
+764
+736
+718
+718
+658
+718
+718
+718
+718
+704
+672
+718
+718
+658
+HBBS sumD : 634
+EXECUTION TIME HBSS: 0.703045845032 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 808.]
+COMPUTATIONS :
+808
+836
+808
+808
+808
+808
+812
+808
+808
+822
+808
+808
+872
+808
+808
+808
+822
+864
+886
+918
+808
+808
+884
+802
+808
+808
+822
+808
+836
+822
+808
+808
+822
+884
+822
+808
+808
+800
+822
+808
+808
+808
+884
+808
+808
+808
+904
+808
+808
+808
+HBBS sumD : 800
+EXECUTION TIME HBSS: 0.851187944412 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 830.]
+COMPUTATIONS :
+830
+830
+830
+840
+830
+776
+756
+826
+840
+830
+830
+830
+830
+830
+830
+830
+830
+830
+830
+830
+830
+728
+830
+830
+830
+692
+830
+830
+830
+830
+830
+776
+812
+830
+758
+830
+830
+812
+776
+780
+830
+812
+828
+836
+830
+830
+830
+768
+830
+832
+HBBS sumD : 692
+EXECUTION TIME HBSS: 0.727062940598 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 804.]
+COMPUTATIONS :
+804
+804
+804
+804
+848
+804
+764
+830
+804
+804
+804
+804
+804
+804
+804
+804
+804
+764
+884
+804
+804
+804
+804
+804
+804
+804
+804
+804
+804
+804
+804
+786
+804
+804
+804
+800
+788
+786
+804
+812
+804
+804
+804
+804
+786
+804
+804
+804
+788
+804
+HBBS sumD : 764
+EXECUTION TIME HBSS: 0.531645059586 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 754.]
+COMPUTATIONS :
+754
+700
+754
+754
+754
+754
+754
+674
+754
+754
+768
+754
+772
+754
+754
+754
+776
+754
+754
+754
+754
+748
+766
+754
+768
+776
+768
+754
+754
+820
+754
+754
+754
+754
+770
+748
+776
+754
+754
+754
+768
+754
+754
+754
+754
+754
+768
+802
+754
+842
+HBBS sumD : 674
+EXECUTION TIME HBSS: 0.789910078049 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 936.]
+COMPUTATIONS :
+936
+936
+936
+936
+936
+938
+936
+936
+936
+936
+1064
+936
+938
+936
+910
+936
+936
+936
+920
+936
+936
+936
+936
+936
+936
+936
+936
+920
+936
+936
+936
+908
+936
+936
+936
+936
+910
+920
+936
+936
+914
+938
+912
+936
+936
+900
+936
+936
+936
+938
+HBBS sumD : 900
+EXECUTION TIME HBSS: 0.428123950958 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 684.]
+COMPUTATIONS :
+684
+684
+684
+684
+684
+684
+684
+684
+690
+684
+680
+684
+684
+684
+684
+684
+684
+676
+684
+684
+692
+706
+680
+684
+818
+684
+684
+680
+692
+680
+684
+670
+684
+684
+684
+684
+684
+684
+694
+670
+692
+692
+706
+684
+694
+704
+684
+684
+684
+684
+HBBS sumD : 670
+EXECUTION TIME HBSS: 0.438232898712 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 6
+GREEDY SOLUTION : [ 854.]
+COMPUTATIONS :
+854
+854
+854
+854
+854
+946
+992
+854
+854
+854
+962
+854
+876
+854
+854
+936
+854
+1064
+938
+854
+880
+854
+896
+854
+854
+874
+932
+854
+874
+854
+854
+854
+854
+854
+874
+854
+854
+854
+854
+854
+854
+854
+854
+854
+854
+854
+932
+854
+932
+854
+HBBS sumD : 854
+EXECUTION TIME HBSS: 0.691671133041 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 786.]
+COMPUTATIONS :
+786
+786
+788
+786
+792
+786
+786
+786
+786
+786
+810
+786
+786
+786
+714
+786
+786
+786
+786
+786
+786
+788
+786
+794
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+820
+786
+786
+786
+786
+786
+786
+786
+786
+792
+832
+HBBS sumD : 714
+EXECUTION TIME HBSS: 1.2703359127 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 998.]
+COMPUTATIONS :
+998
+998
+1026
+898
+998
+998
+998
+1018
+998
+1108
+998
+998
+998
+1118
+998
+998
+998
+1018
+998
+1022
+1022
+1122
+1114
+926
+998
+998
+1018
+1022
+998
+998
+998
+998
+998
+1090
+998
+998
+1060
+924
+998
+998
+998
+998
+998
+998
+998
+998
+1168
+998
+1118
+1048
+HBBS sumD : 898
+EXECUTION TIME HBSS: 0.660153865814 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 760.]
+COMPUTATIONS :
+760
+762
+760
+756
+762
+762
+760
+760
+754
+760
+760
+788
+760
+760
+762
+760
+760
+762
+760
+760
+760
+774
+760
+802
+762
+756
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+768
+756
+760
+760
+740
+760
+760
+716
+756
+760
+HBBS sumD : 716
+EXECUTION TIME HBSS: 1.30607199669 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 954.]
+COMPUTATIONS :
+964
+954
+974
+954
+936
+954
+1102
+954
+954
+964
+1108
+954
+954
+1210
+936
+954
+954
+954
+954
+1126
+1102
+954
+954
+954
+954
+954
+954
+954
+936
+964
+954
+954
+954
+954
+954
+936
+1024
+1104
+954
+936
+954
+954
+936
+954
+936
+1158
+954
+954
+964
+954
+HBBS sumD : 936
+EXECUTION TIME HBSS: 0.741204977036 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 750.]
+COMPUTATIONS :
+750
+750
+776
+782
+834
+750
+750
+750
+750
+772
+750
+750
+766
+750
+750
+750
+744
+750
+750
+750
+750
+750
+750
+750
+750
+750
+750
+750
+760
+750
+750
+750
+750
+750
+750
+750
+750
+714
+750
+750
+772
+750
+750
+750
+750
+750
+772
+750
+750
+750
+HBBS sumD : 714
+EXECUTION TIME HBSS: 1.12078809738 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 754.]
+COMPUTATIONS :
+754
+814
+754
+736
+784
+754
+754
+754
+754
+754
+754
+754
+754
+754
+754
+754
+754
+784
+736
+754
+754
+754
+754
+754
+736
+754
+754
+754
+754
+754
+754
+754
+754
+736
+754
+754
+754
+784
+754
+784
+926
+776
+754
+776
+754
+754
+752
+754
+754
+822
+HBBS sumD : 736
+EXECUTION TIME HBSS: 1.33684396744 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+852
+852
+852
+852
+852
+854
+852
+834
+852
+850
+852
+834
+852
+860
+798
+774
+798
+852
+852
+852
+852
+852
+852
+852
+774
+798
+852
+852
+852
+774
+852
+852
+852
+852
+852
+852
+854
+852
+850
+834
+852
+852
+852
+852
+834
+798
+834
+852
+852
+852
+HBBS sumD : 774
+EXECUTION TIME HBSS: 0.984560012817 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 828.]
+COMPUTATIONS :
+828
+828
+850
+828
+828
+828
+828
+828
+828
+828
+924
+828
+828
+906
+828
+828
+828
+828
+828
+950
+828
+828
+828
+828
+828
+854
+930
+828
+828
+878
+828
+828
+906
+828
+828
+906
+828
+828
+872
+828
+906
+828
+828
+828
+828
+828
+878
+830
+828
+828
+HBBS sumD : 828
+EXECUTION TIME HBSS: 1.23883795738 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 776.]
+COMPUTATIONS :
+844
+776
+776
+762
+776
+776
+844
+776
+844
+854
+776
+776
+776
+862
+776
+786
+762
+818
+800
+776
+776
+762
+776
+776
+776
+776
+776
+776
+776
+776
+776
+776
+776
+844
+762
+790
+776
+776
+776
+776
+762
+858
+782
+776
+772
+776
+776
+776
+800
+776
+HBBS sumD : 762
+EXECUTION TIME HBSS: 0.807413816452 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 746.]
+COMPUTATIONS :
+746
+746
+852
+746
+746
+756
+746
+746
+746
+818
+746
+746
+746
+808
+746
+808
+746
+766
+746
+746
+728
+746
+746
+746
+832
+746
+746
+752
+746
+746
+746
+754
+746
+752
+780
+746
+728
+766
+746
+808
+746
+738
+756
+746
+728
+746
+746
+746
+834
+746
+HBBS sumD : 728
+EXECUTION TIME HBSS: 0.696883916855 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 748.]
+COMPUTATIONS :
+762
+748
+748
+748
+748
+748
+766
+762
+748
+748
+748
+748
+766
+776
+748
+748
+842
+748
+748
+748
+896
+748
+748
+748
+766
+748
+748
+748
+748
+748
+748
+748
+748
+894
+748
+762
+766
+748
+748
+748
+758
+748
+748
+884
+756
+748
+748
+748
+766
+748
+HBBS sumD : 748
+EXECUTION TIME HBSS: 1.14142894745 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 994.]
+COMPUTATIONS :
+994
+994
+1020
+1000
+994
+994
+1016
+994
+994
+994
+976
+994
+1000
+998
+976
+1016
+994
+994
+994
+994
+994
+994
+994
+994
+994
+994
+994
+1016
+994
+1018
+1016
+994
+994
+994
+978
+994
+994
+1016
+994
+994
+994
+994
+994
+994
+994
+994
+994
+994
+994
+994
+HBBS sumD : 976
+EXECUTION TIME HBSS: 1.55509185791 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 696.]
+COMPUTATIONS :
+780
+660
+696
+798
+696
+696
+714
+696
+696
+696
+696
+696
+696
+696
+722
+696
+780
+696
+696
+696
+696
+714
+696
+696
+732
+696
+808
+696
+696
+696
+696
+780
+696
+836
+696
+696
+686
+696
+780
+696
+752
+786
+696
+696
+696
+696
+798
+696
+718
+668
+HBBS sumD : 660
+EXECUTION TIME HBSS: 1.22600793839 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 932.]
+COMPUTATIONS :
+932
+932
+932
+932
+932
+948
+932
+932
+932
+932
+956
+948
+932
+932
+932
+932
+932
+918
+932
+932
+932
+942
+932
+932
+932
+932
+918
+952
+816
+932
+932
+932
+932
+932
+816
+932
+932
+928
+932
+932
+932
+932
+972
+948
+932
+932
+932
+882
+932
+942
+HBBS sumD : 816
+EXECUTION TIME HBSS: 0.766014814377 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 734.]
+COMPUTATIONS :
+780
+816
+734
+702
+734
+734
+734
+734
+868
+738
+734
+734
+734
+734
+734
+734
+734
+734
+734
+734
+734
+734
+734
+722
+734
+882
+734
+870
+734
+734
+734
+730
+734
+734
+734
+754
+882
+734
+734
+734
+734
+868
+734
+734
+734
+738
+734
+730
+894
+734
+HBBS sumD : 702
+EXECUTION TIME HBSS: 0.794349908829 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+852
+812
+852
+852
+852
+852
+852
+852
+836
+848
+852
+852
+852
+852
+834
+852
+852
+852
+852
+852
+834
+852
+812
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+834
+852
+838
+866
+904
+852
+904
+852
+852
+852
+874
+904
+852
+852
+852
+HBBS sumD : 812
+EXECUTION TIME HBSS: 0.843224048615 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 754.]
+COMPUTATIONS :
+754
+754
+754
+754
+754
+840
+754
+754
+754
+826
+754
+754
+754
+754
+754
+754
+754
+776
+754
+754
+826
+754
+748
+852
+826
+754
+674
+754
+754
+754
+754
+754
+754
+840
+748
+754
+754
+754
+806
+754
+754
+754
+754
+776
+754
+754
+754
+748
+754
+754
+HBBS sumD : 674
+EXECUTION TIME HBSS: 1.28570485115 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 962.]
+COMPUTATIONS :
+966
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+962
+1112
+962
+962
+934
+962
+962
+962
+962
+970
+962
+962
+962
+962
+966
+962
+962
+962
+962
+962
+958
+962
+962
+962
+962
+962
+962
+962
+HBBS sumD : 934
+EXECUTION TIME HBSS: 1.13341903687 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 782.]
+COMPUTATIONS :
+734
+782
+820
+782
+782
+782
+782
+842
+788
+778
+798
+732
+764
+782
+782
+782
+790
+782
+782
+782
+778
+782
+782
+782
+782
+782
+782
+782
+782
+798
+782
+782
+782
+782
+782
+782
+782
+782
+764
+782
+782
+782
+824
+782
+782
+782
+782
+782
+782
+792
+HBBS sumD : 732
+EXECUTION TIME HBSS: 1.05869889259 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 7
+GREEDY SOLUTION : [ 964.]
+COMPUTATIONS :
+964
+964
+964
+1010
+964
+964
+964
+966
+964
+1066
+964
+964
+964
+964
+1058
+1010
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+964
+992
+1028
+964
+1030
+964
+964
+964
+964
+964
+1054
+964
+964
+1030
+964
+964
+1054
+HBBS sumD : 964
+EXECUTION TIME HBSS: 1.06293821335 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 892.]
+COMPUTATIONS :
+892
+892
+892
+892
+892
+902
+892
+892
+892
+892
+892
+892
+892
+892
+892
+892
+892
+892
+970
+892
+892
+894
+932
+892
+892
+892
+892
+892
+892
+892
+936
+800
+892
+892
+892
+892
+892
+892
+800
+892
+888
+892
+902
+906
+892
+892
+892
+892
+800
+892
+HBBS sumD : 800
+EXECUTION TIME HBSS: 1.13495206833 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 1016.]
+COMPUTATIONS :
+1202
+1016
+1066
+1016
+1036
+1016
+1016
+1016
+1016
+956
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1142
+1016
+1016
+1166
+1016
+1016
+1016
+1066
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+1016
+998
+1016
+1016
+1016
+1016
+HBBS sumD : 956
+EXECUTION TIME HBSS: 1.21205306053 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 760.]
+COMPUTATIONS :
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+716
+760
+760
+760
+760
+760
+760
+760
+760
+808
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+756
+760
+760
+760
+760
+760
+756
+760
+760
+760
+790
+760
+760
+760
+760
+760
+760
+760
+760
+HBBS sumD : 716
+EXECUTION TIME HBSS: 1.4815788269 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 1058.]
+COMPUTATIONS :
+1058
+1058
+1058
+1058
+1058
+1110
+1058
+1040
+1058
+1040
+1058
+1058
+1118
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1110
+1058
+1062
+1058
+1058
+1058
+1058
+1170
+1058
+1058
+1058
+1118
+1058
+1058
+1118
+1118
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1206
+1138
+1058
+1058
+HBBS sumD : 1040
+EXECUTION TIME HBSS: 1.36886811256 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 756.]
+COMPUTATIONS :
+756
+756
+788
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+810
+756
+756
+756
+756
+842
+756
+756
+756
+756
+756
+756
+756
+756
+824
+756
+756
+756
+792
+816
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+HBBS sumD : 756
+EXECUTION TIME HBSS: 1.13132596016 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 812.]
+COMPUTATIONS :
+812
+834
+812
+812
+814
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+872
+796
+812
+838
+812
+812
+812
+812
+812
+812
+812
+812
+812
+790
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+792
+812
+812
+812
+812
+812
+HBBS sumD : 790
+EXECUTION TIME HBSS: 1.20832300186 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+860
+852
+852
+852
+852
+852
+852
+852
+852
+852
+798
+852
+852
+852
+934
+852
+852
+854
+852
+876
+910
+912
+912
+852
+852
+852
+852
+852
+852
+852
+880
+852
+852
+852
+852
+852
+HBBS sumD : 798
+EXECUTION TIME HBSS: 1.28064393997 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+852
+852
+868
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+876
+852
+852
+936
+852
+852
+852
+852
+876
+880
+852
+852
+852
+852
+868
+852
+922
+852
+876
+852
+852
+852
+852
+852
+852
+952
+852
+852
+852
+852
+852
+852
+852
+844
+852
+852
+952
+HBBS sumD : 844
+EXECUTION TIME HBSS: 0.89667391777 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 798.]
+COMPUTATIONS :
+798
+934
+822
+798
+882
+798
+802
+852
+798
+798
+798
+798
+798
+798
+798
+798
+798
+798
+952
+798
+798
+778
+798
+798
+852
+798
+798
+798
+798
+798
+798
+798
+788
+798
+798
+798
+822
+798
+858
+798
+798
+798
+798
+798
+798
+798
+798
+798
+798
+798
+HBBS sumD : 778
+EXECUTION TIME HBSS: 1.1875679493 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 808.]
+COMPUTATIONS :
+808
+808
+808
+808
+808
+808
+808
+808
+808
+790
+828
+808
+808
+808
+808
+808
+808
+808
+808
+808
+808
+808
+808
+808
+826
+808
+790
+808
+808
+808
+808
+852
+808
+828
+808
+846
+808
+808
+790
+808
+898
+808
+1012
+808
+808
+808
+808
+808
+808
+808
+HBBS sumD : 790
+EXECUTION TIME HBSS: 0.502784967422 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 882.]
+COMPUTATIONS :
+882
+882
+882
+822
+882
+882
+882
+882
+882
+884
+882
+882
+892
+882
+882
+882
+882
+882
+882
+882
+882
+954
+892
+866
+882
+882
+882
+882
+882
+882
+882
+882
+946
+882
+882
+882
+864
+882
+882
+882
+882
+882
+882
+882
+882
+882
+882
+882
+882
+882
+HBBS sumD : 822
+EXECUTION TIME HBSS: 1.09370303154 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 1116.]
+COMPUTATIONS :
+1116
+1138
+1116
+1116
+1116
+1116
+1134
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1162
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1138
+1138
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1116
+1138
+1116
+1116
+1116
+HBBS sumD : 1116
+EXECUTION TIME HBSS: 1.06371879578 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 720.]
+COMPUTATIONS :
+720
+756
+720
+720
+720
+720
+720
+720
+720
+704
+720
+720
+720
+720
+696
+720
+710
+778
+720
+720
+720
+720
+720
+720
+720
+720
+720
+738
+744
+772
+720
+720
+720
+720
+744
+720
+750
+720
+720
+782
+720
+720
+720
+720
+720
+720
+720
+720
+718
+720
+HBBS sumD : 696
+EXECUTION TIME HBSS: 0.942165851593 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 932.]
+COMPUTATIONS :
+932
+932
+932
+932
+932
+932
+932
+932
+932
+932
+932
+932
+932
+942
+1058
+932
+932
+932
+932
+932
+932
+1052
+918
+932
+932
+932
+932
+932
+932
+932
+932
+932
+1058
+932
+932
+932
+974
+932
+1052
+932
+932
+932
+932
+932
+994
+954
+1080
+932
+1042
+1060
+HBBS sumD : 918
+EXECUTION TIME HBSS: 0.684318065643 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 786.]
+COMPUTATIONS :
+790
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+826
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+790
+786
+790
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+786
+790
+786
+786
+786
+828
+786
+786
+786
+HBBS sumD : 786
+EXECUTION TIME HBSS: 0.604943037033 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 914.]
+COMPUTATIONS :
+914
+914
+914
+914
+914
+914
+914
+944
+914
+914
+964
+914
+936
+914
+914
+914
+914
+914
+914
+914
+914
+914
+914
+952
+914
+914
+914
+914
+914
+914
+916
+914
+914
+914
+914
+914
+914
+914
+914
+912
+914
+914
+896
+914
+914
+914
+838
+914
+912
+914
+HBBS sumD : 838
+EXECUTION TIME HBSS: 1.06728696823 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 816.]
+COMPUTATIONS :
+754
+816
+816
+816
+816
+840
+816
+816
+816
+816
+840
+816
+816
+816
+816
+816
+816
+816
+816
+816
+826
+714
+816
+816
+816
+816
+816
+816
+816
+754
+826
+818
+816
+816
+816
+748
+818
+816
+816
+754
+816
+754
+816
+816
+816
+816
+912
+862
+816
+816
+HBBS sumD : 714
+EXECUTION TIME HBSS: 0.944589138031 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 1002.]
+COMPUTATIONS :
+1002
+1040
+1002
+1128
+1132
+1128
+1002
+1002
+1002
+970
+1002
+1002
+1002
+1002
+1002
+1002
+1002
+1086
+1110
+1114
+1002
+1002
+1002
+1002
+1002
+1002
+1002
+1002
+1002
+1020
+1002
+1002
+1002
+1002
+1002
+1002
+1032
+1002
+1094
+1002
+1002
+1134
+1002
+1002
+1086
+1002
+1002
+1002
+1002
+1002
+HBBS sumD : 970
+EXECUTION TIME HBSS: 1.22021579742 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 796.]
+COMPUTATIONS :
+796
+796
+864
+796
+796
+796
+796
+800
+796
+796
+796
+796
+796
+796
+796
+796
+796
+796
+796
+796
+806
+796
+814
+796
+796
+796
+796
+796
+796
+796
+796
+796
+796
+818
+820
+796
+796
+796
+796
+796
+796
+926
+856
+814
+796
+792
+796
+796
+796
+796
+HBBS sumD : 792
+EXECUTION TIME HBSS: 1.08589792252 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 8
+GREEDY SOLUTION : [ 1110.]
+COMPUTATIONS :
+1110
+1110
+1110
+1168
+1110
+1136
+1110
+1134
+1110
+1202
+1110
+1110
+1110
+1110
+1134
+1110
+1132
+1110
+1110
+1110
+1110
+1110
+1110
+1134
+1110
+1234
+1146
+1110
+1110
+1110
+1110
+1110
+1110
+1130
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+HBBS sumD : 1110
+EXECUTION TIME HBSS: 1.1023979187 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 6
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 892.]
+COMPUTATIONS :
+892
+892
+896
+892
+892
+892
+892
+892
+892
+892
+878
+892
+892
+898
+892
+892
+984
+914
+1002
+892
+1002
+892
+892
+892
+892
+988
+892
+892
+892
+892
+892
+892
+892
+892
+892
+892
+892
+914
+892
+892
+892
+892
+892
+892
+892
+892
+892
+796
+892
+892
+HBBS sumD : 796
+EXECUTION TIME HBSS: 1.48464083672 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 7
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1084.]
+COMPUTATIONS :
+1066
+1084
+1084
+1084
+1084
+1176
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1266
+1084
+1084
+1084
+1084
+1084
+1148
+1036
+1084
+1016
+1084
+1016
+1148
+1084
+1176
+1084
+1084
+1108
+1084
+1084
+1084
+1084
+1084
+1294
+1084
+1084
+1084
+1084
+1084
+1148
+1084
+1084
+1084
+1084
+1084
+HBBS sumD : 1016
+EXECUTION TIME HBSS: 1.47959303856 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 8
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 760.]
+COMPUTATIONS :
+760
+760
+760
+760
+760
+760
+760
+784
+806
+760
+760
+760
+760
+760
+808
+760
+760
+760
+760
+760
+808
+806
+760
+760
+760
+760
+760
+806
+760
+760
+760
+802
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+HBBS sumD : 760
+EXECUTION TIME HBSS: 1.50030708313 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 23
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1058.]
+COMPUTATIONS :
+1058
+1058
+1058
+1138
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1040
+1058
+1058
+1058
+1058
+1058
+1226
+1058
+1218
+1082
+1058
+1058
+1222
+1058
+1082
+1058
+1058
+1242
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1246
+1058
+1058
+1058
+HBBS sumD : 1040
+EXECUTION TIME HBSS: 1.29228520393 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 24
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 822.]
+COMPUTATIONS :
+822
+822
+822
+822
+822
+818
+822
+822
+822
+822
+808
+822
+822
+822
+844
+888
+822
+822
+822
+822
+822
+822
+808
+826
+822
+822
+822
+822
+822
+822
+822
+844
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+844
+822
+822
+756
+822
+822
+HBBS sumD : 756
+EXECUTION TIME HBSS: 1.57606482506 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 1
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 896.]
+COMPUTATIONS :
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+880
+888
+896
+896
+896
+896
+894
+896
+918
+896
+896
+896
+896
+896
+896
+860
+896
+896
+896
+896
+896
+896
+896
+860
+896
+896
+896
+896
+896
+816
+896
+896
+896
+896
+HBBS sumD : 816
+EXECUTION TIME HBSS: 1.47943902016 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 17
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+934
+852
+852
+934
+852
+852
+932
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+876
+852
+852
+852
+852
+852
+852
+704
+852
+852
+852
+932
+852
+852
+852
+852
+932
+852
+852
+852
+852
+852
+852
+HBBS sumD : 704
+EXECUTION TIME HBSS: 1.45552802086 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 0
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+986
+852
+852
+852
+852
+852
+852
+852
+900
+852
+852
+968
+874
+852
+852
+940
+900
+844
+852
+852
+852
+852
+852
+852
+900
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+968
+794
+852
+852
+852
+952
+852
+852
+852
+852
+852
+852
+852
+844
+852
+HBBS sumD : 794
+EXECUTION TIME HBSS: 1.47479200363 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 10
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 822.]
+COMPUTATIONS :
+822
+822
+874
+822
+822
+822
+874
+888
+822
+822
+822
+844
+822
+822
+844
+790
+874
+904
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+892
+822
+822
+822
+822
+822
+822
+822
+814
+822
+822
+822
+822
+822
+822
+822
+822
+822
+822
+HBBS sumD : 790
+EXECUTION TIME HBSS: 1.52852702141 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 18
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 896.]
+COMPUTATIONS :
+808
+890
+808
+896
+896
+896
+896
+878
+896
+896
+886
+896
+896
+896
+896
+896
+890
+896
+896
+896
+896
+896
+896
+896
+896
+896
+930
+896
+896
+896
+860
+896
+896
+896
+896
+828
+896
+896
+896
+896
+896
+896
+808
+896
+886
+896
+896
+896
+896
+896
+HBBS sumD : 808
+EXECUTION TIME HBSS: 1.47248196602 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 19
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 940.]
+COMPUTATIONS :
+1000
+940
+940
+940
+940
+940
+1020
+1188
+940
+940
+940
+922
+940
+940
+940
+940
+964
+940
+1010
+940
+940
+922
+1020
+940
+940
+940
+1000
+1020
+940
+940
+940
+940
+940
+974
+940
+940
+944
+940
+922
+940
+940
+940
+940
+940
+940
+940
+940
+940
+940
+940
+HBBS sumD : 922
+EXECUTION TIME HBSS: 1.78692388535 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 3
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1252.]
+COMPUTATIONS :
+1112
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1116
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1136
+1252
+1252
+1252
+1252
+1252
+1116
+1252
+1252
+1274
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1112
+1234
+1252
+1116
+1256
+1116
+1252
+1252
+1252
+1256
+1252
+1252
+HBBS sumD : 1112
+EXECUTION TIME HBSS: 1.69361400604 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 9
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 756.]
+COMPUTATIONS :
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+794
+756
+756
+756
+756
+782
+756
+756
+756
+756
+756
+776
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+756
+HBBS sumD : 756
+EXECUTION TIME HBSS: 1.68100810051 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 21
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1048.]
+COMPUTATIONS :
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+918
+1048
+1048
+1048
+1058
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1058
+1048
+1056
+1048
+1048
+1048
+1048
+1048
+1048
+932
+1048
+1056
+1048
+1048
+1048
+1048
+1048
+1048
+932
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+HBBS sumD : 918
+EXECUTION TIME HBSS: 1.64704012871 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 27
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 826.]
+COMPUTATIONS :
+826
+826
+826
+826
+826
+826
+826
+826
+826
+852
+826
+826
+826
+826
+826
+826
+882
+826
+826
+826
+826
+830
+826
+826
+826
+826
+826
+826
+826
+826
+826
+826
+826
+826
+854
+854
+826
+826
+826
+826
+826
+884
+826
+826
+882
+826
+826
+826
+852
+826
+HBBS sumD : 826
+EXECUTION TIME HBSS: 1.54544019699 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 2
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1012.]
+COMPUTATIONS :
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+992
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+834
+896
+1012
+1012
+1012
+1012
+1012
+1012
+958
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+992
+1012
+1012
+1012
+1012
+1012
+914
+1012
+1012
+1012
+1012
+1012
+1012
+1034
+1012
+1012
+1012
+HBBS sumD : 834
+EXECUTION TIME HBSS: 1.73683619499 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 25
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 816.]
+COMPUTATIONS :
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+902
+816
+816
+816
+816
+816
+816
+816
+888
+816
+816
+816
+816
+754
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+888
+816
+816
+816
+816
+888
+HBBS sumD : 754
+EXECUTION TIME HBSS: 1.40636110306 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 12
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1126.]
+COMPUTATIONS :
+1126
+1126
+1126
+1126
+1126
+1126
+1150
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1150
+1126
+1126
+1126
+1126
+1126
+1126
+1168
+1294
+1126
+1126
+1302
+1188
+1126
+1126
+1126
+1126
+1126
+1126
+1150
+1126
+1126
+1260
+1302
+1126
+1126
+1126
+1168
+HBBS sumD : 1126
+EXECUTION TIME HBSS: 1.50866985321 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 15
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 838.]
+COMPUTATIONS :
+838
+838
+838
+864
+838
+838
+838
+850
+846
+856
+900
+838
+838
+816
+850
+838
+838
+838
+838
+838
+904
+838
+838
+838
+838
+838
+838
+838
+838
+838
+928
+838
+900
+838
+838
+838
+862
+838
+838
+838
+838
+838
+838
+838
+838
+900
+838
+900
+838
+838
+HBBS sumD : 816
+EXECUTION TIME HBSS: 1.73588991165 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : 100
+STARTING_POS : 16
+N_ROBOTS : 9
+GREEDY SOLUTION : [ 1110.]
+COMPUTATIONS :
+1110
+1110
+1110
+1440
+1110
+1110
+1110
+1134
+1110
+1110
+1110
+1282
+1268
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1282
+1110
+1268
+1110
+1110
+1282
+1110
+1292
+1110
+1110
+1110
+1366
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1268
+1110
+1110
+1110
+1132
+1110
+1110
+1110
+HBBS sumD : 1110
+EXECUTION TIME HBSS: 1.52987599373 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_0.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 6
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 984.]
+COMPUTATIONS :
+984
+984
+984
+984
+984
+1012
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+1012
+984
+892
+984
+984
+984
+984
+984
+984
+984
+1008
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+984
+1024
+984
+984
+984
+HBBS sumD : 892
+EXECUTION TIME HBSS: 2.04003691673 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_1.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 7
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1084.]
+COMPUTATIONS :
+1084
+1084
+1084
+1084
+1084
+1084
+1216
+1244
+1084
+1084
+1084
+1084
+1358
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1016
+1084
+1084
+1084
+1244
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+1084
+998
+1084
+HBBS sumD : 998
+EXECUTION TIME HBSS: 2.27414608002 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_2.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 8
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 760.]
+COMPUTATIONS :
+760
+760
+760
+760
+760
+760
+760
+760
+760
+808
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+680
+760
+760
+760
+760
+760
+760
+760
+760
+760
+760
+806
+760
+760
+760
+760
+806
+760
+760
+HBBS sumD : 680
+EXECUTION TIME HBSS: 1.97819209099 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_3.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 23
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1058.]
+COMPUTATIONS :
+1058
+1058
+1058
+1058
+1058
+1058
+1302
+1226
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1370
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1302
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+1058
+HBBS sumD : 1058
+EXECUTION TIME HBSS: 2.09991002083 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_4.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 24
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 888.]
+COMPUTATIONS :
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+888
+896
+888
+888
+888
+888
+888
+888
+888
+910
+888
+888
+888
+888
+888
+888
+888
+826
+888
+888
+888
+888
+896
+888
+888
+888
+888
+888
+888
+HBBS sumD : 826
+EXECUTION TIME HBSS: 1.83724689484 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_5.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 1
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 896.]
+COMPUTATIONS :
+880
+896
+918
+896
+956
+896
+896
+896
+896
+896
+896
+896
+896
+896
+942
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+862
+896
+896
+896
+896
+896
+896
+896
+896
+896
+896
+918
+918
+896
+896
+896
+896
+896
+896
+896
+880
+896
+896
+896
+HBBS sumD : 862
+EXECUTION TIME HBSS: 1.87322902679 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_6.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 17
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+934
+852
+852
+852
+852
+852
+852
+934
+852
+852
+852
+852
+852
+852
+754
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+912
+852
+852
+852
+852
+852
+852
+852
+852
+HBBS sumD : 754
+EXECUTION TIME HBSS: 1.850055933 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_7.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 0
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 852.]
+COMPUTATIONS :
+852
+852
+852
+852
+852
+852
+852
+852
+852
+934
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+844
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+852
+968
+852
+852
+852
+852
+852
+852
+852
+852
+852
+HBBS sumD : 844
+EXECUTION TIME HBSS: 1.90569019318 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_8.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 10
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 868.]
+COMPUTATIONS :
+868
+868
+868
+868
+886
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+988
+892
+868
+868
+868
+868
+868
+868
+868
+868
+868
+868
+912
+868
+868
+868
+924
+868
+868
+868
+892
+868
+868
+868
+868
+868
+868
+868
+HBBS sumD : 868
+EXECUTION TIME HBSS: 2.01367807388 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_9.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 18
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 896.]
+COMPUTATIONS :
+896
+896
+896
+896
+1002
+878
+896
+896
+896
+896
+920
+896
+896
+896
+896
+896
+896
+896
+974
+896
+896
+896
+896
+826
+896
+896
+896
+896
+896
+808
+896
+896
+896
+896
+896
+896
+904
+896
+896
+1052
+808
+896
+896
+896
+896
+896
+896
+896
+896
+896
+HBBS sumD : 808
+EXECUTION TIME HBSS: 1.8607199192 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_10.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 19
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 940.]
+COMPUTATIONS :
+940
+940
+940
+940
+940
+940
+940
+940
+940
+940
+940
+940
+956
+940
+940
+940
+940
+940
+940
+940
+940
+940
+940
+1072
+940
+940
+940
+940
+940
+940
+940
+922
+940
+940
+940
+940
+940
+940
+1058
+940
+940
+940
+1138
+940
+940
+940
+940
+992
+940
+940
+HBBS sumD : 922
+EXECUTION TIME HBSS: 1.91050887108 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_11.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 3
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1252.]
+COMPUTATIONS :
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1274
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1112
+1252
+1252
+1252
+1252
+1252
+1124
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1252
+1392
+1252
+1252
+1252
+HBBS sumD : 1112
+EXECUTION TIME HBSS: 1.97111415863 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_12.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 9
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 812.]
+COMPUTATIONS :
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+756
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+812
+818
+812
+776
+802
+812
+812
+818
+812
+812
+776
+812
+812
+812
+824
+812
+812
+812
+812
+812
+822
+HBBS sumD : 756
+EXECUTION TIME HBSS: 1.9705619812 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_13.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 21
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1048.]
+COMPUTATIONS :
+1048
+1048
+1048
+1048
+1048
+1048
+1174
+840
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+918
+1048
+1174
+1048
+1048
+1048
+1048
+1048
+1174
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1048
+1204
+1048
+1048
+1048
+1048
+928
+HBBS sumD : 840
+EXECUTION TIME HBSS: 1.87811589241 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_14.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 27
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 894.]
+COMPUTATIONS :
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+872
+894
+894
+894
+894
+894
+894
+888
+894
+894
+894
+946
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+886
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+894
+HBBS sumD : 872
+EXECUTION TIME HBSS: 1.80296802521 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_15.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 2
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1012.]
+COMPUTATIONS :
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1034
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1034
+1134
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1012
+1034
+1012
+1012
+1012
+1012
+1012
+HBBS sumD : 1012
+EXECUTION TIME HBSS: 2.02647614479 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_16.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 25
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 816.]
+COMPUTATIONS :
+816
+816
+816
+816
+902
+816
+816
+816
+816
+816
+816
+880
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+888
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+816
+880
+816
+754
+HBBS sumD : 754
+EXECUTION TIME HBSS: 1.86101102829 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_17.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 12
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1126.]
+COMPUTATIONS :
+1454
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1308
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1150
+1292
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1288
+1126
+1126
+1126
+1126
+1126
+1126
+1278
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+1302
+1126
+1126
+1126
+1126
+1126
+1126
+1126
+HBBS sumD : 1126
+EXECUTION TIME HBSS: 1.97871804237 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_18.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 15
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 900.]
+COMPUTATIONS :
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+900
+950
+900
+900
+900
+900
+1014
+900
+900
+900
+900
+900
+942
+900
+900
+900
+928
+900
+900
+928
+900
+900
+900
+900
+900
+996
+900
+942
+918
+900
+900
+HBBS sumD : 900
+EXECUTION TIME HBSS: 1.76923012733 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_100_19.dat
+ENVIRONMENT : bwopen
+ALGORITHM : HBSS
+RANGE : _100
+STARTING_POS : 16
+N_ROBOTS : 10
+GREEDY SOLUTION : [ 1110.]
+COMPUTATIONS :
+1110
+1110
+1110
+1110
+1110
+1268
+1110
+1110
+1110
+1110
+1282
+1110
+1110
+1110
+1110
+1132
+1110
+1110
+1110
+1110
+1110
+1110
+1308
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1110
+1132
+1110
+1110
+1268
+1110
+1110
+1110
+1110
+1110
+HBBS sumD : 1110
+EXECUTION TIME HBSS: 1.98055887222 seconds 
+
+-------------------------------------------------------------------
+MAP: bwopen0_
+DATE: 2017-10-19_11-56-34

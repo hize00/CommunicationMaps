@@ -20,7 +20,6 @@ if len(sys.argv) < 3:
     print("Usage: python filename.py datafile.dat obj_fun('time' or 'distance') sorting_type('cardinaliy', 'heuristic' or 'objective')")
     exit(1)
 
-print "\n------------PARSING THE FILE------------\n"
 #returns N_ROBOTS, N_VERTEX, ROBOT_VELOCITY, POINTS_TO_EXPLORE and DISTANCE_MATRIX
 def parsing_file(datfile):
 	P_EXPLORE = []
@@ -83,18 +82,10 @@ def parsing_file(datfile):
 				
 		return N_ROBOTS, START_POS, N_VERT, R_VELOCITY, P_EXPLORE, distance_matrix
 
-
 		
 N_ROBOTS, STARTING_POS, N_VERTEXES, ROBOT_VELOCITY, POINTS_TO_EXPLORE, distance_matrix = parsing_file(file_to_open)
-
-print "\n---> NUMBER OF ROBOTS = " + str(N_ROBOTS)
-print "\n---> STARTING POSITIONS "
-print STARTING_POS
-print "\n---> NUMBER OF VERTEXES = " + str(N_VERTEXES)
-print "\n---> ROBOT VELOCITY = " + str(ROBOT_VELOCITY)
-print "\n---> POINTS TO EXPLORE "
-print POINTS_TO_EXPLORE
-print "\n"
+if len(STARTING_POS) != 3:
+	exit(1)
 
 #time matrix initialization
 time_matrix =  np.zeros((N_VERTEXES, N_VERTEXES))
@@ -102,10 +93,6 @@ for i in range(0,N_VERTEXES):
 	for j in range(0,N_VERTEXES):
 		time_matrix[i][j] = distance_matrix[i][j] / ROBOT_VELOCITY
 
-print "DISTANCE Matrix"
-print distance_matrix
-print "\nTIME Matrix"
-print time_matrix
 
 
 #ROAD MATRIX. Being a completely connected graph, the 0 are only on the diagonal
@@ -123,11 +110,6 @@ for i in range(0,n_to_explore):
 	adjacency_radio[POINTS_TO_EXPLORE[i][0]][POINTS_TO_EXPLORE[i][1]] = 1
 	adjacency_radio[POINTS_TO_EXPLORE[i][1]][POINTS_TO_EXPLORE[i][0]] = 1
 
-print "\nRoadmap adjacency MATRIX"
-print adjacency_road
-print"\nRadiomap MATRIX - Pairs to be measured"
-print adjacency_radio
-
 g = Graph()
 g.add_vertices(N_VERTEXES)
 
@@ -138,8 +120,6 @@ for i in range(0,N_VERTEXES-1):
 
 g.add_edges(EDGES)
 gEdgeList = g.get_edgelist()
-print "\nEDGES LIST"
-print g.get_edgelist()
 
 if obj_fun == "time":
 	for i in range(0,len(gEdgeList)):
@@ -148,23 +128,15 @@ elif obj_fun == "distance":
 	for i in range(0,len(gEdgeList)):
 		g.es[i]["weight"] = distance_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
 
-print "\nGRAPH\n"
-print g
-for i in range (0, len(EDGES)):
-	print g.es[i].attributes()
 
 #LIST of the shortest distances between vertexes
 shortest_list = g.shortest_paths_dijkstra( weights="weight" )
-print "\nSHORTEST PATHS LIST - " + str(obj_fun)
-print shortest_list
+
 #LIST to MATRIX conversion
 shortest_matrix = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0, N_VERTEXES):
 	for j in range(0, N_VERTEXES):
 		shortest_matrix[i][j] = shortest_list[i][j]
-
-print "\nSHORTEST PATHS MATRIX - " + str(obj_fun)
-print shortest_matrix
 
 # |---------------------------|
 # |DATA AND PARAMETERS - END  |
@@ -184,8 +156,6 @@ for i in range(0, N_VERTEXES):
 				if adjacency_radio[i][j]==1 or adjacency_radio[j][k]==1 or adjacency_radio[i][k]==1:
 					V3.append([z, [i,j,k]])
 					z = z+1
-print "\nV3: each node represents a 3-robot configuration that contains at least a link to be measured. Configurations are not ordered"
-print V3
 #accessing values of V3: [list index] | [vertex_id or pair] | [if pair, selects if first/second/third point]
 #example1: V3[1][1][1] accesses 2nd element of list, pair of point, second point of the pair
 #example2: V3[2][0] accesses 3rd element of list and its vertex_id.
@@ -393,7 +363,6 @@ MOVING_ROBOTS.append(mC1[6])
 move_list = []
 
 #check moves until we explored every point
-print "\nOBJECTIVE: MIN " +  str(obj_fun)
 while len(POINTS_TO_EXPLORE) > 0 :
 	move_list = compute_moves(CONFIGURATIONS[-1], TIMETABLE[-1])
 	if SORTIING == "cardinality":
@@ -426,22 +395,29 @@ TIMETABLE.append(tt_final)
 MEASURING_ROBOTS.append(r_measuring_final)
 MOVING_ROBOTS.append(r_moving_final)
 
-print "CONFIGURATIONS"
-print CONFIGURATIONS
-print "TIMETABLE"
-print TIMETABLE
-print "MEASURING_ROBOTS"
-print MEASURING_ROBOTS
-print "MOVING_ROBOTS"
-print MOVING_ROBOTS
-print "EXPLORED_POINT"
-print EXPLORED_POINT
 
+T_FINAL = max(TIMETABLE[-1])
+print "DATFILE : " + str(file_to_open)
+
+env = file_to_open[0:6]
+print "ENVIRONMENT : " + str(env)
+
+print "ALGORITHM : KUMAR3"
+
+if file_to_open[14] == "_":
+	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
+else:
+	RANGE = RANGE = file_to_open[11:15]
+print "RANGE : " + str(RANGE)
+
+print "STARTING_POS : " + str(STARTING_POS[0])
+
+print "N_ROBOTS : " + str(N_ROBOTS)
 if obj_fun == "time":
-	T_FINAL = max(TIMETABLE[-1])
-	print "Kumar3 ended computation at: " + str(T_FINAL)
+	print "KUMAR3 T " + "/ " + SORTIING + " : " + str(T_FINAL)
 elif obj_fun == "distance":
 	sumdist = TIMETABLE[-1][0] + TIMETABLE[-1][1] + TIMETABLE[-1][2]
-	print"\nKumar3 sum distances is " + str(sumdist)
+	print"KUMAR3 sumD " + "/ " + SORTIING + " : " + str(sumdist)
 
-print("\n\n\n---EXECUTION TIME: %s seconds ---\n" % (time.time() - start_time))
+print("EXECUTION TIME KUMAR3: %s seconds\n" % (time.time() - start_time))
+print "-------------------------------------------------------------------"
