@@ -13,7 +13,7 @@ gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretizat
 
 MIN_ROBOTS = 2
 MAX_ROBOTS = 10
-RANGE = 100
+RANGE = 500
 
 comm_discr_types = ['range']
 
@@ -23,10 +23,9 @@ for i in range(MIN_ROBOTS, MAX_ROBOTS+1):
     datfiles.append(name_of_file)
 
 
-obj_f = 'time'
+obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'GREEDY.py'
-
 
 if __name__ == "__main__":
     """
@@ -36,7 +35,7 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
-    file_to_open = "resultsT_greedy_"+ gflags.FLAGS.env_name + "_" + str(RANGE) +".txt"
+    file_to_open = "resultsD_greedy_"+ gflags.FLAGS.env_name + "_" + str(RANGE) + ".txt"
     file = open(file_to_open, "w")
 
     for dat in datfiles:
