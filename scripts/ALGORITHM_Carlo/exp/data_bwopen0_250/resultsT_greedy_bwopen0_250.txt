@@ -1,0 +1,92 @@
+DATFILE : bwopen0_2r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 2
+GREEDY T : 1368.0
+EXECUTION TIME: 0.364175081253 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_3r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 3
+GREEDY T : 814.0
+EXECUTION TIME: 0.393908977509 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_4r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 4
+GREEDY T : 589.0
+EXECUTION TIME: 0.473135948181 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_5r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 5
+GREEDY T : 472.0
+EXECUTION TIME: 0.601974964142 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_6r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 6
+GREEDY T : 380.0
+EXECUTION TIME: 0.802882194519 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_7r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 7
+GREEDY T : 379.0
+EXECUTION TIME: 1.28473496437 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_8r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 8
+GREEDY T : 317.0
+EXECUTION TIME: 1.48536801338 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_9r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : 250.
+STARTING_POS : 0
+N_ROBOTS : 9
+GREEDY T : 311.0
+EXECUTION TIME: 1.6704659462 seconds 
+
+-------------------------------------------------------------------
+DATFILE : bwopen0_10r_250.dat
+ENVIRONMENT : bwopen
+ALGORITHM : GREEDY
+RANGE : _250
+STARTING_POS : 0
+N_ROBOTS : 10
+GREEDY T : 286.0
+EXECUTION TIME: 2.16302800179 seconds 
+
+-------------------------------------------------------------------
+MAP: bwopen0_
+DATE: 2017-10-20_10-38-04
