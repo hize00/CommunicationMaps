@@ -1,0 +1,60 @@
+DATFILE : offices1_2r_1000.dat
+ENVIRONMENT : office
+ALGORITHM : GREEDY
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 2
+GREEDY sumD : [ 9532.]
+EXECUTION TIME: 578.358545065 seconds 
+
+-------------------------------------------------------------------
+DATFILE : offices1_3r_1000.dat
+ENVIRONMENT : office
+ALGORITHM : GREEDY
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 3
+GREEDY sumD : [ 8684.]
+EXECUTION TIME: 311.659895897 seconds 
+
+-------------------------------------------------------------------
+DATFILE : offices1_6r_1000.dat
+ENVIRONMENT : office
+ALGORITHM : GREEDY
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 6
+GREEDY sumD : [ 5682.]
+EXECUTION TIME: 343.023259878 seconds 
+
+-------------------------------------------------------------------
+DATFILE : offices1_7r_1000.dat
+ENVIRONMENT : office
+ALGORITHM : GREEDY
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 7
+GREEDY sumD : [ 5042.]
+EXECUTION TIME: 401.528144121 seconds 
+
+-------------------------------------------------------------------
+DATFILE : offices1_8r_1000.dat
+ENVIRONMENT : office
+ALGORITHM : GREEDY
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 8
+GREEDY sumD : [ 4252.]
+EXECUTION TIME: 457.206918001 seconds 
+
+-------------------------------------------------------------------
+DATFILE : offices1_9r_1000.dat
+ENVIRONMENT : office
+ALGORITHM : GREEDY
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 9
+GREEDY sumD : [ 4500.]
+EXECUTION TIME: 521.612803936 seconds 
+
+-------------------------------------------------------------------
