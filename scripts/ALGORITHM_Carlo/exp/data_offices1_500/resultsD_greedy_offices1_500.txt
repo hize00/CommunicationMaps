@@ -5,7 +5,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 2
 GREEDY sumD : [ 9038.]
-EXECUTION TIME: 165.148597002 seconds 
+EXECUTION TIME: 165.185795069 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_3r_500.dat
@@ -15,7 +15,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 3
 GREEDY sumD : [ 8078.]
-EXECUTION TIME: 397.250163078 seconds 
+EXECUTION TIME: 173.936589003 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_4r_500.dat
@@ -25,7 +25,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 4
 GREEDY sumD : [ 6888.]
-EXECUTION TIME: 243.875961065 seconds 
+EXECUTION TIME: 194.057446957 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_5r_500.dat
@@ -35,7 +35,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 5
 GREEDY sumD : [ 6516.]
-EXECUTION TIME: 429.615505934 seconds 
+EXECUTION TIME: 228.527367115 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_6r_500.dat
@@ -45,7 +45,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 6
 GREEDY sumD : [ 5528.]
-EXECUTION TIME: 383.941476107 seconds 
+EXECUTION TIME: 284.634634018 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_7r_500.dat
@@ -55,7 +55,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 7
 GREEDY sumD : [ 5090.]
-EXECUTION TIME: 474.474532127 seconds 
+EXECUTION TIME: 339.981360912 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_8r_500.dat
@@ -65,7 +65,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 8
 GREEDY sumD : [ 4234.]
-EXECUTION TIME: 430.417043924 seconds 
+EXECUTION TIME: 388.965961933 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_9r_500.dat
@@ -75,7 +75,7 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 9
 GREEDY sumD : [ 4266.]
-EXECUTION TIME: 477.178322077 seconds 
+EXECUTION TIME: 440.147469044 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_10r_500.dat
@@ -85,8 +85,8 @@ RANGE : 500
 STARTING_POS : 42
 N_ROBOTS : 10
 GREEDY sumD : [ 4116.]
-EXECUTION TIME: 623.755141973 seconds 
+EXECUTION TIME: 517.191738129 seconds 
 
 -------------------------------------------------------------------
 MAP: offices1_
-DATE: 2017-10-20_15-31-58
+DATE: 2017-10-22_17-22-46
