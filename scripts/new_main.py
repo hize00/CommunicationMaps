@@ -285,8 +285,16 @@ class GenericRobot(object):
                 rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
                 r.sleep()
 
+            self.check_communication()
+
         rospy.sleep(rospy.Duration(2.0))
         self.execute_plan_state = 2
+
+    def check_communication(self):
+        if self.arrived_nominal_dest and self.teammate_arrived_nominal_dest and self.comm_module.can_communicate(self.teammates_id[0]):
+            rospy.loginfo(str(self.robot_id) + ' - ' + str(self.teammates_id[0]) + ' - both arrived and communicating.')
+
+        #TODO ELSE
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
@@ -361,10 +369,10 @@ class Leader(GenericRobot):
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
     def calculate_plan(self):
-        #self.parse_plans_file()
+        self.parse_plans_file()
 
-        self.plans = ((((14.0, 12.0), (25.0, 18.0)), (0,1), 10), (((13.0, 15.0), (31.0, 13.0)), (0,1), 12),
-        (((14.0, 16.0), (25.0, 18.0)), (0,1), 11))
+        #self.plans = ((((14.0, 12.0), (25.0, 18.0)), (0,1), 10), (((13.0, 15.0), (31.0, 13.0)), (0,1), 12),
+        #(((14.0, 16.0), (25.0, 18.0)), (0,1), 11))
 
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
 
@@ -378,7 +386,7 @@ class Leader(GenericRobot):
         reading_coords = 0
         reading_RM = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -495,14 +503,30 @@ class Leader(GenericRobot):
 
         goal_threads = []
 
-        for (plan_follower.second_robot_id, goal) in clients_messages:
-            t = threading.Thread(target=self.send_and_wait_goal, args=(plan_follower.second_robot_id, goal))
-            rospy.sleep(rospy.Duration(2.0))
-            t.start()
-            goal_threads.append(t)
+        # TODO fix the case in which both first robot and second robot are followers
+        for (plan_follower.first_robot_id, goal) in clients_messages:
+            rospy.loginfo(
+                str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(plan_follower.first_robot_id))
+            self.clients_signal[plan_follower.first_robot_id].send_goal(goal)
 
-        for t in goal_threads:
-            t.join()
+            self.clients_signal[plan_follower.first_robot_id].wait_for_result()
+            rospy.loginfo(str(robot_id) + ' - Leader - has received the result of ' + str(plan_follower.first_robot_id))
+
+        for (plan_follower.second_robot_id, goal) in clients_messages:
+            #t = threading.Thread(target=self.send_and_wait_goal, args=(plan_follower.second_robot_id, goal))
+            #rospy.sleep(rospy.Duration(2.0))
+            #t.start()
+            #goal_threads.append(t)
+
+            #TODO teammates_id
+            rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(plan_follower.second_robot_id))
+            self.clients_signal[plan_follower.second_robot_id].send_goal(goal)
+
+            self.clients_signal[plan_follower.second_robot_id].wait_for_result()
+            rospy.loginfo(str(robot_id) + ' - Leader - has received the result of ' + str(plan_follower.second_robot_id))
+
+        #for t in goal_threads:
+        #    t.join()
 
         self.execute_plan_state = 1
 
