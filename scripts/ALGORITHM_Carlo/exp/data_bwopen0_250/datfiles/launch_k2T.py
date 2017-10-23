@@ -18,7 +18,7 @@ RANGE = 250
 comm_discr_types = ['range']
 
 
-dat = gflags.FLAGS.env_name + '_2r_' + str(RANGE) + '.dat'
+dat = gflags.FLAGS.env_name + '2r_' + str(RANGE) + '.dat'
 obj_f = 'time'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'k2.py'
