@@ -16,3 +16,15 @@ Gurobi 6.0.5 (linux64) logging started Mon Oct 23 09:34:53 2017
 
 Gurobi 6.0.5 (linux64) logging started Mon Oct 23 09:34:57 2017
 
+
+Gurobi 7.5.1 (linux64, Python) logging started Mon Oct 23 12:21:29 2017
+
+Academic license - for non-commercial use only
+Changed value of parameter LogToConsole to 0
+   Prev: 1  Min: 0  Max: 1  Default: 1
+
+Gurobi 7.5.1 (linux64, Python) logging started Mon Oct 23 12:21:43 2017
+
+Academic license - for non-commercial use only
+Changed value of parameter LogToConsole to 0
+   Prev: 1  Min: 0  Max: 1  Default: 1
