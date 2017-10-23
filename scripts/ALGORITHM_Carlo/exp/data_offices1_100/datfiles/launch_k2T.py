@@ -37,7 +37,6 @@ if __name__ == "__main__":
     d = str(dat)
     o = str(obj_f)
     a = str(alg)
-    s = str(sort)
     os.system("python " + a +' '+ d +' '+ o )
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
