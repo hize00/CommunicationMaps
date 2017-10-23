@@ -1,0 +1,32 @@
+DATFILE : offices1_3r_100.dat
+ENVIRONMENT : office
+ALGORITHM : KUMAR3
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 3
+KUMAR3 sumD / cardinality : 1898.0
+EXECUTION TIME KUMAR3: 3.74197483063 seconds
+
+-------------------------------------------------------------------
+DATFILE : offices1_3r_100.dat
+ENVIRONMENT : office
+ALGORITHM : KUMAR3
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 3
+KUMAR3 sumD / heuristic : 2112.0
+EXECUTION TIME KUMAR3: 3.80252099037 seconds
+
+-------------------------------------------------------------------
+DATFILE : offices1_3r_100.dat
+ENVIRONMENT : office
+ALGORITHM : KUMAR3
+RANGE : _100
+STARTING_POS : 42
+N_ROBOTS : 3
+KUMAR3 sumD / objective : 1278.0
+EXECUTION TIME KUMAR3: 9.2716729641 seconds
+
+-------------------------------------------------------------------
+MAP: offices1_
+DATE: 2017-10-23_10-00-34
