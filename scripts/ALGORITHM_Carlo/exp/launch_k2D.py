@@ -18,7 +18,7 @@ RANGE = 100
 comm_discr_types = ['range']
 
 
-dat = gflags.FLAGS.env_name + '_2r_' + str(RANGE) + '.dat'
+dat = gflags.FLAGS.env_name + '2r_' + str(RANGE) + '.dat'
 obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'k2.py'
@@ -37,7 +37,6 @@ if __name__ == "__main__":
     d = str(dat)
     o = str(obj_f)
     a = str(alg)
-    s = str(sort)
     os.system("python " + a +' '+ d +' '+ o )
 
 

@@ -13,12 +13,12 @@ gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretizat
 
 MIN_ROBOTS = 2
 MAX_ROBOTS = 10
-RANGE = 100
+RANGE = 250
 
 comm_discr_types = ['range']
 
 
-obj_f = 'distance'
+obj_f = 'time'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'k3.py'
 dat = gflags.FLAGS.env_name + '3r_' + str(RANGE) + '.dat'
@@ -31,10 +31,10 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
-    file_to_open = "resultsD_k3_"+ gflags.FLAGS.env_name + "_" + str(RANGE) + ".txt"
+    file_to_open = "resultsT_k3_"+ gflags.FLAGS.env_name + "_" + str(RANGE) +".txt"
     file = open(file_to_open, "w")
 
-    
+
     d = str(dat)
     o = str(obj_f)
     a = str(alg)
