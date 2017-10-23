@@ -5,7 +5,6 @@ import sys
 import itertools
 from operator import *
 from igraph import *
-from gurobipy import *
 
 sys.setrecursionlimit(1000000)
 #start the time
