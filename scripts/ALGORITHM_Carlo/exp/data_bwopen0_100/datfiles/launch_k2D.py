@@ -17,12 +17,8 @@ RANGE = 100
 
 comm_discr_types = ['range']
 
-datfiles = []
-for i in range(MIN_ROBOTS, MAX_ROBOTS+1):
-    name_of_file = gflags.FLAGS.env_name + str(i) + "r_" + str(RANGE) + ".dat"
-    datfiles.append(name_of_file)
 
-
+dat = gflags.FLAGS.env_name + '_2r_' + str(RANGE) + '.dat'
 obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'k2.py'
@@ -38,16 +34,12 @@ if __name__ == "__main__":
     file_to_open = "resultsD_k2_"+ gflags.FLAGS.env_name + "_" + str(RANGE) + ".txt"
     file = open(file_to_open, "w")
 
-    for dat in datfiles:
-        d = str(dat)
-        o = str(obj_f)
-        a = str(alg)
-        if a == 'k3.py':
-            for sort in sorting:
-                s = str(sort)
-                os.system("python " + a +' '+ d +' '+ o +' '+ s)
-        else:
-            os.system("python " + a +' '+ d +' '+ o )
+    d = str(dat)
+    o = str(obj_f)
+    a = str(alg)
+    s = str(sort)
+    os.system("python " + a +' '+ d +' '+ o )
+
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
