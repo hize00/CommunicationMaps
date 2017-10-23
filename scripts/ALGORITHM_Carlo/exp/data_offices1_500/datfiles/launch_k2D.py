@@ -13,13 +13,13 @@ gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretizat
 
 MIN_ROBOTS = 2
 MAX_ROBOTS = 10
-RANGE = 100
+RANGE = 500
 
 comm_discr_types = ['range']
 
 
 dat = gflags.FLAGS.env_name + '2r_' + str(RANGE) + '.dat'
-obj_f = 'time'
+obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'k2.py'
 
@@ -38,6 +38,7 @@ if __name__ == "__main__":
     o = str(obj_f)
     a = str(alg)
     os.system("python " + a +' '+ d +' '+ o )
+
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 

@@ -1,4 +1,3 @@
-Academic license - for non-commercial use only
 DATFILE : bwopen0_2r_100.dat
 ENVIRONMENT : bwopen
 ALGORITHM : KUMAR2
