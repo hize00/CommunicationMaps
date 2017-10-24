@@ -17,16 +17,11 @@ RANGE = 1000
 
 comm_discr_types = ['range']
 
-datfiles = []
-for i in range(MIN_ROBOTS, MAX_ROBOTS+1):
-    name_of_file = gflags.FLAGS.env_name + str(i) + "r_" + str(RANGE) + ".dat"
-    datfiles.append(name_of_file)
 
-
-obj_f = 'time'
+dat = gflags.FLAGS.env_name + '2r_' + str(RANGE) + '.dat'
+obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
-alg = 'newGREEDY.py'
-
+alg = 'newk2.py'
 
 if __name__ == "__main__":
     """
@@ -36,15 +31,13 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
+    d = str(dat)
+    o = str(obj_f)
+    a = str(alg)
+    os.system("python " + a +' '+ d +' '+ o )
 
-    for dat in datfiles:
-        d = str(dat)
-        o = str(obj_f)
-        a = str(alg)
-        os.system("python " + a +' '+ d +' '+ o )
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
-
 
 

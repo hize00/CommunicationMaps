@@ -1,101 +1,92 @@
 DATFILE : offices1_2r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 2
 GREEDY T : 3966.0
-SECONDARY sumD : 21758.0
-EXECUTION TIME: 12.3202288151 seconds 
+EXECUTION TIME: 13.491366148 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_3r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 3
 GREEDY T : 2214.0
-SECONDARY sumD : 23676.0
-EXECUTION TIME: 13.6829321384 seconds 
+EXECUTION TIME: 15.6673841476 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_4r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 4
 GREEDY T : 1569.0
-SECONDARY sumD : 24152.0
-EXECUTION TIME: 16.5136909485 seconds 
+EXECUTION TIME: 17.8218331337 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_5r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 5
 GREEDY T : 1138.0
-SECONDARY sumD : 26853.0
-EXECUTION TIME: 20.9092409611 seconds 
+EXECUTION TIME: 20.8398468494 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_6r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 6
 GREEDY T : 875.0
-SECONDARY sumD : 19411.0
-EXECUTION TIME: 25.1604239941 seconds 
+EXECUTION TIME: 25.5342991352 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_7r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 7
 GREEDY T : 790.0
-SECONDARY sumD : 22101.0
-EXECUTION TIME: 30.3996250629 seconds 
+EXECUTION TIME: 30.5724298954 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_8r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 8
 GREEDY T : 630.0
-SECONDARY sumD : 21770.0
-EXECUTION TIME: 34.9759039879 seconds 
+EXECUTION TIME: 37.0514719486 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_9r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 9
 GREEDY T : 593.0
-SECONDARY sumD : 20577.0
-EXECUTION TIME: 40.6688628197 seconds 
+EXECUTION TIME: 41.1329648495 seconds 
 
 -------------------------------------------------------------------
 DATFILE : offices1_10r_250.dat
 ENVIRONMENT : office
 ALGORITHM : GREEDY
-RANGE : r_25
+RANGE : 250
 STARTING_POS : 42
 N_ROBOTS : 10
 GREEDY T : 495.0
-SECONDARY sumD : 20802.0
-EXECUTION TIME: 49.8771138191 seconds 
+EXECUTION TIME: 49.5425379276 seconds 
 
 -------------------------------------------------------------------
 MAP: offices1_
-DATE: 2017-10-24_10-29-31
+DATE: 2017-10-22_22-05-45

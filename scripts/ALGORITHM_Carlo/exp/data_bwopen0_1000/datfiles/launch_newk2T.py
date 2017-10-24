@@ -7,19 +7,19 @@ import multiprocessing
 from joblib import Parallel, delayed
 
 
-gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
-#gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
+#gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
+gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
 gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretization - physical')
 
 MIN_ROBOTS = 2
 MAX_ROBOTS = 10
-RANGE = 100
+RANGE = 1000
 
 comm_discr_types = ['range']
 
 
 dat = gflags.FLAGS.env_name + '2r_' + str(RANGE) + '.dat'
-obj_f = 'distance'
+obj_f = 'time'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'newk2.py'
 
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     os.system("python " + a +' '+ d +' '+ o )
 
 
-
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
+
 
 
