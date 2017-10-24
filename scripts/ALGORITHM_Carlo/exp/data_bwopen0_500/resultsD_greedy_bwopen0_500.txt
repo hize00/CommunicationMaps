@@ -5,7 +5,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 2
 GREEDY sumD : [ 3970.]
-EXECUTION TIME: 5.18499779701 seconds 
+SECONDARY T : 13594.0
+EXECUTION TIME: 5.12326002121 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_3r_500.dat
@@ -15,7 +16,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 3
 GREEDY sumD : [ 3284.]
-EXECUTION TIME: 6.18454003334 seconds 
+SECONDARY T : 8649.0
+EXECUTION TIME: 5.56570911407 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_4r_500.dat
@@ -25,7 +27,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 4
 GREEDY sumD : [ 3108.]
-EXECUTION TIME: 7.17510700226 seconds 
+SECONDARY T : 8991.0
+EXECUTION TIME: 6.4547328949 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_5r_500.dat
@@ -35,7 +38,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 5
 GREEDY sumD : [ 2626.]
-EXECUTION TIME: 8.86321687698 seconds 
+SECONDARY T : 6384.0
+EXECUTION TIME: 8.03426504135 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_6r_500.dat
@@ -45,7 +49,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 6
 GREEDY sumD : [ 2274.]
-EXECUTION TIME: 10.3545360565 seconds 
+SECONDARY T : 5692.0
+EXECUTION TIME: 9.76990413666 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_7r_500.dat
@@ -55,7 +60,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 7
 GREEDY sumD : [ 2168.]
-EXECUTION TIME: 13.097992897 seconds 
+SECONDARY T : 4575.0
+EXECUTION TIME: 12.081485033 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_8r_500.dat
@@ -65,7 +71,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 8
 GREEDY sumD : [ 2124.]
-EXECUTION TIME: 14.9006729126 seconds 
+SECONDARY T : 4791.0
+EXECUTION TIME: 14.6473190784 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_9r_500.dat
@@ -75,7 +82,8 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 9
 GREEDY sumD : [ 2078.]
-EXECUTION TIME: 17.501085043 seconds 
+SECONDARY T : 4321.0
+EXECUTION TIME: 17.1592428684 seconds 
 
 -------------------------------------------------------------------
 DATFILE : bwopen0_10r_500.dat
@@ -85,8 +93,9 @@ RANGE : 500
 STARTING_POS : 0
 N_ROBOTS : 10
 GREEDY sumD : [ 2014.]
-EXECUTION TIME: 20.4859580994 seconds 
+SECONDARY T : 4668.0
+EXECUTION TIME: 21.6237950325 seconds 
 
 -------------------------------------------------------------------
 MAP: bwopen0_
-DATE: 2017-10-20_10-55-23
+DATE: 2017-10-24_10-05-50

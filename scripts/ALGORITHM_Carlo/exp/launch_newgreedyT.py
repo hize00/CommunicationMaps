@@ -7,8 +7,8 @@ import multiprocessing
 from joblib import Parallel, delayed
 
 
-#gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
-gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
+gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
+#gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
 gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretization - physical')
 
 MIN_ROBOTS = 2
@@ -45,6 +45,6 @@ if __name__ == "__main__":
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
-    file.close()
+
 
 

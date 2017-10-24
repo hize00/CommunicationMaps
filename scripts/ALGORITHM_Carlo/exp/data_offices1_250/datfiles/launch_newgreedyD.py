@@ -7,8 +7,8 @@ import multiprocessing
 from joblib import Parallel, delayed
 
 
-#gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
-gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
+gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
+#gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
 gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretization - physical')
 
 MIN_ROBOTS = 2
@@ -23,10 +23,9 @@ for i in range(MIN_ROBOTS, MAX_ROBOTS+1):
     datfiles.append(name_of_file)
 
 
-obj_f = 'time'
+obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
 alg = 'newGREEDY.py'
-
 
 if __name__ == "__main__":
     """
@@ -35,7 +34,6 @@ if __name__ == "__main__":
     #print 'Running experiments on environment ', gflags.FLAGS.env_name
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
-
 
     for dat in datfiles:
         d = str(dat)

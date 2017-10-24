@@ -1,101 +1,92 @@
-DATFILE : bwopen0_2r_250.dat
+DATFILE : bwopen0_2r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 2
-GREEDY sumD : [ 1710.]
-SECONDARY T : 4507.0
-EXECUTION TIME: 0.336408853531 seconds 
+GREEDY T : 4793.0
+EXECUTION TIME: 14.2428150177 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_3r_250.dat
+DATFILE : bwopen0_3r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 3
-GREEDY sumD : [ 1658.]
-SECONDARY T : 4185.0
-EXECUTION TIME: 0.415928125381 seconds 
+GREEDY T : 2491.0
+EXECUTION TIME: 14.0993130207 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_4r_250.dat
+DATFILE : bwopen0_4r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 4
-GREEDY sumD : [ 1520.]
-SECONDARY T : 2575.0
-EXECUTION TIME: 0.480354785919 seconds 
+GREEDY T : 1662.0
+EXECUTION TIME: 16.6386630535 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_5r_250.dat
+DATFILE : bwopen0_5r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 5
-GREEDY sumD : [ 1488.]
-SECONDARY T : 2636.0
-EXECUTION TIME: 0.642337083817 seconds 
+GREEDY T : 1228.0
+EXECUTION TIME: 19.7495729923 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_6r_250.dat
+DATFILE : bwopen0_6r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 6
-GREEDY sumD : [ 1398.]
-SECONDARY T : 2381.0
-EXECUTION TIME: 0.815569877625 seconds 
+GREEDY T : 914.0
+EXECUTION TIME: 24.0770590305 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_7r_250.dat
+DATFILE : bwopen0_7r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 7
-GREEDY sumD : [ 1400.]
-SECONDARY T : 2135.0
-EXECUTION TIME: 0.970798969269 seconds 
+GREEDY T : 857.0
+EXECUTION TIME: 28.1760189533 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_8r_250.dat
+DATFILE : bwopen0_8r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 8
-GREEDY sumD : [ 1666.]
-SECONDARY T : 2310.0
-EXECUTION TIME: 1.22403883934 seconds 
+GREEDY T : 729.0
+EXECUTION TIME: 36.4407198429 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_9r_250.dat
+DATFILE : bwopen0_9r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : 250.
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 9
-GREEDY sumD : [ 1600.]
-SECONDARY T : 1965.0
-EXECUTION TIME: 1.49949789047 seconds 
+GREEDY T : 634.0
+EXECUTION TIME: 43.0786590576 seconds 
 
 -------------------------------------------------------------------
-DATFILE : bwopen0_10r_250.dat
+DATFILE : bwopen0_10r_1000.dat
 ENVIRONMENT : bwopen
 ALGORITHM : GREEDY
-RANGE : _250
+RANGE : 1000
 STARTING_POS : 0
 N_ROBOTS : 10
-GREEDY sumD : [ 1686.]
-SECONDARY T : 1851.0
-EXECUTION TIME: 1.81631016731 seconds 
+GREEDY T : 584.0
+EXECUTION TIME: 55.1798551083 seconds 
 
 -------------------------------------------------------------------
 MAP: bwopen0_
-DATE: 2017-10-24_10-05-22
+DATE: 2017-10-20_10-58-19
