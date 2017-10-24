@@ -421,7 +421,10 @@ elif obj_fun == "distance":
 
 print "CONFIGURATIONS :"
 for i in range(0,len(CONFIGURATIONS)):
-	print CONFIGURATIONS[i]
+	miniC = ""
+	for j in range(0, N_ROBOTS):
+		miniC = miniC + str(CONFIGURATIONS[i][j]) + " "
+	print miniC
 print ";\n"
 
 print("EXECUTION TIME KUMAR3: %s seconds\n" % (time.time() - start_time))
