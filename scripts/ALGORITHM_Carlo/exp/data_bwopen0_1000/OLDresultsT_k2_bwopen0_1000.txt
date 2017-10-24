@@ -1,0 +1,12 @@
+DATFILE : bwopen0_2r_1000.dat
+ENVIRONMENT : bwopen
+ALGORITHM : KUMAR2
+RANGE : 1000
+STARTING_POS : 0
+N_ROBOTS : 2
+KUMAR2 T : 4506.0
+EXECUTION TIME KUMAR2: 139.001992941 seconds
+
+-------------------------------------------------------------------
+MAP: bwopen0_
+DATE: 2017-10-23_16-55-58

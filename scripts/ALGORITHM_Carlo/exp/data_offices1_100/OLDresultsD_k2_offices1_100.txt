@@ -1,0 +1,12 @@
+DATFILE : offices1_2r_100.dat
+ENVIRONMENT : office
+ALGORITHM : KUMAR2
+RANGE : 100
+STARTING_POS : 42
+N_ROBOTS : 2
+KUMAR2 sumD : 1064.0
+EXECUTION TIME KUMAR2: 0.432434082031 seconds
+
+-------------------------------------------------------------------
+MAP: offices1_
+DATE: 2017-10-23_14-02-19
