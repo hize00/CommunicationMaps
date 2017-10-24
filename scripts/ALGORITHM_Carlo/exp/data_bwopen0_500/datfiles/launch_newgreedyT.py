@@ -45,6 +45,5 @@ if __name__ == "__main__":
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
-    file.close()
 
 
