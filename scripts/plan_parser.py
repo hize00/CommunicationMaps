@@ -4,20 +4,20 @@ import sys
 
 coord = []
 robot_moving = []
-id_robot_moving = []
+robot_plan = []
 
+resize_factor = 0.1
 reading_coords = 0
 reading_RM = 0
 
-
-with open('solution_plan_2_robots.txt', 'r') as file:
+with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
     data = file.readlines()
     for line in data:
         words = line.split()
         if len(words) > 0:
             if words[0] == "N_ROBOTS:":
                 N_ROBOTS = int(words[1])
-                line_lenght = N_ROBOTS*2 + N_ROBOTS-1
+                line_lenght = N_ROBOTS * 2 + N_ROBOTS - 1
             elif words[0] == "COORDINATES_LIST:":
                 reading_coords = 1
                 continue
@@ -43,53 +43,80 @@ with open('solution_plan_2_robots.txt', 'r') as file:
 
 file.close()
 
-print coord
-
 #for i in xrange(N_ROBOTS*2):
 #    coord.pop(0)
 
-#coordinates
-coords = [coord[i:i+2] for i in range(0, len(coord), 2)] #group x and y of a single robot
+#grouping coordinates by (x,y)
+coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
+
+#converting from pixels to meters
+for c in coords:
+    c[0] = int(79.7 - resize_factor * c[0])
+    c[1] = int(0.1 * c[1])
+
 nested_tuple_coords = [tuple(l) for l in coords]
-plan_coordinates = [nested_tuple_coords[i:i+N_ROBOTS] for i in range(0, len(nested_tuple_coords), N_ROBOTS)] #create a plan of coordinates
+plan_coordinates = [nested_tuple_coords[i:i + N_ROBOTS] for i in
+                    range(0, len(nested_tuple_coords), N_ROBOTS)]  # create a plan of coordinates
 
-#creating a tuples of coordinates
-tuple_plan_coordinates = tuple(plan_coordinates)
-nested_tuple_plan_coordinates = [tuple(l) for l in tuple_plan_coordinates]
-
-#robot moving
+#creating the plan
+count_config = 0
 for config in robot_moving:
     count = 0
-    position = 0
-    count_moving = 0
-    for j in config:
-        if j != 0:
-            id_robot_moving.append(count)
+    first_robot = -1
+    for robot in config:
+        if robot != 0 and first_robot == -1:
+            first_robot = count
+            robot_plan.append(first_robot)
             position = count
-            count_moving += 1
+            robot_plan.append(plan_coordinates[count_config][position])
+        elif robot != 0 and first_robot != -1:
+            second_robot = count
+            position = count
+            robot_plan.append(plan_coordinates[count_config][position])
+            robot_plan.append(second_robot)
+
+            #assigning a reflected plan to the other robot
+            robot_plan.append(second_robot)
+            robot_plan.append(plan_coordinates[count_config][position])
+            robot_plan.append(plan_coordinates[count_config][first_robot])
+            robot_plan.append(first_robot)
+
         count += 1
+    count_config += 1
 
-    if count_moving != 0 and count_moving < 2 and position == N_ROBOTS-1:
-        id_robot_moving.insert(-1, position)
-    elif count_moving != 0 and count_moving < 2 and position != N_ROBOTS-1:
-        id_robot_moving.append(position)
+#grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
+robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
 
-print id_robot_moving
+#deleting last (incomplete) plan if last robot_moving row has only one robot to move
+for plan in robot_plan:
+    if len(plan) < 4:  # 4 = number of elements in a plan
+        robot_plan.pop(-1)
 
-plans_id_robot_moving = [id_robot_moving[i:i+2] for i in range(0, len(id_robot_moving), 2)]
-print plans_id_robot_moving
+#grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
+plans = []
+for plan in robot_plan:
+    my_id = []
+    coordinates = []
+    msgs = []
+    my_id.append(plan[0])
+    coordinates.append(plan[1])
+    coordinates.append(plan[2])
+    msgs.append(tuple(coordinates))
+    msgs.append(plan[3])
+    my_id.append(tuple(msgs))
+    plans.append(tuple(my_id))
 
-tuple_id_robot_moving = [tuple(l) for l in plans_id_robot_moving]
+plans = tuple(plans)
 
+# grouping plan elements by robot_id
+robot_ids = set(map(lambda x: x[0], plans))
+plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
 
-#in the first configuration no robot is moving
-#tuple_id_robot_moving.insert(0,(-1,-1))
-#print tuple_id_robot_moving
+if len(robot_ids) < N_ROBOTS:
+    for i in xrange(N_ROBOTS):
+        if i not in robot_ids:
+            plan_id.insert(i, ())  #if a robot never moves, his plan will be empty
 
-#Generating the complete plan
-plan = zip(nested_tuple_plan_coordinates,tuple_id_robot_moving)
-print plan
+plan_id = tuple([tuple(l) for l in plan_id])  #plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
-tuple_plan = tuple(plan)
-print tuple_plan
-#stampa il piano corretto e completo (anche i robot che non si muovono)
+print plan_id
