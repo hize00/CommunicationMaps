@@ -426,6 +426,27 @@ for i in range(0,len(CONFIGURATIONS)):
 		miniC = miniC + str(CONFIGURATIONS[i][j]) + " "
 	print miniC
 print ";\n"
+print "MOVING ROBOT :"
+for i in range(0,len(MOVING_ROBOTS)):
+	miniRM = ""
+	for j in range(0, N_ROBOTS):
+		miniRM = miniRM + str(MOVING_ROBOTS[i][j]) + " "
+	print miniRM
+print ";"
+print "MEASURING ROBOT :"
+for i in range(0,len(MEASURING_ROBOTS)):
+	miniRM = ""
+	for j in range(0, N_ROBOTS):
+		miniRM = miniRM + str(MEASURING_ROBOTS[i][j]) + " "
+	print miniRM
+print ";"
+print "TIMETABLE : "
+for i in range(0,len(TIMETABLE)):
+	miniT = ""
+	for j in range(0, N_ROBOTS):
+		miniT = miniT + str(TIMETABLE[i][j]) + " "
+	print miniT
+print ";"
 
 print("EXECUTION TIME KUMAR3: %s seconds\n" % (time.time() - start_time))
 print "-------------------------------------------------------------------"

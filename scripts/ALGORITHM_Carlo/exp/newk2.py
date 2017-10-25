@@ -398,6 +398,13 @@ for i in range(0,len(CONFIGURATIONS)):
 		miniC = miniC + str(CONFIGURATIONS[i][j]) + " "
 	print miniC
 print ";\n"
+print "TIMETABLE : "
+for i in range(0,len(TIMETABLE)):
+	miniT = ""
+	for j in range(0, N_ROBOTS):
+		miniT = miniT + str(TIMETABLE[i][j]) + " "
+	print miniT
+print ";"
 
 
 print("EXECUTION TIME KUMAR2: %s seconds\n" % (time.time() - start_time))
