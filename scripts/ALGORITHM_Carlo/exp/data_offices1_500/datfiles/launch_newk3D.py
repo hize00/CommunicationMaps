@@ -13,15 +13,15 @@ gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretizat
 
 MIN_ROBOTS = 2
 MAX_ROBOTS = 10
-RANGE = 100
+RANGE = 500
 
 comm_discr_types = ['range']
 
 
-dat = gflags.FLAGS.env_name + '2r_' + str(RANGE) + '.dat'
 obj_f = 'distance'
 sorting = ['cardinality' , 'heuristic', 'objective']
-alg = 'newk2.py'
+alg = 'newk3.py'
+dat = gflags.FLAGS.env_name + '3r_' + str(RANGE) + '.dat'
 
 if __name__ == "__main__":
     """
@@ -31,13 +31,17 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
+
+    
     d = str(dat)
     o = str(obj_f)
     a = str(alg)
-    os.system("python " + a +' '+ d +' '+ o )
-
+    for sort in sorting:
+        s = str(sort)
+        os.system("python " + a +' '+ d +' '+ o +' '+ s)
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
+
 
 
