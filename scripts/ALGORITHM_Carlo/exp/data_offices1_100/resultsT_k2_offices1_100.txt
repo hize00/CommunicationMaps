@@ -1,8 +1,7 @@
-Academic license - for non-commercial use only
 DATFILE : offices1_2r_100.dat
 ENVIRONMENT : office
 ALGORITHM : KUMAR2
-RANGE : _100
+RANGE : 100
 STARTING_POS : 42
 N_ROBOTS : 2
 KUMAR2 T : 871.0
