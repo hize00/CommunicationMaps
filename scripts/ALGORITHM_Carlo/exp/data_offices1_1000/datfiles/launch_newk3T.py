@@ -13,7 +13,7 @@ gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretizat
 
 MIN_ROBOTS = 2
 MAX_ROBOTS = 10
-RANGE = 100
+RANGE = 1000
 
 comm_discr_types = ['range']
 
