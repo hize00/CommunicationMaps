@@ -7,21 +7,19 @@ import multiprocessing
 from joblib import Parallel, delayed
 
 
-gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
-#gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
+#gflags.DEFINE_string('env_name', 'offices1_', 'environment name')
+gflags.DEFINE_string('env_name', 'bwopen0_', 'environment name')
 gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretization - physical')
 
-MIN_ROBOTS = 2
-MAX_ROBOTS = 10
+tau_to_compute = sys.argv[1]
+n_robot = sys.argv[2]
+
 RANGE = 100
 
-comm_discr_types = ['range']
+name_of_file = gflags.FLAGS.env_name + str(n_robot) + "r_" + str(RANGE) + ".dat"
 
-
-obj_f = 'distance'
-sorting = ['cardinality' , 'heuristic', 'objective']
-alg = 'k3.py'
-dat = gflags.FLAGS.env_name + '3r_' + str(RANGE) + '.dat'
+obj_f = 'time'
+alg = 'HBSS' + str(tau_to_compute) + '.py'
 
 if __name__ == "__main__":
     """
@@ -31,19 +29,12 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
-    file_to_open = "resultsD_k3_"+ gflags.FLAGS.env_name + "_" + str(RANGE) + ".txt"
-    file = open(file_to_open, "w")
-
-    
     d = str(dat)
     o = str(obj_f)
     a = str(alg)
-    for sort in sorting:
-        s = str(sort)
-        os.system("python " + a +' '+ d +' '+ o +' '+ s)
+    os.system("python " + a +' '+ d +' '+ o )
 
 
     print "MAP: " + gflags.FLAGS.env_name + "\n" + "DATE: " + subdir 
-    file.close()
 
 

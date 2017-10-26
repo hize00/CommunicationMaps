@@ -6,7 +6,6 @@ import sys
 import itertools
 from igraph import *
 from operator import itemgetter
-from gurobipy import *
 from copy import deepcopy
 
 sys.setrecursionlimit(1000000)
@@ -91,14 +90,12 @@ for i in range(0,N_VERTEXES):
 	for j in range(0,N_VERTEXES):
 		time_matrix[i][j] = distance_matrix[i][j] / ROBOT_VELOCITY
 
-		
 n_to_explore = len(POINTS_TO_EXPLORE)
 #RADIO MATRIX. Values are 1 for points where we need to measure connection
 adjacency_radio = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0,n_to_explore):
 	adjacency_radio[POINTS_TO_EXPLORE[i][0]][POINTS_TO_EXPLORE[i][1]] = 1
 	adjacency_radio[POINTS_TO_EXPLORE[i][1]][POINTS_TO_EXPLORE[i][0]] = 1
-
 
 g = Graph()
 g.add_vertices(N_VERTEXES)
@@ -118,7 +115,6 @@ elif obj_fun == "distance":
 	for i in range(0,len(gEdgeList)):
 		g.es[i]["weight"] = distance_matrix[gEdgeList[i][0]][gEdgeList[i][1]]
 
-
 #LIST of the shortest distances between vertexes
 shortest_list = g.shortest_paths_dijkstra( weights="weight" )
 
@@ -127,7 +123,6 @@ shortest_matrix = np.zeros((N_VERTEXES, N_VERTEXES))
 for i in range(0, N_VERTEXES):
 	for j in range(0, N_VERTEXES):
 		shortest_matrix[i][j] = shortest_list[i][j]
-
 
 # |---------------------------|
 # |DATA AND PARAMETERS - END  |
@@ -399,46 +394,235 @@ if obj_fun == "time":
 			maxTF = shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
 			maxTF_index = i
 	greedy_time = float(STATES[-1].getTimeTable()[maxTF_index]) + maxTF
-	CONFIGURATIONS.append(STARTING_POS)
-	#print CONFIGURATIONS
 
 elif obj_fun == "distance":
-	CONFIGURATIONS.append(STARTING_POS)
+	#distance in which robot complete exploration
+	greedy_time = 0
+	for i in range(0, N_ROBOTS):
+		greedy_time = greedy_time + STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-1][i]][STARTING_POS[i]]
+
+# |---------------------------|
+# |		 HBSS ALGORITHM       |
+# |---------------------------|
+
+HB_CONFIGURATIONS = []
+HB_CONFIGURATIONS_LIST = []
+HB_STATES = []
+HB_STATES_LIST = []
+TIME_HBSEARCH = []
+HB_TIME = []
+HB_TIME_LIST = []
+HB_MOVING = []
+HB_MOVING_LIST = []
 
 
+def HBBS(state0, heuristic, bias, bound, initialBest):
+	resultS, resultT = HBBS_Search(state0, heuristic, bias, 0, bound)
+	return resultS, resultT
+	
+def HBBS_Search(state, heuristic, bias, depth, bound):
+	scores = []
+	if state.getDepthLevel() < bound:
+		#ordered child based on heuristic
+		scores = SORT_heuristic(state, heuristic)
+		length = len(scores)
+		rank = [-1]*length
+		weight = [-1]*length
+		probability = [-1]*length
+		total_weight = 0
+		for i in range(0, len(scores)):
+			rank[i] = i+1
+			weight[i] = BIAS_FUNCTION(bias, rank[i])
+			total_weight = total_weight + weight[i]
+		for i in range(0, len(scores)):
+			probability[i] = weight[i]/total_weight
+		#probability selection
+		child_index = np.random.choice(range(0, length), None, False, probability)
+		#selected move according to BIAS and probability
+		m = scores[child_index]
+		ttable = updateTimeTable(state, m)
+		ptv = updatePointToVisit(state, m)
+		#create a child
+		child = State(maxId(HB_STATES)+1, m[2], ttable, m[3], state.getDepthLevel()+1, ptv, state, [])
+		state.addChild(child)
+		HB_STATES.append(child)
+		tt = deepcopy(child.getTimeTable())
+		TIME_HBSEARCH.append(tt)
+		depth = depth + 1
+		HBBS_Search(child, heuristic, bias, depth, bound)
+
+	return HB_STATES, TIME_HBSEARCH
+
+#sort the moves computed previously according to the heuristic
+def SORT_heuristic(state, heuristic):
+	sortedMoves = []
+	if heuristic == "GREEDY":
+		sortedMoves = SORT_Greedy(state)
+		return sortedMoves
+	else:
+		print "Heuristic doesn't exist"
+		return
+
+#Greedy sorting
+def SORT_Greedy(state):
+	LSG = []
+	#all possible moves
+	moves = EXPAND(state)
+	LSG = sorted(moves, key=itemgetter(0))
+	return LSG
+
+
+#compute the BIAS
+def BIAS_FUNCTION(bias, rank):
+	w = 0
+	if bias == "LOG":
+		w = 1/math.log10(rank+1)
+	elif bias == "EXP":
+		w = math.exp(-rank)
+	elif bias == "POLY1":
+		w = math.pow(rank, -1)
+	elif bias == "POLY2":
+		w = math.pow(rank, -2)
+	elif bias == "POLY3":
+		w = math.pow(rank, -3)
+	elif bias == "POLY4":
+		w = math.pow(rank, -4)
+	elif bias == "POLY5":
+		w = math.pow(rank, -5)
+	elif bias == "POLY6":
+		w = math.pow(rank, -6)
+	elif bias == "POLY7":
+		w = math.pow(rank, -7)
+	else:
+		print "Unknown BIAS function"
+	return w
+	
+
+TIMES = []
+
+#run HBBS procedure N_ITERATIONS times
+N_ITERATIONS = 200
+for j in range (0, N_ITERATIONS):
+	#empty the lists
+	HB_STATES = [] 
+	TIME_HBSEARCH = []
+	HB_CONFIGURATIONS = []  
+	HB_MOVING = []
+	HBT = []
+	HB_TIME = []
+	HB_STATES.append(root)
+	HB_STATES, HBT = HBBS(root, "GREEDY", "POLY5", len(POINTS_TO_EXPLORE), greedy_time)
+	HBT.insert(0, np.zeros((N_ROBOTS, 1)))
+	for i in range(0,len(HB_STATES)):
+		HB_CONFIGURATIONS.append(HB_STATES[i].getConfiguration())
+		HB_MOVING.append(HB_STATES[i].getRobotMoving())
+		HB_TIME.append(HBT[i])
+	T_exploration = 0
+	#find the maximum time or distance in which the HBSS computation ends and add it to TIMES list
+	if obj_fun == "time":
+		for i in range(0,len(STARTING_POS)):
+			if shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i] > T_exploration:
+				T_exploration = shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]
+				T_exploration_index = i
+		T_final =  float(T_exploration)
+		TIMES.append(T_final)
+	elif obj_fun == "distance":
+		sumtime = 0
+		for i in range(0,len(STARTING_POS)):
+			sumtime = sumtime + shortest_matrix[HB_CONFIGURATIONS[-1][i]][STARTING_POS[i]] + HB_STATES[-1].getTimeTable()[i]
+		TIMES.append(int(sumtime))
+
+
+	#set timetable of root to 0
+	tt = np.full((N_ROBOTS,1), 0)
+	root.setTimeTable(tt)
+	#list of list with all computations
+	HB_CONFIGURATIONS_LIST.append(HB_CONFIGURATIONS)
+	HB_MOVING_LIST.append(HB_MOVING)
+	HB_STATES_LIST.append(HB_STATES)
+	HB_TIME_LIST.append(HB_TIME)
+
+bestTime = min(TIMES)
+
+bestIndex = TIMES.index(bestTime)
+#append STARTING POS
+HB_CONFIGURATIONS_LIST[bestIndex].append(STARTING_POS)
+
+#flatting timetable arraylist computed by HB_TIME_LIST
+T_LIST = []
+flat = []
+for i in range(0, len(HB_TIME_LIST[bestIndex])):
+	T_LIST.append(HB_TIME_LIST[bestIndex][i].tolist())
+for i in range(0,len(T_LIST)):
+	flattened = [val for sublist in T_LIST[i] for val in sublist]
+	flat.append(flattened)
+
+#adding the final robots that are moving and the final times
+final_robot_moving = [0]*N_ROBOTS
+final_times = [0]*N_ROBOTS
+for i in range(0,len(STARTING_POS)):
+	#at [-1] the configuration = START POS, at [-2] there's the 'real' last configuration
+	if HB_CONFIGURATIONS_LIST[bestIndex][-2][i] != STARTING_POS[i]:
+		final_robot_moving[i] = 1
+	final_times[i] = flat[-1][i] + shortest_matrix[HB_CONFIGURATIONS_LIST[bestIndex][-2][i]][STARTING_POS[i]] 
+HB_MOVING_LIST[bestIndex].append(final_robot_moving) 
+flat.append(final_times)
 
 print "DATFILE : " + str(file_to_open)
 
 env = file_to_open[0:6]
 print "ENVIRONMENT : " + str(env)
 
-print "ALGORITHM : GREEDY"
+print "ALGORITHM : HBSS - TAU 5"
 
-#se bwopen
 if file_to_open[14] == "_":
-	RANGE = file_to_open[11:13] #se 100 [11:15] se 1000
+	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
 else:
 	RANGE = RANGE = file_to_open[11:15]
-
-#se offices
-#if file_to_open[15] == ".":
-#	RANGE = file_to_open[12:15]
-#else:
-#	RANGE = file_to_open[12:16]
-
 print "RANGE : " + str(RANGE)
 
 print "STARTING_POS : " + str(STARTING_POS[0])
 
 print "N_ROBOTS : " + str(N_ROBOTS)
 
-if obj_fun == "time":
-	print"GREEDY T : " + str(greedy_time)
-elif obj_fun == "distance":
-	sumdist = 0
-	for i in range(0, N_ROBOTS):
-		sumdist = sumdist + STATES[-1].getTimeTable()[i] + shortest_matrix[CONFIGURATIONS[-2][i]][STARTING_POS[i]]
-	print"GREEDY sumD : " + str(sumdist)
+print "GREEDY SOLUTION : " + str(greedy_time)
 
-print("EXECUTION TIME: %s seconds \n" % (time.time() - start_time))
+if obj_fun == "time":
+	o = "T"
+else:
+	o = "D"
+
+print "COMPUTATIONS " + o + " :"
+for i in range(0, len(TIMES)):
+	print TIMES[i]
+print ";"
+
+if obj_fun == "time":
+	print "HBBS bestT : " + str(bestTime)
+elif obj_fun == "distance":
+	print "HBBS sumD : " + str(bestTime)
+
+print "BEST_CONFIGURATIONS : "
+for i in range(0,len(HB_CONFIGURATIONS_LIST[bestIndex])):
+	miniC = ""
+	for j in range(0, N_ROBOTS):
+		miniC = miniC + str(HB_CONFIGURATIONS_LIST[bestIndex][i][j]) + " "
+	print miniC
+print ";"
+print "ROBOT MOVING BEST:"
+for i in range(0,len(HB_MOVING_LIST[bestIndex])):
+	miniRM = ""
+	for j in range(0, N_ROBOTS):
+		miniRM = miniRM + str(HB_MOVING_LIST[bestIndex][i][j]) + " "
+	print miniRM
+print ";"
+print "TIMETABLE BEST: "
+for i in range(0,len(flat)):
+	miniT = ""
+	for j in range(0, N_ROBOTS):
+		miniT = miniT + str(flat[i][j]) + " "
+	print miniT
+print ";"
+
+print("EXECUTION TIME HBSS: %s seconds \n" % (time.time() - start_time))
 print "-------------------------------------------------------------------"

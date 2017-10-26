@@ -6,7 +6,6 @@ import sys
 import itertools
 from igraph import *
 from operator import itemgetter
-from gurobipy import *
 from copy import deepcopy
 
 sys.setrecursionlimit(1000000)
@@ -502,7 +501,7 @@ def BIAS_FUNCTION(bias, rank):
 TIMES = []
 
 #run HBBS procedure N_ITERATIONS times
-N_ITERATIONS = 50
+N_ITERATIONS = 200
 for j in range (0, N_ITERATIONS):
 	#empty the lists
 	HB_STATES = [] 
@@ -512,7 +511,7 @@ for j in range (0, N_ITERATIONS):
 	HBT = []
 	HB_TIME = []
 	HB_STATES.append(root)
-	HB_STATES, HBT = HBBS(root, "GREEDY", "POLY4", len(POINTS_TO_EXPLORE), greedy_time)
+	HB_STATES, HBT = HBBS(root, "GREEDY", "POLY5", len(POINTS_TO_EXPLORE), greedy_time)
 	HBT.insert(0, np.zeros((N_ROBOTS, 1)))
 	for i in range(0,len(HB_STATES)):
 		HB_CONFIGURATIONS.append(HB_STATES[i].getConfiguration())
@@ -574,7 +573,7 @@ print "DATFILE : " + str(file_to_open)
 env = file_to_open[0:6]
 print "ENVIRONMENT : " + str(env)
 
-print "ALGORITHM : HBSS"
+print "ALGORITHM : HBSS - TAU 5"
 
 if file_to_open[14] == "_":
 	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
@@ -588,14 +587,42 @@ print "N_ROBOTS : " + str(N_ROBOTS)
 
 print "GREEDY SOLUTION : " + str(greedy_time)
 
-print "COMPUTATIONS :"
+if obj_fun == "time":
+	o = "T"
+else:
+	o = "D"
+
+print "COMPUTATIONS " + o + " :"
 for i in range(0, len(TIMES)):
 	print TIMES[i]
+print ";"
 
 if obj_fun == "time":
 	print "HBBS bestT : " + str(bestTime)
 elif obj_fun == "distance":
 	print "HBBS sumD : " + str(bestTime)
+
+print "BEST_CONFIGURATIONS : "
+for i in range(0,len(HB_CONFIGURATIONS_LIST[bestIndex])):
+	miniC = ""
+	for j in range(0, N_ROBOTS):
+		miniC = miniC + str(HB_CONFIGURATIONS_LIST[bestIndex][i][j]) + " "
+	print miniC
+print ";"
+print "ROBOT MOVING BEST:"
+for i in range(0,len(HB_MOVING_LIST[bestIndex])):
+	miniRM = ""
+	for j in range(0, N_ROBOTS):
+		miniRM = miniRM + str(HB_MOVING_LIST[bestIndex][i][j]) + " "
+	print miniRM
+print ";"
+print "TIMETABLE BEST: "
+for i in range(0,len(flat)):
+	miniT = ""
+	for j in range(0, N_ROBOTS):
+		miniT = miniT + str(flat[i][j]) + " "
+	print miniT
+print ";"
 
 print("EXECUTION TIME HBSS: %s seconds \n" % (time.time() - start_time))
 print "-------------------------------------------------------------------"
