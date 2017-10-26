@@ -29,7 +29,7 @@ if __name__ == "__main__":
     subdir = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     mydir = os.path.join(os.getcwd(), 'logs', subdir)
 
-    d = str(dat)
+    d = str(name_of_file)
     o = str(obj_f)
     a = str(alg)
     os.system("python " + a +' '+ d +' '+ o )
