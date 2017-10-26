@@ -7,12 +7,12 @@ import multiprocessing
 ENVIRONMENT = 'bwopen0_'
 #ENVIRONMENT = 'offices1'
 
-RANGE = 100
+RANGE = 500
 
 MIN_ROBOT = 2
 MAX_ROBOT = 10
 ALGORITHM = ['HBSS']
-OBJECTIVE = 'distance'
+OBJECTIVE = 'time'
 
 LAUNCH_DAT_FILES = []
 #LAUNCH_PY_FILES = []
@@ -27,8 +27,8 @@ print LAUNCH_DAT_FILES
 for i in range(0,len(LAUNCH_DAT_FILES)):
 	#tau from 1 to 7
 	for tau in range(1,8):
-		os.system("python " + "HBSS" + str(tau) + ".py" + " " + LAUNCH_DAT_FILES[i] + " " + OBJECTIVE + " > resultsD_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_" + str(i+2) + "r.txt" )
-		#print("python " + "HBSS" + str(tau) + ".py" + " " + LAUNCH_DAT_FILES[i] + " " + OBJECTIVE + " > resultsD_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_" + str(i+2) + "r.txt" )
+		os.system("python " + "HBSS" + str(tau) + ".py" + " " + LAUNCH_DAT_FILES[i] + " " + OBJECTIVE + " > resultsT_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_" + str(i+2) + "r.txt" )
+		#print("python " + "HBSS" + str(tau) + ".py" + " " + LAUNCH_DAT_FILES[i] + " " + OBJECTIVE + " > resultsT_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_" + str(i+2) + ".txt" )
 
 
-#"python HBSS3 filedati distance > resultsD_hbss_bwopen0_100_tau3_4r.txt"
+#"python HBSS3 filedati time > resultsT_hbss_bwopen0_100_tau3_4r.txt"

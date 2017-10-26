@@ -7,7 +7,7 @@ import multiprocessing
 ENVIRONMENT = 'bwopen0_'
 #ENVIRONMENT = 'offices1'
 
-RANGE = 100
+RANGE = 500
 
 MIN_ROBOT = 2
 MAX_ROBOT = 10
