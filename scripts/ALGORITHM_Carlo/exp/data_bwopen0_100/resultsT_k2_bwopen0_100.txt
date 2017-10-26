@@ -1,8 +1,7 @@
-Academic license - for non-commercial use only
 DATFILE : bwopen0_2r_100.dat
 ENVIRONMENT : bwopen
 ALGORITHM : KUMAR2
-RANGE : 100.
+RANGE : 100
 STARTING_POS : 0
 N_ROBOTS : 2
 KUMAR2 T : 268.0
