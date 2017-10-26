@@ -43,46 +43,54 @@ with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt',
 
 file.close()
 
-#for i in xrange(N_ROBOTS*2):
-#    coord.pop(0)
-
 #grouping coordinates by (x,y)
-coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
+coord = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
 
 #converting from pixels to meters
-for c in coords:
+for c in coord:
     c[0] = int(79.7 - resize_factor * c[0])
     c[1] = int(0.1 * c[1])
 
-nested_tuple_coords = [tuple(l) for l in coords]
-plan_coordinates = [nested_tuple_coords[i:i + N_ROBOTS] for i in
-                    range(0, len(nested_tuple_coords), N_ROBOTS)]  # create a plan of coordinates
+coord = [tuple(l) for l in coord]
+
+coord = [coord[i:i + N_ROBOTS] for i in
+                    range(0, len(coord), N_ROBOTS)]  # create a plan of coordinates
+
+print coord
 
 #creating the plan
 count_config = 0
 for config in robot_moving:
     count = 0
     first_robot = -1
+    my_self = -1
     for robot in config:
         if robot != 0 and first_robot == -1:
             first_robot = count
             robot_plan.append(first_robot)
             position = count
-            robot_plan.append(plan_coordinates[count_config][position])
+            robot_plan.append(coord[count_config][position])
         elif robot != 0 and first_robot != -1:
             second_robot = count
             position = count
-            robot_plan.append(plan_coordinates[count_config][position])
+            robot_plan.append(coord[count_config][position])
             robot_plan.append(second_robot)
 
             #assigning a reflected plan to the other robot
             robot_plan.append(second_robot)
-            robot_plan.append(plan_coordinates[count_config][position])
-            robot_plan.append(plan_coordinates[count_config][first_robot])
+            robot_plan.append(coord[count_config][position])
+            robot_plan.append(coord[count_config][first_robot])
             robot_plan.append(first_robot)
-
+        elif count_config == 0 and robot == 0: #I add the starting positions of each robot to plan
+            my_self = count
+            robot_plan.append(my_self)
+            position = count
+            robot_plan.append(coord[count_config][position])
+            robot_plan.append(coord[count_config][position])
+            robot_plan.append(my_self)
         count += 1
     count_config += 1
+
 
 #grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
 robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
@@ -91,6 +99,13 @@ robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
 for plan in robot_plan:
     if len(plan) < 4:  # 4 = number of elements in a plan
         robot_plan.pop(-1)
+        final_dest = plan
+
+final_dest.append(final_dest[1])
+final_dest.append(final_dest[0])
+
+robot_plan.append(final_dest)
+
 
 #grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
 plans = []
@@ -112,6 +127,7 @@ plans = tuple(plans)
 robot_ids = set(map(lambda x: x[0], plans))
 plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
 
+
 if len(robot_ids) < N_ROBOTS:
     for i in xrange(N_ROBOTS):
         if i not in robot_ids:
@@ -119,4 +135,3 @@ if len(robot_ids) < N_ROBOTS:
 
 plan_id = tuple([tuple(l) for l in plan_id])  #plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
-print plan_id

@@ -180,7 +180,6 @@ class GenericRobot(object):
                         os.system("pkill -f ros")
                     else:
                         self.client_motion.cancel_goal()
-                rospy.loginfo(str(robot_id) + ' - STUCK')
                 self.stuck = True
             else:
                 self.stuck = False
@@ -189,7 +188,7 @@ class GenericRobot(object):
             self.stuck = False
 
         if (self.stuck):
-            rospy.loginfo(str(self.robot_id) + ' - sending cancel goal.')
+            rospy.loginfo(str(self.robot_id) + ' - STUCK, sending cancel goal.')
             self.client_motion.cancel_goal()
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
@@ -253,6 +252,7 @@ class GenericRobot(object):
                 success = True
             elif state == GoalStatus.PREEMPTED:
                 rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
+                self.arrived_nominal_dest = False
                 success = False
                 self.clear_costmap_service()
                 self.motion_recovery()
@@ -262,18 +262,25 @@ class GenericRobot(object):
 
     def move_robot(self):
         if self.plans: #if plan exists (it is not an empty tuple)
+            starting_position = True
+            alone = False
             for plan in self.plans:
-                rospy.loginfo(str(self.robot_id) + ' - move_robots')
-                starting_pose = False
                 self.reset_stuff()
                 self.moving_nominal_dest = True
 
-                if self.is_leader:
-                    self.teammates_id[0] = plan[1]
+                if starting_position:
+                    rospy.loginfo(str(self.robot_id) + ' - going to starting position')
                 else:
-                    self.teammates_id[0] = plan.comm_robot_id
+                    if self.is_leader:
+                        self.teammates_id[0] = plan[1]
+                    else:
+                        self.teammates_id[0] = plan.comm_robot_id
 
-                rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
+                    if self.robot_id == self.teammates_id[0]: #if I am my own communication teammate
+                        alone = True
+                        rospy.loginfo(str(self.robot_id) + ' - going alone to final destination')
+                    else: #I need to know where my teammate is
+                        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -281,15 +288,16 @@ class GenericRobot(object):
                     self.go_to_pose((plan.first_robot_dest.position.x,plan.first_robot_dest.position.y))
 
                 r = rospy.Rate(0.5)
-                while not self.teammate_arrived_nominal_dest and not starting_pose:
+                while not self.teammate_arrived_nominal_dest and not starting_position and not alone:
                     rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
                     r.sleep()
 
-                self.check_communication()
+                if not starting_position and not alone: #in starting position a robot has not a teammate
+                    self.check_communication()
 
-            rospy.sleep(rospy.Duration(2.0))
+                starting_position = False
 
-            self.execute_plan_state = 3
+            self.execute_plan_state = 2
 
         else:
             rospy.loginfo(str(self.robot_id) + ' - no plans to follow')
@@ -325,7 +333,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.plans = self.plans[self.robot_id] #leader plans are the ones at index self.robot_id
                 self.move_robot()
-            elif self.execute_plan_state == 3:
+            elif self.execute_plan_state == 2:
                 #plan completed
                 rospy.loginfo(str(robot_id) + ' - exploration completed! Shutting down...')
                 break
@@ -378,9 +386,6 @@ class Leader(GenericRobot):
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
         self.parse_plans_file()
 
-        #self.plans = ((((14.0, 12.0), (25.0, 18.0)), 1, 10), (((13.0, 15.0), (31.0, 13.0)), 1, 12),
-        #(((14.0, 16.0), (25.0, 18.0)), 1, 11))
-
         self.execute_plan_state = 0
 
     def parse_plans_file(self):
@@ -388,7 +393,6 @@ class Leader(GenericRobot):
         robot_moving = []
         robot_plan = []
 
-        resize_factor = 0.1
         reading_coords = 0
         reading_RM = 0
 
@@ -425,23 +429,19 @@ class Leader(GenericRobot):
 
         file.close()
 
-        #for i in xrange(N_ROBOTS*2):
-        #    coord.pop(0)
+        # grouping coordinates by (x,y)
+        coord = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
 
-        #grouping coordinates by (x,y)
-        coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
+        # converting from pixels to meters
+        for c in coord:
+            c[0] = int(79.7 - resize_factor * c[0])
+            c[1] = int(0.1 * c[1])
 
-        #converting from pixels to meters
+        coord = [tuple(l) for l in coord]
 
-        for c in coords:
-            c[0] = int(self.env.dimX - resize_factor * c[0])
-            c[1] = int(resize_factor * c[1])
+        coord = [coord[i:i + N_ROBOTS] for i in range(0, len(coord), N_ROBOTS)]  # create a plan of coordinates
 
-        nested_tuple_coords = [tuple(l) for l in coords]
-        plan_coordinates = [nested_tuple_coords[i:i + N_ROBOTS] for i in
-                            range(0, len(nested_tuple_coords), N_ROBOTS)]  # create a plan of coordinates
-
-        #creating the plan
+        # creating the plan
         count_config = 0
         for config in robot_moving:
             count = 0
@@ -451,31 +451,44 @@ class Leader(GenericRobot):
                     first_robot = count
                     robot_plan.append(first_robot)
                     position = count
-                    robot_plan.append(plan_coordinates[count_config][position])
+                    robot_plan.append(coord[count_config][position])
                 elif robot != 0 and first_robot != -1:
                     second_robot = count
                     position = count
-                    robot_plan.append(plan_coordinates[count_config][position])
+                    robot_plan.append(coord[count_config][position])
                     robot_plan.append(second_robot)
 
-                    #assigning a reflected plan to the other robot
+                    # assigning a reflected plan to the other robot
                     robot_plan.append(second_robot)
-                    robot_plan.append(plan_coordinates[count_config][position])
-                    robot_plan.append(plan_coordinates[count_config][first_robot])
+                    robot_plan.append(coord[count_config][position])
+                    robot_plan.append(coord[count_config][first_robot])
                     robot_plan.append(first_robot)
+                elif count_config == 0 and robot == 0:  # I add the starting positions of each robot to plan
+                    my_self = count
+                    robot_plan.append(my_self)
+                    position = count
+                    robot_plan.append(coord[count_config][position])
+                    robot_plan.append(coord[count_config][position])
+                    robot_plan.append(my_self)
 
                 count += 1
             count_config += 1
 
-        #grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
+        # grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
         robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
 
-        #deleting last (incomplete) plan if last robot_moving row has only one robot to move
+        # deleting last (incomplete) plan if last robot_moving row has only one robot to move
         for plan in robot_plan:
             if len(plan) < 4:  # 4 = number of elements in a plan
                 robot_plan.pop(-1)
+                final_dest = plan
 
-        #grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
+        final_dest.append(final_dest[1])
+        final_dest.append(final_dest[0])
+
+        robot_plan.append(final_dest) #adding to the complete plan the plan of the robot that has to go to final destination
+
+        # grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
         plans = []
         for plan in robot_plan:
             my_id = []
@@ -498,9 +511,9 @@ class Leader(GenericRobot):
         if len(robot_ids) < N_ROBOTS:
             for i in xrange(N_ROBOTS):
                 if i not in robot_ids:
-                    plan_id.insert(i, ())  #if a robot never moves, his plan will be empty
+                    plan_id.insert(i, ())  # if a robot never moves, his plan will be empty
 
-        plan_id = tuple([tuple(l) for l in plan_id])  #plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
+        plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
         self.plans = plan_id
 
