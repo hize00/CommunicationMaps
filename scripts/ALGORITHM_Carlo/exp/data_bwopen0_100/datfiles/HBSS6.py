@@ -575,10 +575,17 @@ print "ENVIRONMENT : " + str(env)
 
 print "ALGORITHM : HBSS - TAU 6"
 
-if file_to_open[14] == "_":
-	RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
-else:
-	RANGE = RANGE = file_to_open[11:15]
+if file_to_open[0] == "b":
+	if file_to_open[14] == '.':
+		RANGE = file_to_open[11:14] #se 100 [11:15] se 1000
+	else:
+		RANGE = RANGE = file_to_open[11:15]
+elif file_to_open[0] == "o":
+	if file_to_open[15] == '.':
+		RANGE = file_to_open[12:15]
+	else:
+		RANGE = RANGE = file_to_open[12:16]
+		
 print "RANGE : " + str(RANGE)
 
 print "STARTING_POS : " + str(STARTING_POS[0])
