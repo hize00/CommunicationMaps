@@ -122,7 +122,6 @@ class GenericRobot(object):
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
-        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
         # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
@@ -162,8 +161,6 @@ class GenericRobot(object):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
         max_index = int(math.floor((MAX_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
         self.front_range = min(scan.ranges[min_index: max_index])
-
-
 
     def feedback_motion_cb(self, feedback):
         if (self.last_feedback_pose is not None and abs(
@@ -263,11 +260,14 @@ class GenericRobot(object):
         self.pub_state.publish(Bool(self.arrived_nominal_dest))
 
     def move_robot(self):
-        for plan in self.plans:
-            if plan: #if plan exists (it is not an empty tuple)
+        if self.plans: #if plan exists (it is not an empty tuple)
+            for plan in self.plans:
                 starting_pose = False
                 self.reset_stuff()
                 self.moving_nominal_dest = True
+
+                self.teammates_id[0] = plan.comm_robot_id
+                rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -276,10 +276,13 @@ class GenericRobot(object):
 
                 r = rospy.Rate(0.5)
                 while not self.teammate_arrived_nominal_dest and not starting_pose:
-                    rospy.loginfo(str(robot_id) + ' - waiting for my teammate')
+                    rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
                     r.sleep()
 
                 self.check_communication()
+        else:
+            rospy.loginfo(str(self.robot_id) + ' - no plans')
+            rospy.sleep(rospy.Duration(500))
 
         rospy.sleep(rospy.Duration(2.0))
 
@@ -307,6 +310,7 @@ class GenericRobot(object):
                 #leader sends plans to follower
                 if self.is_leader:
                     self.send_plans_to_foll(self.plans)
+                    rospy.sleep(rospy.Duration(5))
                 else:
                     rospy.sleep(rospy.Duration(10))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
@@ -382,7 +386,7 @@ class Leader(GenericRobot):
         reading_coords = 0
         reading_RM = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -511,18 +515,15 @@ class Leader(GenericRobot):
                         plan_follower.first_robot_dest = Pose()
                         plan_follower.first_robot_dest.position.x = points[0][0]
                         plan_follower.first_robot_dest.position.y = points[0][1]
-                        #print 'FIRST_ROBOT_DEST: ' + str(plan_follower.first_robot_dest)
 
                         #second_robot_dest
                         plan_follower.second_robot_dest = Pose()
                         plan_follower.second_robot_dest.position.x = points[1][0]
                         plan_follower.second_robot_dest.position.y = points[1][1]
-                        #print 'SECOND_ROBOT_DEST: ' + str(plan_follower.second_robot_dest)
 
                         #first_robot_id
                         plan_follower.comm_robot_id = Float32
                         plan_follower.comm_robot_id = plan[1]
-                        #print 'COMM_ROBOT_ID: ' + str(plan_follower.comm_robot_id)
 
                         #timestep
                         #plan_follower.timestep = Float32
@@ -546,7 +547,6 @@ class Leader(GenericRobot):
             t.join()
 
         self.execute_plan_state = 1
-        rospy.sleep(rospy.Duration(20))
 
     def send_and_wait_goal(self, teammate_id, goal):
         rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
