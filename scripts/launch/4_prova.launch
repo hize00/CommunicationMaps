@@ -48,7 +48,7 @@
     <include file="$(find strategy)/launch/main_robot.launch">
         <arg name="id" value="0" />
 
-        <arg name="teammates_id" value="1" />
+        <arg name="teammates_id" value="1-2-3" />
         <arg name="is_leader" value="1" />
     </include>
     <include file="$(find strategy)/includes/single_robot.launch">

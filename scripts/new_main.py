@@ -119,6 +119,7 @@ class GenericRobot(object):
         self.teammate_arrived_nominal_dest = False
         self.arrived_nominal_dest = False
         self.moving_nominal_dest = False
+        self.arrived_final_dest = False
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
@@ -188,7 +189,7 @@ class GenericRobot(object):
             self.stuck = False
 
         if (self.stuck):
-            rospy.loginfo('Sending cancel goal.')
+            rospy.loginfo(str(self.robot_id) + ' - sending cancel goal.')
             self.client_motion.cancel_goal()
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
@@ -262,11 +263,16 @@ class GenericRobot(object):
     def move_robot(self):
         if self.plans: #if plan exists (it is not an empty tuple)
             for plan in self.plans:
+                rospy.loginfo(str(self.robot_id) + ' - move_robots')
                 starting_pose = False
                 self.reset_stuff()
                 self.moving_nominal_dest = True
 
-                self.teammates_id[0] = plan.comm_robot_id
+                if self.is_leader:
+                    self.teammates_id[0] = plan[1]
+                else:
+                    self.teammates_id[0] = plan.comm_robot_id
+
                 rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
                 if self.is_leader:
@@ -280,13 +286,14 @@ class GenericRobot(object):
                     r.sleep()
 
                 self.check_communication()
+
+            rospy.sleep(rospy.Duration(2.0))
+
+            self.execute_plan_state = 3
+
         else:
-            rospy.loginfo(str(self.robot_id) + ' - no plans')
-            rospy.sleep(rospy.Duration(500))
-
-        rospy.sleep(rospy.Duration(2.0))
-
-        self.execute_plan_state = 2
+            rospy.loginfo(str(self.robot_id) + ' - no plans to follow')
+            self.execute_plan_state = 2
 
     def check_communication(self):
         if self.arrived_nominal_dest and self.teammate_arrived_nominal_dest and self.comm_module.can_communicate(self.teammates_id[0]):
@@ -310,16 +317,15 @@ class GenericRobot(object):
                 #leader sends plans to follower
                 if self.is_leader:
                     self.send_plans_to_foll(self.plans)
-                    rospy.sleep(rospy.Duration(5))
                 else:
                     rospy.sleep(rospy.Duration(10))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
                 if self.is_leader:
-                    self.plans = self.plans[self.robot_id] #plans leader are the ones at index self.robot_id
+                    self.plans = self.plans[self.robot_id] #leader plans are the ones at index self.robot_id
                 self.move_robot()
-            elif self.execute_plan_state == 2:
+            elif self.execute_plan_state == 3:
                 #plan completed
                 rospy.loginfo(str(robot_id) + ' - exploration completed! Shutting down...')
                 break
@@ -386,7 +392,7 @@ class Leader(GenericRobot):
         reading_coords = 0
         reading_RM = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -426,9 +432,10 @@ class Leader(GenericRobot):
         coords = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
 
         #converting from pixels to meters
+
         for c in coords:
-            c[0] = int(79.7 - resize_factor * c[0])
-            c[1] = int(0.1 * c[1])
+            c[0] = int(self.env.dimX - resize_factor * c[0])
+            c[1] = int(resize_factor * c[1])
 
         nested_tuple_coords = [tuple(l) for l in coords]
         plan_coordinates = [nested_tuple_coords[i:i + N_ROBOTS] for i in
@@ -498,7 +505,7 @@ class Leader(GenericRobot):
         self.plans = plan_id
 
     def send_plans_to_foll(self,plans):
-        rospy.loginfo(str(robot_id) + ' sending plans to other robots')
+        rospy.loginfo(str(robot_id) + ' - sending plans to other robots')
         clients_messages = []
 
         plan_index = 0
