@@ -22,7 +22,6 @@ with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt',
                 reading_coords = 1
                 continue
             if reading_coords == 1:
-                coordinate = []
                 if words[0] != ';':
                     for i in range(0, line_lenght):
                         if words[i] != '|':
@@ -46,10 +45,11 @@ file.close()
 #grouping coordinates by (x,y)
 coord = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
 
+
 #converting from pixels to meters
 for c in coord:
-    c[0] = int(79.7 - resize_factor * c[0])
-    c[1] = int(0.1 * c[1])
+    c[0] = int(79.7 - resize_factor * c[0]) #79.7 = self.env.dimX
+    c[1] = int(resize_factor * c[1])
 
 coord = [tuple(l) for l in coord]
 
@@ -76,12 +76,13 @@ for config in robot_moving:
             robot_plan.append(coord[count_config][position])
             robot_plan.append(second_robot)
 
-            #assigning a reflected plan to the other robot
+            # assigning a reflected plan to the communication teammate
             robot_plan.append(second_robot)
             robot_plan.append(coord[count_config][position])
             robot_plan.append(coord[count_config][first_robot])
             robot_plan.append(first_robot)
-        elif count_config == 0 and robot == 0: #I add the starting positions of each robot to plan
+        elif count_config == 0 and robot == 0:
+            #I add the starting positions of each robot to plan: [my_self,(starting_pose),(starting_pose),my_self]
             my_self = count
             robot_plan.append(my_self)
             position = count
