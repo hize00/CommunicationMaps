@@ -332,7 +332,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll()
                 else:
-                    rospy.sleep(rospy.Duration(2))  # I have to wait while leader is sending goals to followers
+                    rospy.sleep(rospy.Duration(5))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
@@ -390,10 +390,10 @@ class Leader(GenericRobot):
 
     def calculate_plan(self):
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
-        #self.parse_plans_file()
+        self.parse_plans_file()
 
-        self.plans = (((((14.0, 12.0), (14.0, 12.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
-            ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
+        #self.plans = (((((14.0, 12.0), (14.0, 12.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
+        #    ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
 
         self.execute_plan_state = 0
 
@@ -442,8 +442,9 @@ class Leader(GenericRobot):
 
         # converting from pixels to meters
         for c in coord:
-            c[0] = float(self.env.dimX - resize_factor * c[0])
-            c[1] = float(resize_factor * c[1])
+            pos = c
+            c[0] = float(self.env.dimX - resize_factor * pos[0])
+            c[1] = float(resize_factor * pos[1])
 
         coord = [tuple(l) for l in coord]
 
