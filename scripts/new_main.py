@@ -29,7 +29,7 @@ from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, Si
                          SignalMappingFeedback, SignalMappingResult, Plan
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
-TIME_STUCK = 3.0
+TIME_STUCK = 10.0
 TIME_AGAINST_WALL = 5.0
 SPEED = 0.45 # TODO It should depend on the settings of the planner.
 TIME_TOL_PERC = 0.04 # TODO It should depend on the settings of the planner and velocity.
@@ -120,6 +120,7 @@ class GenericRobot(object):
         self.arrived_nominal_dest = False
         self.moving_nominal_dest = False
         self.arrived_final_dest = False
+        self.signal_strengths = []
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
@@ -239,8 +240,6 @@ class GenericRobot(object):
             # Start moving
             self.iam_moving = True
             self.client_motion.send_goal(goal, feedback_cb = self.feedback_motion_cb)
-            if self.robot_id == 1:
-                rospy.loginfo('I am '+ str(self.robot_id) + ' and my goal is ' + str(goal))
             self.iam_moving = False
             self.client_motion.wait_for_result()
             state = self.client_motion.get_state()
@@ -293,7 +292,7 @@ class GenericRobot(object):
                     r.sleep()
 
                 if not starting_position and not alone: #in starting position and alone robots have not a teammate
-                    self.check_communication()
+                    self.check_signal_strength()
 
                 starting_position = False
 
@@ -302,11 +301,10 @@ class GenericRobot(object):
 
         self.execute_plan_state = 2
 
-    def check_communication(self):
-        if self.arrived_nominal_dest and self.teammate_arrived_nominal_dest and self.comm_module.can_communicate(self.teammates_id[0]):
-            rospy.loginfo(str(self.robot_id) + ' - ' + str(self.teammates_id[0]) + ' - both arrived and communicating.')
-
-        #TODO ELSE
+    def check_signal_strength(self):
+        rospy.loginfo(str(self.robot_id) + ' - calculating signal strenght with teammate ' + str(self.teammates_id[0]))
+        signal_strength = self.comm_module.get_signal_strength(self.teammates_id[0])
+        self.signal_strengths.append(signal_strength)
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
@@ -325,7 +323,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll()
                 else:
-                    rospy.sleep(rospy.Duration(15))  # I have to wait while leader is sending goals to followers
+                    rospy.sleep(rospy.Duration(10))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
@@ -383,7 +381,10 @@ class Leader(GenericRobot):
 
     def calculate_plan(self):
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
-        self.parse_plans_file()
+        #self.parse_plans_file()
+
+        self.plans = (((((14.0, 12.0), (14.0, 12.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
+            ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
 
         self.execute_plan_state = 0
 
@@ -432,8 +433,8 @@ class Leader(GenericRobot):
 
         # converting from pixels to meters
         for c in coord:
-            c[0] = int(self.env.dimX - resize_factor * c[0])
-            c[1] = int(resize_factor * c[1])
+            c[0] = float(self.env.dimX - resize_factor * c[0])
+            c[1] = float(resize_factor * c[1])
 
         coord = [tuple(l) for l in coord]
 
@@ -519,7 +520,6 @@ class Leader(GenericRobot):
     def send_plans_to_foll(self):
         rospy.loginfo(str(robot_id) + ' - sending plans to other robots')
         clients_messages = []
-
         plan_index = 0
         for robots_plans in self.plans:
             for teammate_id in teammates_id:
@@ -568,11 +568,11 @@ class Leader(GenericRobot):
         self.execute_plan_state = 1
 
     def send_and_wait_goal(self, teammate_id, goal):
-        rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
+        #rospy.loginfo(str(self.robot_id) + ' - Leader - sending a new goal for follower ' + str(teammate_id))
         self.clients_signal[teammate_id].send_goal(goal)
 
         self.clients_signal[teammate_id].wait_for_result()
-        rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+        #rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
 
 
 
