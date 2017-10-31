@@ -104,7 +104,6 @@ class GenericRobot(object):
         self.listener = tf.TransformListener()
         rospy.Timer(rospy.Duration(0.1), self.tf_callback)
         self.robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
-
         self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
 
         for i in xrange(n_robots):
@@ -267,7 +266,17 @@ class GenericRobot(object):
                 self.clear_costmap_service()
                 self.motion_recovery()
                 self.clear_costmap_service()
+            elif state == GoalStatus.ABORTED:
+                rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! Trying recovering.")
+                if self.sim:
+                    self.bump_bkw()
+                else:
+                    self.clear_costmap_service()
+                    self.motion_recovery()
+                    self.clear_costmap_service()
+                success = False
             else:
+                rospy.loginfo(str(robot_id) + ' - state: ' + str(state))
                 break
 
         self.pub_state.publish(Bool(self.arrived_nominal_dest))
@@ -354,10 +363,6 @@ class Leader(GenericRobot):
                  communication_model):
 
         rospy.loginfo(str(robot_id) + ' - Leader - starting!')
-        if communication_model is "":
-            self.filter_locations = False
-        else:
-            self.filter_locations = True
         if not (os.path.exists(env_filename)):
             print "Creating new environment."
             f = open(env_filename, "wb")
@@ -390,11 +395,14 @@ class Leader(GenericRobot):
 
     def calculate_plan(self):
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
-        self.parse_plans_file()
+        #self.parse_plans_file()
 
-        #self.plans = (((((14.0, 12.0), (14.0, 12.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
-        #    ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
+        self.plans = (((((41.0, 17.0), (41.800000000000004, 17.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
+            ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
 
+        #rospy.loginfo(str(self.robot_id) + ' - PLAN:  ' + str(self.plans))
+
+        # (14.0, 12.0), (14.0, 12.0)), 0)
         self.execute_plan_state = 0
 
     def parse_plans_file(self):
