@@ -1,6 +1,6 @@
 # Define the plan
+#GoalWithBackup[] double_goals
 Plan[] plans_follower
-
 ---
 # Define the result
 SignalData[] data

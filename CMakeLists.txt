@@ -57,6 +57,7 @@ add_message_files(
     RobotInfo.msg
     AllInfo.msg
     Plan.msg
+    GoalWithBackup.msg
 )
 
 ## Generate services in the 'srv' folder

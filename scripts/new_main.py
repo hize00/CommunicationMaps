@@ -29,8 +29,8 @@ from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, Si
                          SignalMappingFeedback, SignalMappingResult, Plan
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
-TIME_STUCK = 10.0
-TIME_AGAINST_WALL = 5.0
+TIME_STUCK = 3.0
+TIME_AGAINST_WALL = 2.5
 SPEED = 0.45 # TODO It should depend on the settings of the planner.
 TIME_TOL_PERC = 0.04 # TODO It should depend on the settings of the planner and velocity.
 REPLAN_RATE = 10 # Frequency rate at which the leader is checking again the plan
@@ -253,7 +253,7 @@ class GenericRobot(object):
             state = self.client_motion.get_state()
 
             if state == GoalStatus.SUCCEEDED:
-                rospy.loginfo(str(robot_id) + ' - position reached ')
+                rospy.loginfo(str(robot_id) + ' - position reached')
                 success = True
                 if self.starting_poses:
                     self.arrived_starting_poses = True
@@ -266,14 +266,12 @@ class GenericRobot(object):
                 self.clear_costmap_service()
                 self.motion_recovery()
                 self.clear_costmap_service()
+                success = False
             elif state == GoalStatus.ABORTED:
-                rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! Trying recovering.")
-                if self.sim:
-                    self.bump_bkw()
-                else:
-                    self.clear_costmap_service()
-                    self.motion_recovery()
-                    self.clear_costmap_service()
+                rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! Trying recovering")
+                self.clear_costmap_service()
+                self.motion_recovery()
+                self.clear_costmap_service()
                 success = False
             else:
                 rospy.loginfo(str(robot_id) + ' - state: ' + str(state))
@@ -341,7 +339,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll()
                 else:
-                    rospy.sleep(rospy.Duration(5))  # I have to wait while leader is sending goals to followers
+                    rospy.sleep(rospy.Duration(2))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
@@ -702,4 +700,3 @@ if __name__ == '__main__':
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename)
         foll.execute_plan()
-        rospy.spin()

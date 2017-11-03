@@ -143,7 +143,7 @@ class GenericRobot(object):
             #only updated by the leader
             self.teammate_path = None
 
-            if self.is_leader:
+            if(self.is_leader):
                 rospy.Subscriber('/robot_' + str(self.teammates_id[0]) +'/move_base_node/NavfnROS/plan', Path, self.teammate_path_callback)
 
             #to update path and time only at the begininning with the navfnros data
