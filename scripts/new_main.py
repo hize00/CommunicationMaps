@@ -395,12 +395,11 @@ class Leader(GenericRobot):
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
         #self.parse_plans_file()
 
-        self.plans = (((((41.0, 17.0), (41.800000000000004, 17.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
+        self.plans = (((((41.0, 15.0), (41.800000000000004, 15.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
             ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
 
         #rospy.loginfo(str(self.robot_id) + ' - PLAN:  ' + str(self.plans))
 
-        # (14.0, 12.0), (14.0, 12.0)), 0)
         self.execute_plan_state = 0
 
     def parse_plans_file(self):
