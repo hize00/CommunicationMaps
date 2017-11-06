@@ -190,7 +190,7 @@ class GenericRobot(object):
             self.stuck = False
 
         if self.stuck:
-            rospy.loginfo(str(self.robot_id) + ' - STUCK, sending cancel goal.')
+            #rospy.loginfo(str(self.robot_id) + ' - STUCK, sending cancel goal.')
             self.client_motion.cancel_goal()
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
@@ -236,7 +236,9 @@ class GenericRobot(object):
             rospy.loginfo(str(self.robot_id) + ' - moving to ' + str(pos))
 
         success = False
-
+        old_pos = pos
+        round = 0
+        count = 0
         while not success:
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = '/map'
@@ -262,10 +264,22 @@ class GenericRobot(object):
                     self.arrived_nominal_dest = True
             elif state == GoalStatus.PREEMPTED:
                 rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
-                self.arrived_nominal_dest = False
                 self.clear_costmap_service()
                 self.motion_recovery()
+                if round >=1 :
+                    rospy.loginfo(str(robot_id) + ' - trying to fix the goal after too many recoveries')
+                    pos = old_pos
+                    pos = list(pos)
+                    # randomly select a change in robot coordinates
+                    update = {0: [1, 0], 1:[-1,0], 2: [0,1], 3: [0,-1], 4: [2, 0], 5:[-2,0], 6: [0,2], 7: [0,-2]}
+                    pos[0] = pos[0] + update[count][0]
+                    pos[1] = pos[1] + update[count][1]
+                    pos = tuple(pos)
+                    rospy.loginfo(str(robot_id) + ' - moving to new fixed goal ' + str(pos))
+                    count += 1
                 self.clear_costmap_service()
+                round += 1
+                self.arrived_nominal_dest = False
                 success = False
             elif state == GoalStatus.ABORTED:
                 rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! Trying recovering")
@@ -301,13 +315,13 @@ class GenericRobot(object):
                 else:
                     self.go_to_pose((plan.first_robot_dest.position.x,plan.first_robot_dest.position.y))
 
-                r = rospy.Rate(0.5)
-                if not self.starting_poses and not self.alone:
-                    while not self.teammate_arrived_nominal_dest:
-                        rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
-                        r.sleep()
 
                 if not self.starting_poses and not self.alone: #in starting position and alone robots have not a teammate
+                    rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
+                    r = rospy.Rate(20)
+                    while not self.teammate_arrived_nominal_dest:
+                        r.sleep()
+
                     self.check_signal_strength()
 
                 self.starting_poses = False
@@ -318,9 +332,11 @@ class GenericRobot(object):
         self.execute_plan_state = 2
 
     def check_signal_strength(self):
-        rospy.loginfo(str(self.robot_id) + ' - calculating signal strenght with teammate ' + str(self.teammates_id[0]))
+        rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.teammates_id[0]))
         signal_strength = self.comm_module.get_signal_strength(self.teammates_id[0])
         self.signal_strengths.append(signal_strength)
+        #rospy.sleep(rospy.Duration(1))
+
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
@@ -348,6 +364,7 @@ class GenericRobot(object):
                 self.move_robot()
             elif self.execute_plan_state == 2:
                 #plan completed
+                rospy.loginfo(str(robot_id) + ' - Signal Strength list: ' + str(self.signal_strengths))
                 rospy.loginfo(str(robot_id) + ' - exploration completed! Shutting down...')
                 break
         r.sleep()
@@ -393,10 +410,10 @@ class Leader(GenericRobot):
 
     def calculate_plan(self):
         rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
-        #self.parse_plans_file()
+        self.parse_plans_file()
 
-        self.plans = (((((41.0, 15.0), (41.800000000000004, 15.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
-            ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
+        #self.plans = (((((41.0, 17.0), (41.800000000000004, 17.0)), 0), (((13.0, 15.0), (31.0, 13.0)), 1),(((14.0, 16.0), (25.0, 18.0)), 1)),
+        #    ((((25.0,18.0), (25.0,18.0)), 1), (((31.0, 13.0), (13.0, 15.0)), 0),(((25.0, 18.0), (14.0, 16.0)), 0)))
 
         #rospy.loginfo(str(self.robot_id) + ' - PLAN:  ' + str(self.plans))
 
@@ -538,6 +555,7 @@ class Leader(GenericRobot):
         clients_messages = []
         plan_index = 0
         for robots_plans in self.plans:
+            print robots_plans
             for teammate_id in teammates_id:
                 if teammate_id == plan_index:
                     plans_follower = []
