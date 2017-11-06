@@ -18,14 +18,13 @@ LAUNCH_DAT_FILES = []
 #LAUNCH_PY_FILES = []
 
 name_of_file = ENVIRONMENT + "10r_" + str(RANGE) + ".dat"
-LAUNCH_DAT_FILES.append(name_of_file)
 
 ###REMAKE OF EXPERIMENTS FOR TIME 9 & 10 r
 print LAUNCH_DAT_FILES
 
 for tau in TAU_LIST:
-	os.system("python " + "HBSS" + str(tau) + ".py" + " " + LAUNCH_DAT_FILES + " " + OBJECTIVE + " > resultsT_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_10r.txt" )
-		#print("python " + "HBSS" + str(tau) + ".py" + " " + LAUNCH_DAT_FILES[i] + " " + OBJECTIVE + " > resultsT_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_" + str(i+2) + ".txt" )
+	os.system("python " + "HBSS" + str(tau) + ".py" + " " + name_of_file + " " + OBJECTIVE + " > resultsT_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_10r.txt" )
+	#print("python " + "HBSS" + str(tau) + ".py" + " " + name_of_file + " " + OBJECTIVE + " > resultsT_hbss_" + ENVIRONMENT + str(RANGE) + "_tau" + str(tau) + "_10r.txt" )
 
 
 #"python HBSS3 filedati time > resultsT_hbss_bwopen0_100_tau3_4r.txt"
