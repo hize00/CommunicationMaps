@@ -263,15 +263,19 @@ class GenericRobot(object):
                 else:
                     self.arrived_nominal_dest = True
             elif state == GoalStatus.PREEMPTED:
-                rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
                 self.clear_costmap_service()
-                self.motion_recovery()
-                if round >=1 :
-                    rospy.loginfo(str(robot_id) + ' - trying to fix the goal after too many recoveries')
+                if round <=2:
+                    rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
+                    self.motion_recovery()
+                else:
+                    if count == 8:
+                        self.motion_recovery()
+                        count = 0
+                    rospy.loginfo(str(robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
                     pos = old_pos
                     pos = list(pos)
                     # randomly select a change in robot coordinates
-                    update = {0: [1, 0], 1:[-1,0], 2: [0,1], 3: [0,-1], 4: [2, 0], 5:[-2,0], 6: [0,2], 7: [0,-2]}
+                    update = {0: [1, 0], 1:[-1,0], 2: [0,1], 3: [0,-1], 4: [1, 1], 5:[-1,1], 6: [1,-1], 7: [-1,-1]}
                     pos[0] = pos[0] + update[count][0]
                     pos[1] = pos[1] + update[count][1]
                     pos = tuple(pos)
@@ -316,11 +320,13 @@ class GenericRobot(object):
                     self.go_to_pose((plan.first_robot_dest.position.x,plan.first_robot_dest.position.y))
 
 
-                if not self.starting_poses and not self.alone: #in starting position and alone robots have not a teammate
-                    rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
-                    r = rospy.Rate(20)
-                    while not self.teammate_arrived_nominal_dest:
-                        r.sleep()
+                if not self.starting_poses and not self.alone:  #in starting position and alone robots have not a teammate
+
+                    if not self.teammate_arrived_nominal_dest:
+                        rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
+                        r = rospy.Rate(20)
+                        while not self.teammate_arrived_nominal_dest:
+                            r.sleep()
 
                     self.check_signal_strength()
 
@@ -355,12 +361,13 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll()
                 else:
-                    rospy.sleep(rospy.Duration(2))  # I have to wait while leader is sending goals to followers
+                    rospy.sleep(rospy.Duration(1.5 * n_robots))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
             elif self.execute_plan_state == 1:
                 #follower has received plan, robots can move
                 if self.is_leader:
                     self.plans = self.plans[self.robot_id] #leader plans are the ones at index self.robot_id
+                    rospy.loginfo(str(self.robot_id) + ' - PLAN: ' + str(self.plans))
                 self.move_robot()
             elif self.execute_plan_state == 2:
                 #plan completed
@@ -478,30 +485,31 @@ class Leader(GenericRobot):
             count = 0
             first_robot = -1
             for robot in config:
-                if robot != 0 and first_robot == -1:
-                    first_robot = count
-                    robot_plan.append(first_robot)
-                    position = count
-                    robot_plan.append(coord[count_config][position])
-                elif robot != 0 and first_robot != -1:
-                    second_robot = count
-                    position = count
-                    robot_plan.append(coord[count_config][position])
-                    robot_plan.append(second_robot)
-
-                    # assigning a reflected plan to the communication teammate
-                    robot_plan.append(second_robot)
-                    robot_plan.append(coord[count_config][position])
-                    robot_plan.append(coord[count_config][first_robot])
-                    robot_plan.append(first_robot)
-                elif count_config == 0 and robot == 0:
-                    #I add the starting positions of each robot to plan: [my_self,(starting_pose),(starting_pose),my_self]
+                if count_config == (len(robot_moving) - 1) or (count_config == 0 and robot == 0) :
+                    # I add the starting/final positions of each robot to plan: [my_self,(pose),(pose),my_self]
                     my_self = count
                     robot_plan.append(my_self)
                     position = count
                     robot_plan.append(coord[count_config][position])
                     robot_plan.append(coord[count_config][position])
                     robot_plan.append(my_self)
+                else:
+                    if robot != 0 and first_robot == -1:
+                        first_robot = count
+                        robot_plan.append(first_robot)
+                        position = count
+                        robot_plan.append(coord[count_config][position])
+                    elif robot != 0 and first_robot != -1:
+                        second_robot = count
+                        position = count
+                        robot_plan.append(coord[count_config][position])
+                        robot_plan.append(second_robot)
+
+                        # assigning a reflected plan to the communication teammate
+                        robot_plan.append(second_robot)
+                        robot_plan.append(coord[count_config][position])
+                        robot_plan.append(coord[count_config][first_robot])
+                        robot_plan.append(first_robot)
 
                 count += 1
             count_config += 1
@@ -510,15 +518,17 @@ class Leader(GenericRobot):
         robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
 
         # deleting last (incomplete) plan if last robot_moving row has only one robot to move
+        final_dest = ()
         for plan in robot_plan:
-            if len(plan) < 4:  # 4 = number of elements in a plan
+            if len(plan) < 4: #2*N_ROBOTS:  #if only one robot or all robots have to go to final destination
                 robot_plan.pop(-1)
                 final_dest = plan
 
-        final_dest.append(final_dest[1])
-        final_dest.append(final_dest[0])
+        if final_dest:
+            final_dest.append(final_dest[1])
+            final_dest.append(final_dest[0])
 
-        robot_plan.append(final_dest) #adding to the complete plan the plan of the robot that has to go to final destination
+            robot_plan.append(final_dest) #adding to the complete plan the plan of the robot that has to go to final destination
 
         # grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
         plans = []
@@ -540,10 +550,10 @@ class Leader(GenericRobot):
         robot_ids = set(map(lambda x: x[0], plans))
         plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
 
-        if len(robot_ids) < N_ROBOTS:
-            for i in xrange(N_ROBOTS):
-                if i not in robot_ids:
-                    plan_id.insert(i, ())  # if a robot never moves, his plan will be empty
+        #if len(robot_ids) < N_ROBOTS:
+        #    for i in xrange(N_ROBOTS):
+        #        if i not in robot_ids:
+        #            plan_id.insert(i, ())  # if a robot never moves, his plan will be empty
 
         plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
@@ -555,9 +565,9 @@ class Leader(GenericRobot):
         clients_messages = []
         plan_index = 0
         for robots_plans in self.plans:
-            print robots_plans
             for teammate_id in teammates_id:
                 if teammate_id == plan_index:
+                    rospy.loginfo(str(teammate_id) + ' - PLAN: ' + str(robots_plans))
                     plans_follower = []
                     for plan in robots_plans:
                         points = plan[0]

@@ -6,11 +6,10 @@ coord = []
 robot_moving = []
 robot_plan = []
 
-resize_factor = 0.1
 reading_coords = 0
 reading_RM = 0
 
-with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
     data = file.readlines()
     for line in data:
         words = line.split()
@@ -42,73 +41,71 @@ with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt',
 
 file.close()
 
-#grouping coordinates by (x,y)
+# grouping coordinates by (x,y)
 coord = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a single robot
 
-
-#converting from pixels to meters
+# converting from pixels to meters
 for c in coord:
-    c[0] = int(79.7 - resize_factor * c[0]) #79.7 = self.env.dimX
-    c[1] = int(resize_factor * c[1])
+    pos = c
+    c[0] = float(self.env.dimX - resize_factor * pos[0])
+    c[1] = float(resize_factor * pos[1])
 
 coord = [tuple(l) for l in coord]
 
-coord = [coord[i:i + N_ROBOTS] for i in
-                    range(0, len(coord), N_ROBOTS)]  # create a plan of coordinates
+coord = [coord[i:i + N_ROBOTS] for i in range(0, len(coord), N_ROBOTS)]  # create a plan of coordinates
 
-print coord
-
-#creating the plan
+# creating the plan
 count_config = 0
 for config in robot_moving:
     count = 0
     first_robot = -1
-    my_self = -1
     for robot in config:
-        if robot != 0 and first_robot == -1:
-            first_robot = count
-            robot_plan.append(first_robot)
-            position = count
-            robot_plan.append(coord[count_config][position])
-        elif robot != 0 and first_robot != -1:
-            second_robot = count
-            position = count
-            robot_plan.append(coord[count_config][position])
-            robot_plan.append(second_robot)
-
-            # assigning a reflected plan to the communication teammate
-            robot_plan.append(second_robot)
-            robot_plan.append(coord[count_config][position])
-            robot_plan.append(coord[count_config][first_robot])
-            robot_plan.append(first_robot)
-        elif count_config == 0 and robot == 0:
-            #I add the starting positions of each robot to plan: [my_self,(starting_pose),(starting_pose),my_self]
+        if count_config == (len(robot_moving) - 1) or (count_config == 0 and robot == 0) :
+            # I add the starting/final positions of each robot to plan: [my_self,(pose),(pose),my_self]
             my_self = count
             robot_plan.append(my_self)
             position = count
             robot_plan.append(coord[count_config][position])
             robot_plan.append(coord[count_config][position])
             robot_plan.append(my_self)
+        else:
+            if robot != 0 and first_robot == -1:
+                first_robot = count
+                robot_plan.append(first_robot)
+                position = count
+                robot_plan.append(coord[count_config][position])
+            elif robot != 0 and first_robot != -1:
+                second_robot = count
+                position = count
+                robot_plan.append(coord[count_config][position])
+                robot_plan.append(second_robot)
+
+                # assigning a reflected plan to the communication teammate
+                robot_plan.append(second_robot)
+                robot_plan.append(coord[count_config][position])
+                robot_plan.append(coord[count_config][first_robot])
+                robot_plan.append(first_robot)
+
         count += 1
     count_config += 1
 
-
-#grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
+# grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
 robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
 
-#deleting last (incomplete) plan if last robot_moving row has only one robot to move
+# deleting last (incomplete) plan if last robot_moving row has only one robot to move
+final_dest = ()
 for plan in robot_plan:
-    if len(plan) < 4:  # 4 = number of elements in a plan
+    if len(plan) < 4: #2*N_ROBOTS:  #if only one robot or all robots have to go to final destination
         robot_plan.pop(-1)
         final_dest = plan
 
-final_dest.append(final_dest[1])
-final_dest.append(final_dest[0])
+if final_dest:
+    final_dest.append(final_dest[1])
+    final_dest.append(final_dest[0])
 
-robot_plan.append(final_dest)
+    robot_plan.append(final_dest) #adding to the complete plan the plan of the robot that has to go to final destination
 
-
-#grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
+# grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
 plans = []
 for plan in robot_plan:
     my_id = []
@@ -128,11 +125,9 @@ plans = tuple(plans)
 robot_ids = set(map(lambda x: x[0], plans))
 plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
 
+#if len(robot_ids) < N_ROBOTS:
+#    for i in xrange(N_ROBOTS):
+#        if i not in robot_ids:
+#            plan_id.insert(i, ())  # if a robot never moves, his plan will be empty
 
-if len(robot_ids) < N_ROBOTS:
-    for i in xrange(N_ROBOTS):
-        if i not in robot_ids:
-            plan_id.insert(i, ())  #if a robot never moves, his plan will be empty
-
-plan_id = tuple([tuple(l) for l in plan_id])  #plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
-
+plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
