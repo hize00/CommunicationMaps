@@ -501,7 +501,7 @@ def BIAS_FUNCTION(bias, rank):
 TIMES = []
 
 #run HBBS procedure N_ITERATIONS times
-N_ITERATIONS = 200
+N_ITERATIONS = 50
 for j in range (0, N_ITERATIONS):
 	#empty the lists
 	HB_STATES = [] 
