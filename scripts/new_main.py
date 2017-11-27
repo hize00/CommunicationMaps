@@ -17,7 +17,7 @@ from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, 
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
-from std_msgs.msg import Float32, Bool
+from std_msgs.msg import Float32, Bool, Int8
 
 import communication
 from environment import Environment
@@ -121,11 +121,15 @@ class GenericRobot(object):
         self.arrived_final_dest = False
         self.starting_poses = True
         self.arrived_starting_poses = False
+        self.fixed_wall_poses = []
+        self.problematic_poses = []
         self.alone = False
         self.signal_strengths = []
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
+
+        self.pub_teammate = rospy.Publisher('expl_teammate', Int8, queue_size=10)
 
         # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
@@ -151,6 +155,7 @@ class GenericRobot(object):
 
     def state_callback(self, msg):
         self.teammate_arrived_nominal_dest = msg.data
+
 
     def reset_stuff(self):
         self.arrived_nominal_dest = False
@@ -236,9 +241,11 @@ class GenericRobot(object):
             rospy.loginfo(str(self.robot_id) + ' - moving to ' + str(pos))
 
         success = False
+        fixing_pose = False
         old_pos = pos
         round = 0
         count = 0
+
         while not success:
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = '/map'
@@ -262,22 +269,43 @@ class GenericRobot(object):
                     self.arrived_nominal_dest = False
                 else:
                     self.arrived_nominal_dest = True
+
+                if fixing_pose:
+                    self.fixed_wall_poses.append(pos)
+
             elif state == GoalStatus.PREEMPTED:
+                rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
                 self.clear_costmap_service()
-                if round <=2:
-                    rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
+                if pos not in self.problematic_poses:
+                    self.problematic_poses.append(pos)
+                    rospy.loginfo(str(robot_id) + ' - added position to problematic points')
+                else:
+                    if self.fixed_wall_poses:
+                        for pose in self.fixed_wall_poses:
+                            pos = list(pos)
+                            if pose[0] == pos[0] + 1 and pose[1] == pos[1] + 1 or \
+                                pose[0] == pos[0] + 1 and pose[1] == pos[1] - 1 or \
+                                pose[0] == pos[0] - 1 and pose[1] == pos[1] + 1 or \
+                                pose[0] == pos[0] - 1 and pose[1] == pos[1] - 1:
+                                rospy.loginfo(str(robot_id) + ' - moving to the fixed position calculated before: ' + str(pose))
+                                pos[0] = pose[0]
+                                pos[1] = pose[1]
+                                pos = tuple(pos)
+
+                if round <=1:
                     self.motion_recovery()
                 else:
-                    if count == 8:
-                        self.motion_recovery()
+                    fixing_pose = True
+                    if count == 8: #trying 8 times to fix the position
                         count = 0
                     rospy.loginfo(str(robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
                     pos = old_pos
                     pos = list(pos)
-                    # randomly select a change in robot coordinates
-                    update = {0: [1, 0], 1:[-1,0], 2: [0,1], 3: [0,-1], 4: [1, 1], 5:[-1,1], 6: [1,-1], 7: [-1,-1]}
-                    pos[0] = pos[0] + update[count][0]
-                    pos[1] = pos[1] + update[count][1]
+                    #randomly select a change in robot coordinates
+                    update = {0: [1, 1], 1:[-1,1], 2: [1,-1], 3: [-1,-1]}
+                    random_update = random.randint(0, 3)
+                    pos[0] = pos[0] + update[random_update][0]
+                    pos[1] = pos[1] + update[random_update][1]
                     pos = tuple(pos)
                     rospy.loginfo(str(robot_id) + ' - moving to new fixed goal ' + str(pos))
                     count += 1
@@ -311,7 +339,7 @@ class GenericRobot(object):
 
                     if self.robot_id == self.teammates_id[0]: #if I am my own communication teammate
                         self.alone = True
-                    else: #I need to know where my teammate is
+                    else: #I need to know where my teammate is and its own teammate
                         rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
                 if self.is_leader:
@@ -319,9 +347,7 @@ class GenericRobot(object):
                 else:
                     self.go_to_pose((plan.first_robot_dest.position.x,plan.first_robot_dest.position.y))
 
-
                 if not self.starting_poses and not self.alone:  #in starting position and alone robots have not a teammate
-
                     if not self.teammate_arrived_nominal_dest:
                         rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
                         r = rospy.Rate(20)
@@ -367,7 +393,8 @@ class GenericRobot(object):
                 #follower has received plan, robots can move
                 if self.is_leader:
                     self.plans = self.plans[self.robot_id] #leader plans are the ones at index self.robot_id
-                    rospy.loginfo(str(self.robot_id) + ' - PLAN: ' + str(self.plans))
+                    #rospy.loginfo(str(self.robot_id) + ' - PLAN: ' + str(self.plans))
+
                 self.move_robot()
             elif self.execute_plan_state == 2:
                 #plan completed
@@ -434,7 +461,7 @@ class Leader(GenericRobot):
         reading_coords = 0
         reading_RM = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -567,7 +594,8 @@ class Leader(GenericRobot):
         for robots_plans in self.plans:
             for teammate_id in teammates_id:
                 if teammate_id == plan_index:
-                    rospy.loginfo(str(teammate_id) + ' - PLAN: ' + str(robots_plans))
+                    #rospy.loginfo(str(teammate_id) + ' - PLAN: ' + str(robots_plans))
+
                     plans_follower = []
                     for plan in robots_plans:
                         points = plan[0]
