@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
 import sys
+import random
 
 coord = []
 robot_moving = []
 robot_plan = []
+timetable = []
 
 reading_coords = 0
 reading_RM = 0
+reading_TT = 0
 
 with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
     data = file.readlines()
@@ -38,6 +41,17 @@ with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt',
                     robot_moving.append(min_list_RM)
                 else:
                     reading_RM = 0
+            elif words[0] == "TIMETABLE:":
+                reading_TT = 1
+                continue
+            if reading_TT == 1:
+                min_list_T = []
+                if words[0] != ';':
+                    for i in range(0, N_ROBOTS):
+                        min_list_T.append(float(words[i]))
+                    timetable.append(min_list_T)
+                else:
+                    reading_TT = 0
 
 file.close()
 
@@ -47,14 +61,14 @@ coord = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a 
 # converting from pixels to meters
 for c in coord:
     pos = c
-    c[0] = float(self.env.dimX - resize_factor * pos[0])
-    c[1] = float(resize_factor * pos[1])
+    #c[0] = float(self.env.dimX - resize_factor * pos[0])
+    #c[1] = float(resize_factor * pos[1])
 
 coord = [tuple(l) for l in coord]
 
 coord = [coord[i:i + N_ROBOTS] for i in range(0, len(coord), N_ROBOTS)]  # create a plan of coordinates
 
-# creating the plan
+#assigning a timestamp to a robot everytime it has to move and creating the plan
 count_config = 0
 for config in robot_moving:
     count = 0
@@ -68,6 +82,7 @@ for config in robot_moving:
             robot_plan.append(coord[count_config][position])
             robot_plan.append(coord[count_config][position])
             robot_plan.append(my_self)
+            robot_plan.append(timetable[count_config][position])
         else:
             if robot != 0 and first_robot == -1:
                 first_robot = count
@@ -79,23 +94,25 @@ for config in robot_moving:
                 position = count
                 robot_plan.append(coord[count_config][position])
                 robot_plan.append(second_robot)
+                robot_plan.append(timetable[count_config][position])
 
                 # assigning a reflected plan to the communication teammate
                 robot_plan.append(second_robot)
                 robot_plan.append(coord[count_config][position])
                 robot_plan.append(coord[count_config][first_robot])
                 robot_plan.append(first_robot)
-
+                robot_plan.append(timetable[count_config][position])
         count += 1
     count_config += 1
 
-# grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate]
-robot_plan = [robot_plan[i:i + 4] for i in range(0, len(robot_plan), 4)]
+
+# grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate,timestamp]
+robot_plan = [robot_plan[i:i + 5] for i in range(0, len(robot_plan), 5)]
 
 # deleting last (incomplete) plan if last robot_moving row has only one robot to move
 final_dest = ()
 for plan in robot_plan:
-    if len(plan) < 4: #2*N_ROBOTS:  #if only one robot or all robots have to go to final destination
+    if len(plan) < 4: #if only one robot or all robots have to go to final destination
         robot_plan.pop(-1)
         final_dest = plan
 
@@ -105,7 +122,7 @@ if final_dest:
 
     robot_plan.append(final_dest) #adding to the complete plan the plan of the robot that has to go to final destination
 
-# grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate)]
+# grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate, timestamp)]
 plans = []
 for plan in robot_plan:
     my_id = []
@@ -116,6 +133,7 @@ for plan in robot_plan:
     coordinates.append(plan[2])
     msgs.append(tuple(coordinates))
     msgs.append(plan[3])
+    msgs.append(plan[4])
     my_id.append(tuple(msgs))
     plans.append(tuple(my_id))
 
@@ -131,3 +149,9 @@ plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
 #            plan_id.insert(i, ())  # if a robot never moves, his plan will be empty
 
 plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
+
+#for i in xrange(10):
+#    random_update = random.randint(0, 4)
+#    print random_update
+
+print plan_id
