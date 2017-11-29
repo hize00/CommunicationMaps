@@ -117,6 +117,8 @@ class GenericRobot(object):
         self.plans = []
         self.timestep = -1
         self.teammate_timestep = -2
+        self.conn_checked = False
+        self.teammate_conn_checked = False
         self.teammate_arrived_nominal_dest = False
         self.arrived_nominal_dest = False
         self.moving_nominal_dest = False
@@ -137,6 +139,9 @@ class GenericRobot(object):
 
         # (reduced) state publisher: 0 = not going to starting pose, 1 = going to starting pose
         self.pub_starting_pose = rospy.Publisher('expl_starting_pose', Bool, queue_size=10)
+
+        #signal strenght checking: 0 = to do, 1 = done
+        self.pub_conn_checking = rospy.Publisher('expl_conn_checking', Bool, queue_size=10)
 
         # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
@@ -169,6 +174,9 @@ class GenericRobot(object):
     def timestep_callback(self, msg):
         self.teammate_timestep = msg.data
 
+    def conn_checked_callback(self, msg):
+        self.teammate_conn_checked = msg.data
+
     def reset_stuff(self):
         self.arrived_nominal_dest = False
         self.teammate_arrived_nominal_dest = False
@@ -178,6 +186,8 @@ class GenericRobot(object):
         self.iam_moving = False
         self.timestep = -1
         self.teammate_timestep = -2
+        self.conn_checked = False
+        self.teammate_conn_checked = False
 
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
@@ -342,7 +352,6 @@ class GenericRobot(object):
     def move_robot(self):
         if self.plans: #if plan exists (it is not an empty tuple)
             rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_starting_pose', Bool, self.starting_pose_callback)
-
             for plan in self.plans:
                 self.reset_stuff()
                 self.moving_nominal_dest = True
@@ -360,9 +369,9 @@ class GenericRobot(object):
                     else: #I need to know where my teammate is
                         rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
 
-                    #publishing my timestep
-                    rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_timestep', Float32, self.timestep_callback)
-                    self.pub_timestep.publish(Float32(self.timestep))
+                        # publishing my teammate timestep
+                        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_timestep', Float32,self.timestep_callback)
+                        self.pub_timestep.publish(Float32(self.timestep))
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -372,16 +381,15 @@ class GenericRobot(object):
                 if not self.starting_poses and not self.alone and not self.teammate_starting_pose:
                     #in starting position and alone robots have not a teammate
                     if not self.teammate_arrived_nominal_dest and not(self.timestep == self.teammate_timestep):
-                        #rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
+                        rospy.loginfo(str(robot_id) + ' - waiting for my teammate ' + str(self.teammates_id[0]))
                         r = rospy.Rate(20)
-                        rospy.loginfo(str(robot_id) + ' - my teammate is ' + str(self.teammates_id[0]) + ', my timestep is '
-                        + str(self.timestep) + ' and his timestep is ' + str(self.teammate_timestep))
-
                         while not self.teammate_arrived_nominal_dest and not(self.timestep == self.teammate_timestep):
+                            self.pub_timestep.publish(Float32(self.timestep))
                             r.sleep()
 
-                    rospy.loginfo(str(robot_id) + ' - SONO USCITO E my teammate is ' + str(self.teammates_id[0]) + ', my timestep is '
-                                  + str(self.timestep) + ' and his timestep is ' + str(self.teammate_timestep))
+                        #rospy.loginfo(str(robot_id) + ' - my teammate is ' + str(self.teammates_id[0]) + ', my timestep is '
+                        #    + str(self.timestep) + ' and his timestep is ' + str(self.teammate_timestep))
+
                     self.check_signal_strength()
 
                 self.starting_poses = False
@@ -394,10 +402,29 @@ class GenericRobot(object):
         self.execute_plan_state = 2
 
     def check_signal_strength(self):
+        rospy.loginfo(str(robot_id) + ' - my timestep: '
+                      + str(self.timestep) + ', my teammate timestep: ' + str(self.teammate_timestep))
+        if self.teammate_timestep != self.timestep:
+            rospy.loginfo(str(robot_id) + ' - waiting for my teammate with my same timestep ')
+            r = rospy.Rate(20)
+            while self.teammate_timestep != self.timestep:
+                r.sleep()
+
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.teammates_id[0]))
+        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_conn_checking', Bool,self.conn_checked_callback)
         signal_strength = self.comm_module.get_signal_strength(self.teammates_id[0])
         self.signal_strengths.append(signal_strength)
-        #rospy.sleep(rospy.Duration(1))
+        self.conn_checked = True
+        self.pub_conn_checking.publish(Bool(self.conn_checked))
+
+        #if not self.teammate_conn_checked:
+        #    rospy.loginfo(str(self.robot_id) + ' - waiting his teammate to check the signal')
+        #    r = rospy.Rate(100)
+        #    while not self.teammate_conn_checked:
+        #        #rospy.loginfo(str(self.robot_id) + ' - WAITING')
+        #        r.sleep()
+        #else:
+        #    rospy.loginfo(str(self.robot_id) + ' - CAMBIO PUNTO')
 
 
     # -1: plan, 0: plan_set
