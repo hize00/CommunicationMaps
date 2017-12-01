@@ -113,7 +113,7 @@ class GenericRobot(object):
             exec ("setattr(GenericRobot, 'pos_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/updated_pose', Point, self.pos_teammate" + str(i) + ", queue_size = 100)")
 
-        #plan for navigation
+        #stuff for navigation
         self.plans = []
         self.timestep = -1
         self.teammate_timestep = -2
@@ -128,15 +128,20 @@ class GenericRobot(object):
         self.problematic_poses = []
         self.alone = False
         self.signal_strengths = []
+        self.my_teammate = -1
+        self.teammate_teammate = -2
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
 
-        #timestep publisher for synchronizing the exploration
+        # timestep publisher for synchronizing the exploration
         self.pub_timestep = rospy.Publisher('expl_timestep', Float32, queue_size=10)
 
-        # (reduced) state publisher: 0 = not going to starting pose, 1 = going to starting pose
+        # starting_pose publisher: 0 = not going to starting pose, 1 = going to starting pose
         self.pub_starting_pose = rospy.Publisher('expl_starting_pose', Bool, queue_size=10)
+
+        # teammate's teammate for synchronizing the exploration team
+        self.pub_teammate = rospy.Publisher('expl_teammate', Int8, queue_size=10)
 
         # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
@@ -169,6 +174,9 @@ class GenericRobot(object):
     def timestep_callback(self, msg):
         self.teammate_timestep = msg.data
 
+    def teammate_callback(self, msg):
+        self.teammate_teammate = msg.data
+
     def reset_stuff(self):
         self.arrived_nominal_dest = False
         self.teammate_arrived_nominal_dest = False
@@ -178,6 +186,8 @@ class GenericRobot(object):
         self.iam_moving = False
         self.timestep = -1
         self.teammate_timestep = -2
+        self.my_teammate = -1
+        self.teammate_teammate = -2
 
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
@@ -288,11 +298,11 @@ class GenericRobot(object):
                     self.fixed_wall_poses.append(pos)
 
             elif state == GoalStatus.PREEMPTED:
-                rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
+                #rospy.loginfo(str(robot_id) + ' - preempted, using recovery')
                 self.clear_costmap_service()
                 if pos not in self.problematic_poses:
                     self.problematic_poses.append(pos)
-                    rospy.loginfo(str(robot_id) + ' - added position to problematic points')
+                    #rospy.loginfo(str(robot_id) + ' - added position to problematic points')
                 else:
                     if self.fixed_wall_poses:
                         for pose in self.fixed_wall_poses:
@@ -312,7 +322,7 @@ class GenericRobot(object):
                     fixing_pose = True
                     if count == 8: #trying 8 times to fix the position
                         count = 0
-                    rospy.loginfo(str(robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
+                    #rospy.loginfo(str(robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
                     pos = old_pos
                     pos = list(pos)
                     #randomly select a change in robot coordinates
@@ -354,13 +364,14 @@ class GenericRobot(object):
                         self.teammates_id[0] = plan.comm_robot_id
                         self.timestep = plan.timestep
 
-                    if self.robot_id == self.teammates_id[0]: #if I am my own communication teammate
-                        self.alone = True
-                    else: #I need to know where my teammate is
-                        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
+                    self.my_teammate = self.teammates_id[0]
 
-                        # publishing my teammate timestep
+                    if self.robot_id == self.my_teammate: #if I am my own communication teammate
+                        self.alone = True
+                    else: #I need to know where my teammate is and its timestep
+                        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_state', Bool, self.state_callback)
                         rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_timestep', Float32, self.timestep_callback)
+                        rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_teammate', Int8,self.teammate_callback)
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -370,6 +381,9 @@ class GenericRobot(object):
                 #publishing my timestep
                 self.pub_timestep.publish(Float32(self.timestep))
 
+                #publishing my teammate
+                self.pub_teammate.publish(Int8(self.my_teammate))
+
                 if not self.starting_poses and not self.teammate_starting_pose and not self.alone:
                     #in starting position and alone robots have not a teammate
                     if not self.teammate_arrived_nominal_dest:
@@ -378,8 +392,6 @@ class GenericRobot(object):
                         while not self.teammate_arrived_nominal_dest:
                             r.sleep()
 
-                    #rospy.loginfo(str(self.robot_id) + ' - self.timestep: ' + str(self.timestep))
-                    #rospy.loginfo(str(self.robot_id) + ' - self.teammate_timestep: ' + str(self.teammate_timestep))
                     self.check_signal_strength()
 
                 self.starting_poses = False
@@ -391,11 +403,26 @@ class GenericRobot(object):
         self.execute_plan_state = 2
 
     def check_signal_strength(self):
-        if self.teammate_timestep != self.timestep:
-            rospy.loginfo(str(robot_id) + ' - waiting for my teammate with my same timestep ')
-            r = rospy.Rate(20)
-            while self.teammate_timestep != self.timestep:
+        r = rospy.Rate(100)
+        #rospy.loginfo(str(self.robot_id) + ' - self.timestep: ' + str(self.timestep))
+        #rospy.loginfo(str(self.robot_id) + ' - self.teammate_timestep: ' + str(self.teammate_timestep))
+        #if self.teammate_timestep != self.timestep:
+        #    rospy.loginfo(str(self.robot_id) + ' - waiting for my teammate with my same timestep ')
+        #    while self.teammate_timestep != self.timestep:
+        #        self.pub_timestep.publish(Float32(self.timestep))
+         #       self.pub_teammate.publish(Int8(self.my_teammate))
+         #       r.sleep()
+
+        if self.robot_id != self.teammate_teammate:
+            rospy.loginfo(str(self.robot_id) + ' - teammate: ' + str(self.teammates_id[0]))
+            rospy.loginfo(str(self.robot_id) + ' - teammate is already busy with robot ' + str(self.teammate_teammate) + '. Waiting my turn')
+            while self.robot_id != self.teammate_teammate:
+                self.pub_state.publish(Bool(self.arrived_nominal_dest))
+                self.pub_timestep.publish(Float32(self.timestep))
+                self.pub_teammate.publish(Int8(self.my_teammate))
                 r.sleep()
+
+            rospy.sleep(rospy.Duration(1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.teammates_id[0]))
         signal_strength = self.comm_module.get_signal_strength(self.teammates_id[0])
