@@ -74,7 +74,7 @@ for config in robot_moving:
     count = 0
     first_robot = -1
     for robot in config:
-        if count_config == (len(robot_moving) - 1) or (count_config == 0 and robot == 0) :
+        if (count_config == (len(robot_moving) - 1) and robot !=0) or (count_config == 0 and robot == 0) :
             # I add the starting/final positions of each robot to plan: [my_self,(pose),(pose),my_self]
             my_self = count
             robot_plan.append(my_self)
@@ -112,7 +112,8 @@ robot_plan = [robot_plan[i:i + 5] for i in range(0, len(robot_plan), 5)]
 # deleting last (incomplete) plan if last robot_moving row has only one robot to move
 final_dest = ()
 for plan in robot_plan:
-    if len(plan) < 4: #if only one robot or all robots have to go to final destination
+    print plan
+    if len(plan) < 5: #if only one robot or all robots have to go to final destination
         robot_plan.pop(-1)
         final_dest = plan
 
