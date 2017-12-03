@@ -309,19 +309,13 @@ class GenericRobot(object):
                     if self.fixed_wall_poses:
                         for pose in self.fixed_wall_poses:
                             pos = list(pos)
-                            min_x = pos[0] - 1
-                            max_x = pos[0] + 1
-                            min_y = pos[1] - 1
-                            max_y = pos[1] + 1
-                            if min_x <= pose[0] <= max_x and min_y <= pose[1] <= max_y:
-                            #if pose[0] == pos[0] + 1 and pose[1] == pos[1] + 1 or \
-                            #    pose[0] == pos[0] + 1 and pose[1] == pos[1] - 1 or \
-                            #    pose[0] == pos[0] - 1 and pose[1] == pos[1] + 1 or \
-                            #    pose[0] == pos[0] - 1 and pose[1] == pos[1] - 1:
+                            if ((pose[0] == (pos[0] - 1)  or pose[0] == (pos[0] + 1))
+                                and (pose[1] == (pos[1] - 1) or pose[1] == (pos[1] + 1))):
                                 rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position calculated before: ' + str(pose))
                                 pos[0] = pose[0]
                                 pos[1] = pose[1]
-                                pos = tuple(pos)
+
+                            pos = tuple(pos)
 
                 if round <=1:
                     self.motion_recovery()
