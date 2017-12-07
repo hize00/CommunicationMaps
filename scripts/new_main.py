@@ -122,7 +122,7 @@ class GenericRobot(object):
         self.moving_nominal_dest = False
         self.arrived_final_dest = False
         self.starting_poses = True
-        self.teammate_starting_pose = True
+        self.teammate_starting_pose = False
         self.arrived_starting_poses = False
         self.fixed_wall_poses = []
         self.problematic_poses = []
@@ -132,6 +132,8 @@ class GenericRobot(object):
         self.teammate_teammate = -2
         self.got_signal = False
         self.teammate_got_signal = False
+        self.iam_moving = False
+        self.teammate_moving = False
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
@@ -147,6 +149,9 @@ class GenericRobot(object):
 
         # signal strenght acquisition publisher: 0 = not yet got signal strenght, 1 = got signal strenght
         self.pub_got_signal = rospy.Publisher('expl_got_signal', Bool, queue_size=10)
+
+        # moving state publisher: 0 = not moving, 1 = moving
+        self.pub_moving = rospy.Publisher('expl_moving', Bool, queue_size=10)
 
         # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
@@ -185,6 +190,9 @@ class GenericRobot(object):
     def got_signal_callback(self, msg):
         self.teammate_got_signal = msg.data
 
+    def moving_callback(self, msg):
+        self.teammate_moving = msg.data
+
     def reset_stuff(self):
         self.arrived_nominal_dest = False
         self.teammate_arrived_nominal_dest = False
@@ -198,6 +206,8 @@ class GenericRobot(object):
         self.teammate_teammate = -2
         self.got_signal = False
         self.teammate_got_signal = False
+        self.teammate_starting_pose = False
+
 
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
@@ -290,6 +300,8 @@ class GenericRobot(object):
 
             # Start moving
             self.iam_moving = True
+            self.pub_moving.publish(Bool(self.iam_moving))
+
             self.client_motion.send_goal(goal, feedback_cb = self.feedback_motion_cb)
             self.iam_moving = False
             self.client_motion.wait_for_result()
@@ -298,8 +310,10 @@ class GenericRobot(object):
             if state == GoalStatus.SUCCEEDED:
                 rospy.loginfo(str(self.robot_id) + ' - position reached')
                 success = True
+                self.iam_moving = False
+
                 if self.starting_poses:
-                    self.arrived_starting_poses = True
+                    #self.arrived_starting_poses = True
                     self.arrived_nominal_dest = False
                 else:
                     self.arrived_nominal_dest = True
@@ -325,7 +339,6 @@ class GenericRobot(object):
                                 rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position calculated before: ' + str(pose))
                                 pos[0] = pose[0]
                                 pos[1] = pose[1]
-
                             pos = tuple(pos)
 
                 if round <=1:
@@ -335,9 +348,9 @@ class GenericRobot(object):
                     if count == 0:
                         rospy.loginfo(
                             str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
-                    elif count == 4: #trying 8 times to fix the position
+                    elif count == 4: #trying 4 times to fix the position
                         self.clear_costmap_service()
-                        self.motion_recovery() #TODO DA TESTARE
+                        self.motion_recovery()
                         self.clear_costmap_service()
                         count = 0
                     pos = old_pos
@@ -362,12 +375,11 @@ class GenericRobot(object):
                 rospy.loginfo(str(self.robot_id) + ' - state: ' + str(state))
                 break
 
-        if not self.starting_poses:
-            self.pub_state.publish(Bool(self.arrived_nominal_dest))
+        self.pub_state.publish(Bool(self.arrived_nominal_dest))
+        self.pub_moving.publish(Bool(self.iam_moving))
 
     def move_robot(self):
         if self.plans: #if plan exists (it is not an empty tuple)
-            rospy.Subscriber('/robot_' + str(self.teammates_id[0]) + '/expl_starting_pose', Bool, self.starting_pose_callback)
             for plan in self.plans:
                 self.reset_stuff()
                 self.moving_nominal_dest = True
@@ -384,10 +396,16 @@ class GenericRobot(object):
 
                     if self.robot_id == self.my_teammate: #if I am my own communication teammate
                         self.alone = True
-                    else: #I need to know where my teammate is, its timestep and its teammate
+                    else:
+                        #I need to know where my teammate is, its timestep and its teammate
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_state', Bool, self.state_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_timestep', Float32, self.timestep_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
+                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_moving', Bool,self.moving_callback)
+                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_starting_pose', Bool,self.starting_pose_callback)
+
+                #if self.robot_id == 2:
+                #    rospy.sleep(rospy.Duration(100000000))
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -398,8 +416,18 @@ class GenericRobot(object):
                 self.pub_timestep.publish(Float32(self.timestep))
                 self.pub_teammate.publish(Int8(self.my_teammate))
 
-                if not self.starting_poses and not self.teammate_starting_pose and not self.alone:
+                if not self.starting_poses and not self.alone:
                     # in starting position and alone robots there are no teammates
+                    rospy.loginfo(str(self.robot_id) + ' - my teammate, robot ' + str(self.my_teammate))
+                    rospy.loginfo(str(self.robot_id) + ' - self.starting_poses: ' + str(self.starting_poses))
+                    rospy.loginfo(str(self.robot_id) + ' - self.teammate_starting_pose: ' + str(self.teammate_starting_pose))
+
+                    if self.teammate_starting_pose:
+                        rospy.loginfo(str(self.robot_id) + ' - my teammate is moving to starting pose.')
+                        r = rospy.Rate(20)
+                        while self.teammate_starting_pose:
+                            r.sleep()
+
                     self.check_signal_strength()
 
                 self.starting_poses = False
@@ -407,6 +435,7 @@ class GenericRobot(object):
 
         else:
             rospy.loginfo(str(self.robot_id) + ' - no plans to follow')
+
 
         self.execute_plan_state = 2
 
