@@ -386,13 +386,11 @@ class GenericRobot(object):
 
                 if not self.starting_poses: #I set my communication teammate (that changes according to the plan)
                     if self.is_leader:
-                        self.teammates_id[0] = plan[1]
+                        self.my_teammate = plan[1]
                         self.timestep = plan[2]
                     else:
-                        self.teammates_id[0] = plan.comm_robot_id
+                        self.my_teammate = plan.comm_robot_id
                         self.timestep = plan.timestep
-
-                    self.my_teammate = self.teammates_id[0]
 
                     if self.robot_id == self.my_teammate: #if I am my own communication teammate
                         self.alone = True
@@ -404,30 +402,19 @@ class GenericRobot(object):
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_moving', Bool,self.moving_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_starting_pose', Bool,self.starting_pose_callback)
 
-                #if self.robot_id == 2:
-                #    rospy.sleep(rospy.Duration(100000000))
-
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
                 else:
                     self.go_to_pose((plan.first_robot_dest.position.x,plan.first_robot_dest.position.y))
 
                 # publishing my timestep and my teammate
-                self.pub_timestep.publish(Float32(self.timestep))
                 self.pub_teammate.publish(Int8(self.my_teammate))
+                self.pub_timestep.publish(Float32(self.timestep))
+
+                rospy.loginfo(str(self.robot_id) + ' - timestep: ' + str(self.timestep))
+                rospy.loginfo(str(self.robot_id) + ' - teammate timestep: ' + str(self.teammate_timestep))
 
                 if not self.starting_poses and not self.alone:
-                    # in starting position and alone robots there are no teammates
-                    rospy.loginfo(str(self.robot_id) + ' - my teammate, robot ' + str(self.my_teammate))
-                    rospy.loginfo(str(self.robot_id) + ' - self.starting_poses: ' + str(self.starting_poses))
-                    rospy.loginfo(str(self.robot_id) + ' - self.teammate_starting_pose: ' + str(self.teammate_starting_pose))
-
-                    if self.teammate_starting_pose:
-                        rospy.loginfo(str(self.robot_id) + ' - my teammate is moving to starting pose.')
-                        r = rospy.Rate(20)
-                        while self.teammate_starting_pose:
-                            r.sleep()
-
                     self.check_signal_strength()
 
                 self.starting_poses = False
@@ -450,9 +437,23 @@ class GenericRobot(object):
                 self.pub_state.publish(Bool(self.arrived_nominal_dest))
                 r.sleep()
 
-            rospy.sleep(rospy.Duration(1))
+            rospy.sleep(rospy.Duration(0.1))
 
-        rospy.sleep(rospy.Duration(1))
+        rospy.sleep(rospy.Duration(0.1))
+
+
+
+        if self.timestep != self.teammate_timestep:
+            rospy.loginfo(str(self.robot_id) + ' - my timestep is different from my teammate timestep. Waiting')
+            while self.timestep != self.teammate_timestep:
+                self.pub_state.publish(Bool(self.arrived_nominal_dest))
+                self.pub_teammate.publish(Int8(self.my_teammate))
+                self.pub_timestep.publish(Float32(self.timestep))
+                r.sleep()
+
+            rospy.sleep(rospy.Duration(0.1))
+
+        rospy.sleep(rospy.Duration(0.1))
 
 
         if self.robot_id != self.teammate_teammate:
@@ -462,11 +463,12 @@ class GenericRobot(object):
             while self.robot_id != self.teammate_teammate:
                 self.pub_state.publish(Bool(self.arrived_nominal_dest))
                 self.pub_teammate.publish(Int8(self.my_teammate))
+                self.pub_timestep.publish(Float32(self.timestep))
                 r.sleep()
 
-            rospy.sleep(rospy.Duration(1))
+            rospy.sleep(rospy.Duration(0.1))
 
-        rospy.sleep(rospy.Duration(1))
+        rospy.sleep(rospy.Duration(0.1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         signal_strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -476,11 +478,15 @@ class GenericRobot(object):
 
         if not self.teammate_got_signal:
             while not self.teammate_got_signal:
+                self.pub_state.publish(Bool(self.arrived_nominal_dest))
+                self.pub_teammate.publish(Int8(self.my_teammate))
+                self.pub_timestep.publish(Float32(self.timestep))
+                self.pub_got_signal.publish(Bool(self.got_signal))
                 r.sleep()
         else:
             rospy.sleep(rospy.Duration(0.2))
 
-        #self.reset_stuff()
+        self.pub_got_signal.publish(Bool(self.got_signal))
 
         rospy.sleep(rospy.Duration(2))
 
