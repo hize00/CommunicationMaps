@@ -127,6 +127,8 @@ class GenericRobot(object):
         self.teammate_teammate = -2
         self.got_signal = False
         self.teammate_got_signal = False
+        self.strenght = 0
+        self.teammate_strenght = 0
 
         # (reduced) state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
@@ -139,6 +141,9 @@ class GenericRobot(object):
 
         # signal strenght acquisition publisher: 0 = not yet got signal strenght, 1 = got signal strenght
         self.pub_got_signal = rospy.Publisher('expl_got_signal', Bool, queue_size=10)
+
+        # signal strenght publisher, to write on a txt file
+        self.pub_strenght = rospy.Publisher('expl_strenght', Float32, queue_size=10)
 
         # -1: plan, 0: plan_set, 1: leader-follower reached, 2: plan finished
         self.replan_rate = REPLAN_RATE
@@ -174,6 +179,9 @@ class GenericRobot(object):
     def got_signal_callback(self, msg):
         self.teammate_got_signal = msg.data
 
+    def strenght_callback(self, msg):
+        self.teammate_strenght = msg.data
+
     def reset_stuff(self):
         self.arrived_nominal_dest = False
         self.teammate_arrived_nominal_dest = False
@@ -185,6 +193,8 @@ class GenericRobot(object):
         self.teammate_teammate = -2
         self.got_signal = False
         self.teammate_got_signal = False
+        self.strenght = 0
+        self.teammate_strenght = 0
 
         self.pub_state.publish(Bool(self.arrived_nominal_dest))
         self.pub_teammate.publish(Int8(self.my_teammate))
@@ -202,17 +212,17 @@ class GenericRobot(object):
                     abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
             if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
                 self.error_count += 1
-                if self.error_count == MAX_NUM_ERRORS:
-                    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
-                    f = open(self.errors_filename, mode)
-                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" + str(
-                        self.n_robots) + "\n")
-                    f.close()
-                    if self.sim:
+                #if self.error_count == MAX_NUM_ERRORS:
+                #    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
+                #    f = open(self.errors_filename, mode)
+                #    f.write(str(self.seed) + "--->" + self.map_filename + "--->" + str(
+                #        self.n_robots) + "\n")
+                #    f.close()
+                #    if self.sim:
                         # sim too biased by nav errors!
-                        os.system("pkill -f ros")
-                    else:
-                        self.client_motion.cancel_goal()
+                #        os.system("pkill -f ros")
+                #    else:
+                #        self.client_motion.cancel_goal()
                 self.stuck = True
             else:
                 self.stuck = False
@@ -395,6 +405,7 @@ class GenericRobot(object):
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_timestep', Float32, self.timestep_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_got_signal', Bool,self.got_signal_callback)
+                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_strenght', Float32, self.strenght_callback)
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -471,8 +482,10 @@ class GenericRobot(object):
         rospy.sleep(rospy.Duration(0.5))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
-        signal_strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
-        self.signal_strengths.append(signal_strength)
+        self.strenght = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
+        self.pub_strenght.publish(Float32(self.strenght))
+
+        self.signal_strengths.append(self.strenght)
         self.got_signal = True
         self.pub_got_signal.publish(Bool(self.got_signal))
 
@@ -487,6 +500,25 @@ class GenericRobot(object):
         else:
             self.pub_got_signal.publish(Bool(self.got_signal))
             rospy.sleep(rospy.Duration(0.1))
+
+        rospy.sleep(rospy.Duration(0.2))
+
+        if not self.teammate_strenght:
+            while not self.teammate_got_signal:
+                self.pub_strenght.publish(Float32(self.strenght))
+        else:
+            self.pub_strenght.publish(Float32(self.strenght))
+            rospy.sleep(rospy.Duration(0.1))
+
+        if self.robot_id < self.my_teammate: #in a pair of robot, the one with lower id writes on the file signal_strenght.txt
+            # writing solution plan.txt
+            with open('/home/andrea/catkin_ws/src/strategy/data/strenghts/signal_strenghts.txt', 'a') as f1:
+                f1.write(str(self.timestep) + ' --- ' + str(self.robot_id) + ': '
+                         + str(self.strenght) + ' | ' + str(self.my_teammate) + ': '
+                         + str(self.teammate_strenght) + " |\n")
+            f1.close()
+        else:
+            rospy.sleep(rospy.Duration(0.2))
 
         rospy.sleep(rospy.Duration(0.5))
 
@@ -578,7 +610,7 @@ class Leader(GenericRobot):
         reading_RM = 0
         reading_TT = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
