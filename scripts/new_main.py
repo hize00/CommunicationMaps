@@ -17,7 +17,7 @@ from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, 
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
-from std_msgs.msg import Float32, Bool, Int8
+from std_msgs.msg import Float32, Bool, Int8, Int32
 
 import communication
 from environment import Environment
@@ -134,7 +134,7 @@ class GenericRobot(object):
         self.pub_state = rospy.Publisher('expl_state', Bool, queue_size=10)
 
         # timestep publisher for synchronizing the exploration
-        self.pub_timestep = rospy.Publisher('expl_timestep', Float32, queue_size=10)
+        self.pub_timestep = rospy.Publisher('expl_timestep', Int32, queue_size=10)
 
         # teammate's teammate for synchronizing the exploration team
         self.pub_teammate = rospy.Publisher('expl_teammate', Int8, queue_size=10)
@@ -198,7 +198,7 @@ class GenericRobot(object):
 
         self.pub_state.publish(Bool(self.arrived_nominal_dest))
         self.pub_teammate.publish(Int8(self.my_teammate))
-        self.pub_timestep.publish(Float32(self.timestep))
+        self.pub_timestep.publish(Int32(self.timestep))
 
 
     def scan_callback(self, scan):
@@ -392,7 +392,7 @@ class GenericRobot(object):
                 if not self.starting_poses: #I set my communication teammate (that changes according to the plan)
                     if self.is_leader:
                         self.my_teammate = plan[1]
-                        self.timestep = plan[2]
+                        self.timestep = int(plan[2])
                     else:
                         self.my_teammate = plan.comm_robot_id
                         self.timestep = plan.timestep
@@ -402,7 +402,7 @@ class GenericRobot(object):
                     else:
                         #I need to know where my teammate is, its timestep and its teammate
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_state', Bool, self.state_callback)
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_timestep', Float32, self.timestep_callback)
+                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_timestep', Int32, self.timestep_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_got_signal', Bool,self.got_signal_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_strenght', Float32, self.strenght_callback)
@@ -432,7 +432,7 @@ class GenericRobot(object):
             self.pub_got_signal.publish(Bool(self.got_signal))
             self.pub_state.publish(Bool(self.arrived_nominal_dest))
             self.pub_teammate.publish(Int8(self.my_teammate))
-            self.pub_timestep.publish(Float32(self.timestep))
+            self.pub_timestep.publish(Int32(self.timestep))
 
             rospy.sleep(rospy.Duration(0.5))
 
@@ -443,7 +443,7 @@ class GenericRobot(object):
                 while not self.teammate_arrived_nominal_dest:
                     self.pub_state.publish(Bool(self.arrived_nominal_dest))
                     self.pub_teammate.publish(Int8(self.my_teammate))
-                    self.pub_timestep.publish(Float32(self.timestep))
+                    self.pub_timestep.publish(Int32(self.timestep))
                     r.sleep()
                     
                 rospy.sleep(rospy.Duration(0.5))
@@ -459,6 +459,8 @@ class GenericRobot(object):
                 continue
 
             if self.robot_id != self.teammate_teammate and self.my_teammate == self.teammate_teammate:
+                if count == 0:
+                    rospy.loginfo(str(self.robot_id) + ' - waiting for synchronization')
                 self.teammate_arrived_nominal_dest = False
                 rospy.sleep(rospy.Duration(0.1))
                 count += 1
@@ -474,7 +476,7 @@ class GenericRobot(object):
             while self.robot_id != self.teammate_teammate:
                 self.pub_state.publish(Bool(self.arrived_nominal_dest))
                 self.pub_teammate.publish(Int8(self.my_teammate))
-                self.pub_timestep.publish(Float32(self.timestep))
+                self.pub_timestep.publish(Int32(self.timestep))
                 r.sleep()
 
             rospy.sleep(rospy.Duration(0.1))
@@ -489,19 +491,18 @@ class GenericRobot(object):
         self.got_signal = True
         self.pub_got_signal.publish(Bool(self.got_signal))
 
-        #rospy.loginfo(str(self.robot_id) + ' - self.teammate_got_signal ' + str(self.teammate_got_signal))
 
         if not self.teammate_got_signal:
             while not self.teammate_got_signal:
                 self.pub_state.publish(Bool(self.arrived_nominal_dest))
                 self.pub_teammate.publish(Int8(self.my_teammate))
-                self.pub_timestep.publish(Float32(self.timestep))
+                self.pub_timestep.publish(Int32(self.timestep))
                 self.pub_got_signal.publish(Bool(self.got_signal))
         else:
             self.pub_got_signal.publish(Bool(self.got_signal))
             rospy.sleep(rospy.Duration(0.1))
 
-        rospy.sleep(rospy.Duration(0.2))
+        rospy.sleep(rospy.Duration(0.1))
 
         if not self.teammate_strenght:
             while not self.teammate_got_signal:
@@ -510,12 +511,14 @@ class GenericRobot(object):
             self.pub_strenght.publish(Float32(self.strenght))
             rospy.sleep(rospy.Duration(0.1))
 
+        rospy.sleep(rospy.Duration(0.1))
+
         if self.robot_id < self.my_teammate: #in a pair of robot, the one with lower id writes on the file signal_strenght.txt
             # writing solution plan.txt
             with open('/home/andrea/catkin_ws/src/strategy/data/strenghts/signal_strenghts.txt', 'a') as f1:
                 f1.write(str(self.timestep) + ' --- ' + str(self.robot_id) + ': '
                          + str(self.strenght) + ' | ' + str(self.my_teammate) + ': '
-                         + str(self.teammate_strenght) + " |\n")
+                         + str(self.teammate_strenght) + "\n")
             f1.close()
         else:
             rospy.sleep(rospy.Duration(0.2))
@@ -610,7 +613,7 @@ class Leader(GenericRobot):
         reading_RM = 0
         reading_TT = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -776,11 +779,11 @@ class Leader(GenericRobot):
                         plan_follower.second_robot_dest.position.y = points[1][1]
 
                         # first_robot_id
-                        plan_follower.comm_robot_id = Float32
+                        plan_follower.comm_robot_id = Int8
                         plan_follower.comm_robot_id = plan[1]
 
                         #timestep
-                        plan_follower.timestep = Float32
+                        plan_follower.timestep = Int32
                         plan_follower.timestep = plan[2]
 
                         plans_follower.append(plan_follower)
