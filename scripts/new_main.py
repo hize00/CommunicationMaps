@@ -196,9 +196,9 @@ class GenericRobot(object):
         self.strenght = 0
         self.teammate_strenght = 0
 
-        self.pub_state.publish(Bool(self.arrived_nominal_dest))
-        self.pub_teammate.publish(Int8(self.my_teammate))
-        self.pub_timestep.publish(Int32(self.timestep))
+        #self.pub_state.publish(Bool(self.arrived_nominal_dest))
+        #self.pub_teammate.publish(Int8(self.my_teammate))
+        #self.pub_timestep.publish(Int32(self.timestep))
 
 
     def scan_callback(self, scan):
@@ -354,6 +354,7 @@ class GenericRobot(object):
                             #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
                     elif count == 3:
                         i = 1.5
+                        self.rotate_robot()
                     elif count == 5:
                         i = 1
                         count = 1
@@ -382,7 +383,7 @@ class GenericRobot(object):
                 rospy.loginfo(str(self.robot_id) + ' - state: ' + str(state))
                 break
 
-        self.pub_state.publish(Bool(self.arrived_nominal_dest))
+        #self.pub_state.publish(Bool(self.arrived_nominal_dest))
 
     def move_robot(self):
         if self.plans: #if plan exists (it is not an empty tuple)
@@ -406,6 +407,13 @@ class GenericRobot(object):
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_got_signal', Bool,self.got_signal_callback)
                         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_strenght', Float32, self.strenght_callback)
+
+                #rospy.loginfo(str(self.robot_id) + ' - teammate: ' + str(self.my_teammate))
+                #rospy.loginfo(str(self.robot_id) + ' - teammate teammate: ' + str(self.teammate_teammate))
+                #rospy.loginfo(str(self.robot_id) + ' - timestep: ' + str(self.timestep))
+                #rospy.loginfo(str(self.robot_id) + ' - teammate timestep: ' + str(self.teammate_timestep))
+                #rospy.loginfo(str(self.robot_id) + ' - arrived: ' + str(self.arrived_nominal_dest))
+                #rospy.loginfo(str(self.robot_id) + ' - teammate arrived: ' + str(self.teammate_arrived_nominal_dest))
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -434,7 +442,7 @@ class GenericRobot(object):
             self.pub_teammate.publish(Int8(self.my_teammate))
             self.pub_timestep.publish(Int32(self.timestep))
 
-            rospy.sleep(rospy.Duration(0.5))
+            rospy.sleep(rospy.Duration(1))
 
             if not self.teammate_arrived_nominal_dest:
                 if count == 0:
@@ -446,7 +454,7 @@ class GenericRobot(object):
                     self.pub_timestep.publish(Int32(self.timestep))
                     r.sleep()
                     
-                rospy.sleep(rospy.Duration(0.5))
+                rospy.sleep(rospy.Duration(0.2))
 
             rospy.sleep(rospy.Duration(0.5))
 
@@ -458,7 +466,7 @@ class GenericRobot(object):
                 count += 1
                 continue
 
-            if self.robot_id != self.teammate_teammate and self.my_teammate == self.teammate_teammate:
+            if self.robot_id != self.teammate_teammate: # and self.my_teammate == self.teammate_teammate:
                 if count == 0:
                     rospy.loginfo(str(self.robot_id) + ' - waiting for synchronization')
                 self.teammate_arrived_nominal_dest = False
@@ -466,22 +474,11 @@ class GenericRobot(object):
                 count += 1
                 continue
 
-            success = True
+            if self.teammate_arrived_nominal_dest and self.robot_id == self.teammate_teammate \
+                    and self.timestep == self.teammate_timestep:
+                success = True
 
-        rospy.sleep(rospy.Duration(0.5))
-
-        if self.robot_id != self.teammate_teammate and self.my_teammate != self.teammate_teammate:
-            rospy.loginfo(str(self.robot_id) + ' - my teammate, robot ' + str(self.my_teammate)
-                          + ', is already busy with robot ' + str(self.teammate_teammate))
-            while self.robot_id != self.teammate_teammate:
-                self.pub_state.publish(Bool(self.arrived_nominal_dest))
-                self.pub_teammate.publish(Int8(self.my_teammate))
-                self.pub_timestep.publish(Int32(self.timestep))
-                r.sleep()
-
-            rospy.sleep(rospy.Duration(0.1))
-
-        rospy.sleep(rospy.Duration(0.5))
+        rospy.sleep(rospy.Duration(0.2))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strenght = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -523,7 +520,7 @@ class GenericRobot(object):
         else:
             rospy.sleep(rospy.Duration(0.2))
 
-        rospy.sleep(rospy.Duration(0.5))
+        rospy.sleep(rospy.Duration(0.3))
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
@@ -534,6 +531,8 @@ class GenericRobot(object):
             if self.execute_plan_state == -1:
                 #leader calculate plan
                 if self.is_leader:
+                    #cleaning a sighal_strenghts.txt file created before
+                    open('/home/andrea/catkin_ws/src/strategy/data/strenghts/signal_strenghts.txt', 'w').close()
                     self.calculate_plan()
                 else:
                     self.execute_plan_state = 0
@@ -549,6 +548,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.plans = self.plans[self.robot_id] #leader plans are the ones at index self.robot_id
                     #rospy.loginfo(str(self.robot_id) + '- PLAN: ' + str(self.plans))
+
 
                 self.move_robot()
             elif self.execute_plan_state == 2:
