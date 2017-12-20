@@ -204,6 +204,11 @@ class GenericRobot(object):
         self.teammate_strength = 0
         self.other_robot_id = -1
 
+    def reset_teammate_stuff(self):
+        self.teammate_arrived_nominal_dest = False
+        self.teammate_timestep = -2
+        self.teammate_teammate = -2
+
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
         max_index = int(math.floor((MAX_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
@@ -294,6 +299,11 @@ class GenericRobot(object):
         i = 1
         attempt = 0
 
+        inf_x = float(self.env.dimX * 0.25)
+        sup_x = float(self.env.dimX * 0.75)
+        inf_y = float(self.env.dimY * 0.25)
+        sup_y = float(self.env.dimY * 0.75)
+
         while not success:
             goal = MoveBaseGoal()
             goal.target_pose.header.frame_id = '/map'
@@ -332,22 +342,26 @@ class GenericRobot(object):
                 else:
                     if self.fixed_wall_poses:
                         incr_i = 1.5
+                        mid_i = 0.5
                         max_i = 5
                         for pose in self.fixed_wall_poses:
                             pos = list(pos)
                             if ((((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] - incr_i)) or
-                                  pose[0] == (pos[0] - max_i)) or ((pose[0] == (pos[0] + i)) or
-                                    (pose[0] == (pos[0] + incr_i))) or (pose[0] == (pos[0] + max_i))) and
-                                    (((pose[1] == (pos[1] - i)) or (pose[0] == (pos[1] - incr_i)) or
-                                      pose[1] == (pos[1] - max_i)) or ((pose[1] == (pos[1] + i)) or
-                                        (pose[1] == (pos[1] + incr_i))) or (pose[1] == (pos[1] + max_i)))):
+                                  (pose[0] == (pos[0] - mid_i)) or (pose[0] == (pos[0] - max_i))) or
+                                 ((pose[0] == (pos[0] + i)) or (pose[0] == (pos[0] + incr_i)) or
+                                  (pose[0] == (pos[0] + mid_i)) or (pose[0] == (pos[0] + max_i)))) and
+                                    (((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] - incr_i)) or
+                                      (pose[1] == (pos[1] - mid_i)) or (pose[1] == (pos[1] - max_i))) or
+                                     ((pose[1] == (pos[1] + i)) or (pose[1] == (pos[1] + incr_i))) or
+                                     (pose[1] == (pos[1] + mid_i)) or (pose[1] == (pos[1] + max_i)))):
 
-                                rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position calculated before: ' + str(pose))
+                                rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position found before: ' + str(pose))
                                 pos[0] = pose[0]
                                 pos[1] = pose[1]
+                                fixed_pose = pose
                             pos = tuple(pos)
 
-                if round <=1:
+                if round <=3:
                     self.motion_recovery()
                 else:
                     fixing_pose = True
@@ -360,7 +374,7 @@ class GenericRobot(object):
                         if pos in self.fixed_wall_poses:
                             self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
                             #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
-                    elif count > 2 :
+                    elif count > 2:
                         self.rotate_robot()
 
                         if count == 3:
@@ -369,8 +383,15 @@ class GenericRobot(object):
                             i = 1
                             count = 1
                             attempt = 1
-                        elif 5 <= count < 10 and attempt != 0: #probably I am in an angle of the map
-                            i = 5
+                        elif 5 <= count < 10 and attempt == 1:
+                            pos = old_pos
+                            if ((pos[0] >= sup_x and pos[1] >= sup_y) or
+                                    (pos[0] >= sup_x and pos[1] <= inf_y) or
+                                    (pos[0] <= inf_x and pos[1] >= sup_y) or
+                                    (pos[0] <= inf_x and pos[1] <= inf_y)): #probably I am in an angle of the map
+                                i = 5
+                            else: #probably I am stuck between walls in the middle of the map
+                                i = 0.5
                         elif count == 10:
                             i = 1
                             count = 1 #restarting
@@ -387,11 +408,6 @@ class GenericRobot(object):
                     elif count >= 5 and attempt != 0: #probably I am in an angle of the map, I try manually to fix coordinates
                         if count == 5:
                             rospy.loginfo(str(self.robot_id) + ' - fixing the position manually')
-
-                        inf_x = float(self.env.dimX * 0.25)
-                        sup_x = float(self.env.dimX * 0.75)
-                        inf_y = float(self.env.dimY * 0.25)
-                        sup_y = float(self.env.dimY * 0.75)
 
                         if pos[0] >= sup_x and pos[1] >= sup_y: #top right angle
                             random_update = 3
@@ -415,6 +431,7 @@ class GenericRobot(object):
                     rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
                     count += 1
                 self.clear_costmap_service()
+                self.rotate_robot()
                 round += 1
                 success = False
             elif state == GoalStatus.ABORTED:
@@ -442,13 +459,6 @@ class GenericRobot(object):
 
                     if self.robot_id == self.my_teammate: #for the last plan, if I have to move to the last destination
                         self.alone = True
-                    else:
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_arrived', Bool, self.arrived_callback)
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_timestep', Int32, self.timestep_callback)
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_got_signal', Bool,self.got_signal_callback)
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_strength', Float32, self.strength_callback)
-                        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_id', Int8, self.id_callback)
 
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
@@ -467,49 +477,57 @@ class GenericRobot(object):
 
     def check_signal_strength(self):
 
-        r = rospy.Rate(20)
         success = False
-        count = 0
+
+        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_arrived', Bool, self.arrived_callback)
+        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_timestep', Int32, self.timestep_callback)
+        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
+        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_got_signal', Bool, self.got_signal_callback)
+        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_strength', Float32, self.strength_callback)
 
         while not success:
+            self.reset_teammate_stuff()
+
+            rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_id', Int8, self.id_callback)
+
+            rospy.sleep(rospy.Duration(0.2))
+
             self.pub_got_signal.publish(Bool(self.got_signal))
             self.pub_arrived.publish(Bool(self.arrived_nominal_dest))
             self.pub_teammate.publish(Int8(self.my_teammate))
             self.pub_timestep.publish(Int32(self.timestep))
             self.pub_id.publish(Int8(self.robot_id))
 
-            rospy.sleep(rospy.Duration(1))
+            rospy.sleep(rospy.Duration(0.2))
+
+
+            if self.other_robot_id != self.my_teammate:
+                #rospy.loginfo(str(self.robot_id) + ' - I am reading information from an other robot')
+
+                if self.robot_id % 2 != 0:
+                    if self.other_robot_id % 2 != 0: #if both robots are odd I have to let one of them wait
+                        if self.robot_id > self.other_robot_id:
+                            rospy.sleep(rospy.Duration(0.2))
+                else:
+                    if self.other_robot_id % 2 == 0:
+                        if self.robot_id > self.other_robot_id: #if both robots are even I have to let one of them wait
+                            rospy.sleep(rospy.Duration(0.2))
+
+                rospy.sleep(rospy.Duration(0.2))
+
+                continue
 
             if not self.teammate_arrived_nominal_dest:
-                if count == 0:
-                    rospy.loginfo(str(self.robot_id) + ' - waiting for my teammate '
-                              + str(self.my_teammate) + ' to arrive to its destination')
-                while not self.teammate_arrived_nominal_dest:
-                    self.pub_arrived.publish(Bool(self.arrived_nominal_dest))
-                    self.pub_teammate.publish(Int8(self.my_teammate))
-                    self.pub_timestep.publish(Int32(self.timestep))
-                    self.pub_id.publish(Int8(self.robot_id))
-                    r.sleep()
-
-            if self.robot_id != self.teammate_teammate:
-                if count == 0:
-                    rospy.loginfo(str(self.robot_id) + ' - my teammate is waiting an other robot')
-                self.teammate_arrived_nominal_dest = False
-                count +=1
+                #rospy.loginfo(str(self.robot_id) + ' - waiting for my teammate '
+                #              + str(self.my_teammate) + ' to arrive to its destination')
                 continue
 
             if self.timestep != self.teammate_timestep:
-                if count == 0:
-                    rospy.loginfo(str(self.robot_id) + ' - my timestep is different from my teammate timestep. Waiting')
-                self.teammate_arrived_nominal_dest = False
-                count +=1
+                #rospy.loginfo(str(self.robot_id) + ' - my timestep is different from my teammate timestep. Waiting')
                 continue
 
-            if self.other_robot_id != self.my_teammate:
-                if count == 0:
-                    rospy.loginfo(str(self.robot_id) + ' - the other robot is not my teammate. Waiting')
-                self.teammate_arrived_nominal_dest = False
-                count +=1
+            if self.robot_id != self.teammate_teammate:
+                #rospy.loginfo(str(self.robot_id) + ' - my teammate is waiting an other robot')
                 continue
 
             success = True
@@ -559,7 +577,7 @@ class GenericRobot(object):
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
-    #2: completed
+    # 2: completed
     def execute_plan(self):
         r = rospy.Rate(self.replan_rate)
 
@@ -576,12 +594,13 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll() #leader sends plans to followers
                 else:
-                    rospy.sleep(rospy.Duration(1.25 * n_robots))  # I have to wait while leader is sending goals to followers
+                    rospy.sleep(rospy.Duration(2 * n_robots))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
 
             elif self.execute_plan_state == 1:
                 if self.is_leader:
                     self.plans = self.plans[self.robot_id] #leader plans are the ones at index self.robot_id
+                    #rospy.loginfo(str(self.robot_id) + ' - PLAN: ' + str(self.plans))
 
                 self.move_robot() #followers has received plan, robots can move
 
@@ -850,7 +869,7 @@ class Leader(GenericRobot):
         self.clients_signal[teammate_id].send_goal(goal)
 
         self.clients_signal[teammate_id].wait_for_result()
-        rospy.loginfo(str(self.robot_id) + ' - Leader - has received the result of ' + str(teammate_id))
+        rospy.loginfo(str(self.robot_id) + ' - Leader - received the result of ' + str(teammate_id))
 
 
 
@@ -888,7 +907,7 @@ class Follower(GenericRobot):
         self._as.start()
 
     def execute_callback(self,goal):
-        rospy.loginfo(str(self.robot_id) + ' - Follower - has received new goal ')
+        rospy.loginfo(str(self.robot_id) + ' - Follower - received new goal ')
 
         for plan in goal.plans_follower:
             success = True

@@ -112,7 +112,7 @@ robot_plan = [robot_plan[i:i + 5] for i in range(0, len(robot_plan), 5)]
 # deleting last (incomplete) plan if last robot_moving row has only one robot to move
 final_dest = ()
 for plan in robot_plan:
-    print plan
+    #print plan
     if len(plan) < 5: #if only one robot or all robots have to go to final destination
         robot_plan.pop(-1)
         final_dest = plan
@@ -155,4 +155,39 @@ plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robo
 #    random_update = random.randint(0, 4)
 #    print random_update
 
-print plan_id
+#print plan_id
+
+
+
+
+list = []
+
+list.append((41.5,17))
+list.append((63,10))
+
+print list
+
+i = 1
+incr_i = 1.5
+mid_i = 2
+max_i = 5
+
+pos = (43.5, 19)
+
+for pose in list:
+    print pose
+    #if ((pose[0] == (pos[0] - (i or incr_i or mid_i or max_i)) or (pose[0] == (pos[0] + (i or incr_i or mid_i or max_i))))
+    #    and (pose[1] == (pos[1] - (i or incr_i or mid_i or max_i)) or (pose[1] == (pos[1] + (i or incr_i or mid_i or max_i))))):
+    if ((((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] - incr_i)) or
+          (pose[0] == (pos[0] - mid_i)) or (pose[0] == (pos[0] - max_i))) or
+         ((pose[0] == (pos[0] + i)) or (pose[0] == (pos[0] + incr_i)) or
+          (pose[0] == (pos[0] + mid_i)) or (pose[0] == (pos[0] + max_i)))) and
+            (((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] - incr_i)) or
+              (pose[1] == (pos[1] - mid_i)) or (pose[1] == (pos[1] - max_i))) or
+             ((pose[1] == (pos[1] + i)) or (pose[1] == (pos[1] + incr_i))) or
+             (pose[1] == (pos[1] + mid_i)) or (pose[1] == (pos[1] + max_i)))):
+        print pos
+        print pose
+    else:
+        print 'none'
+
