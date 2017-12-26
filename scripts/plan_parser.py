@@ -165,7 +165,7 @@ list = []
 list.append((41.5,17))
 list.append((63,10))
 
-print list
+#print list
 
 i = 1
 incr_i = 1.5
@@ -174,20 +174,39 @@ max_i = 5
 
 pos = (43.5, 19)
 
-for pose in list:
-    print pose
+#for pose in list:
+    #print pose
     #if ((pose[0] == (pos[0] - (i or incr_i or mid_i or max_i)) or (pose[0] == (pos[0] + (i or incr_i or mid_i or max_i))))
     #    and (pose[1] == (pos[1] - (i or incr_i or mid_i or max_i)) or (pose[1] == (pos[1] + (i or incr_i or mid_i or max_i))))):
-    if ((((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] - incr_i)) or
-          (pose[0] == (pos[0] - mid_i)) or (pose[0] == (pos[0] - max_i))) or
-         ((pose[0] == (pos[0] + i)) or (pose[0] == (pos[0] + incr_i)) or
-          (pose[0] == (pos[0] + mid_i)) or (pose[0] == (pos[0] + max_i)))) and
-            (((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] - incr_i)) or
-              (pose[1] == (pos[1] - mid_i)) or (pose[1] == (pos[1] - max_i))) or
-             ((pose[1] == (pos[1] + i)) or (pose[1] == (pos[1] + incr_i))) or
-             (pose[1] == (pos[1] + mid_i)) or (pose[1] == (pos[1] + max_i)))):
-        print pos
-        print pose
-    else:
-        print 'none'
+#    if ((((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] - incr_i)) or
+#          (pose[0] == (pos[0] - mid_i)) or (pose[0] == (pos[0] - max_i))) or
+#         ((pose[0] == (pos[0] + i)) or (pose[0] == (pos[0] + incr_i)) or
+#          (pose[0] == (pos[0] + mid_i)) or (pose[0] == (pos[0] + max_i)))) and
+ #           (((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] - incr_i)) or
+  #            (pose[1] == (pos[1] - mid_i)) or (pose[1] == (pos[1] - max_i))) or
+   #          ((pose[1] == (pos[1] + i)) or (pose[1] == (pos[1] + incr_i))) or
+    #         (pose[1] == (pos[1] + mid_i)) or (pose[1] == (pos[1] + max_i)))):
+        #print pos
+        #print pose
+    #else:
+        #print 'none'
 
+#Signal Strenghts parser
+
+signals = []
+
+with open('/home/andrea/Desktop/parser/signal_strengths.txt', 'r') as f:
+    num_row = 5
+    data = f.readlines()
+    for line in data:  #5 =num_row da specificare nella funzione
+        words = line.split()
+        if len(words) > 0:
+            if words[0] != ';':
+                print words
+
+
+        break
+
+
+
+f.close()
