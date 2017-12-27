@@ -591,12 +591,12 @@ class GenericRobot(object):
                 if self.robot_id % 2 != 0:
                     if self.other_robot_id % 2 != 0: #if both robots are odd I have to let one of them wait
                         if self.robot_id > self.other_robot_id:
-                            rospy.sleep(rospy.Duration(0.4))
+                            rospy.sleep(rospy.Duration(0.2))
 
                 else:
                     if self.other_robot_id % 2 == 0:
                         if self.robot_id > self.other_robot_id: #if both robots are even I have to let one of them wait
-                            rospy.sleep(rospy.Duration(0.4))
+                            rospy.sleep(rospy.Duration(0.2))
 
                 rospy.sleep(rospy.Duration(0.2))
 
@@ -613,6 +613,10 @@ class GenericRobot(object):
 
             if self.robot_id != self.teammate_teammate:
                 #rospy.loginfo(str(self.robot_id) + ' - my teammate is waiting an other robot')
+                continue
+
+            if self.other_robot_id != self.my_teammate:
+                #rospy.loginfo(str(self.robot_id) + ' - I am reading information from an other robot')
                 continue
 
             success = True
