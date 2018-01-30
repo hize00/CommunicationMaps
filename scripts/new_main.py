@@ -638,11 +638,12 @@ class GenericRobot(object):
         while not done:
             self.publish_stuff()
             if not self.teammate_got_signal:
-                continue
+                done = False
             else:
-                rospy.sleep(rospy.Duration(0.1))
+                rospy.sleep(rospy.Duration(0.5))
                 self.publish_stuff()
                 done = True
+            self.publish_stuff()
 
         with open(self.txt_filename,'a') as f1: #writing the signal strength in my txt file
             f1.write(str(self.timestep) + ': ' + str(self.strength) + ';\n')
