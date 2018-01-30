@@ -301,6 +301,7 @@ class GenericRobot(object):
         count = 0
         i = 1
         attempt = 0
+        manually = 0
 
         inf_x = float(self.env.dimX * 0.25)
         sup_x = float(self.env.dimX * 0.75)
@@ -396,10 +397,10 @@ class GenericRobot(object):
                     elif count > 2:
                         self.rotate_robot()
 
-                        if count == 3:
+                        if 3 <= count < 5:
                             i = 1.5
 
-                        if 5 <= count < 10:
+                        if 5 <= count < 20:
                             pos = old_pos
 
                             if attempt == 0:
@@ -496,13 +497,33 @@ class GenericRobot(object):
                                     i = 0.5 #0.5 TODO
                                     random_update = random.randint(0, 3)  # not in an angle, try randomly
 
-                        elif count == 10:
-                            i = 1
-                            count = 1 #restarting
-                            attempt = 0
+                        elif count == 20:
+                            if manually == 1:
+                                count = 5  # trying again to fix manually
+                                manually = -1
+                            else:
+                                i = 1
+                                count = 1  # restarting
+                                attempt = 0
+                                if manually == 0:
+                                    manually = 1
+                                else:
+                                    manually = 0
 
                     if count < 5:
                         random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
+                    elif 14 <=count < 20: #I try 8 times to fix a position manually, if it is not enough I fix again coords changing them a little
+                        if count == 14:
+                            rospy.loginfo(str(self.robot_id) + ' - changing the manual fixing a bit') #Very rare, needed only if two robots have to stop in the same point
+                        if i > 1: #if place is large
+                            upd = 1
+                        elif 0 < i < 1: #if place is narrow
+                            upd = 0.2
+
+                        random_upd = random.randint(0, 1)
+
+                        update = {0: upd, 1: -upd}
+                        i = i + update[random_upd] #adding a random update for the manual fixing
 
                     # fixing the position
                     pos = old_pos
@@ -615,10 +636,6 @@ class GenericRobot(object):
                 #rospy.loginfo(str(self.robot_id) + ' - my teammate is waiting an other robot')
                 continue
 
-            #if self.other_robot_id != self.my_teammate:
-                #rospy.loginfo(str(self.robot_id) + ' - I am reading information from an other robot')
-            #    continue
-
             rospy.sleep(rospy.Duration(0.2))
 
             if self.other_robot_id == self.my_teammate and self.teammate_arrived_nominal_dest and \
@@ -630,19 +647,18 @@ class GenericRobot(object):
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
         self.got_signal = True
-        #self.pub_got_signal.publish(Bool(self.got_signal))
         self.signal_strengths.append(self.strength)
 
-        done = False
+        success = False
 
-        while not done:
+        while not success:
             self.publish_stuff()
             if not self.teammate_got_signal:
-                done = False
+                success = False
             else:
                 rospy.sleep(rospy.Duration(0.5))
                 self.publish_stuff()
-                done = True
+                success = True
             self.publish_stuff()
 
         with open(self.txt_filename,'a') as f1: #writing the signal strength in my txt file

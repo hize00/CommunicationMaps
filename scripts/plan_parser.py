@@ -12,7 +12,7 @@ reading_coords = 0
 reading_RM = 0
 reading_TT = 0
 
-with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_3_robots.txt', 'r') as file:
+with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
     data = file.readlines()
     for line in data:
         words = line.split()
@@ -210,3 +210,16 @@ with open('/home/andrea/Desktop/parser/signal_strengths.txt', 'r') as f:
 
 
 f.close()
+
+i = 1
+
+upd = 0.2
+
+random_upd = random.randint(0, 1)
+
+update = {0: upd, 1: -upd}
+
+print i
+print upd
+i = i + update[random_upd]
+print i
