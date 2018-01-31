@@ -347,7 +347,7 @@ class GenericRobot(object):
                     if self.fixed_wall_poses:
                         i = 1
                         incr_i = 1.5
-                        mid_i = 0.5 #0.5 TODO
+                        mid_i = 0.3 #0.5 TODO
                         max_i = 5
                         top_i = 12
 
@@ -397,10 +397,10 @@ class GenericRobot(object):
                     elif count > 2:
                         self.rotate_robot()
 
-                        if 3 <= count < 5:
+                        if 3 <= count < 7:
                             i = 1.5
 
-                        if 5 <= count < 20:
+                        if 7 <= count < 15:
                             pos = old_pos
 
                             if attempt == 0:
@@ -410,7 +410,7 @@ class GenericRobot(object):
 
                             elif attempt == 1: # probably I am in an angle of the map, I try manually to fix coordinates
 
-                                if count == 5:
+                                if count == 7:
                                     rospy.loginfo(str(self.robot_id) + ' - fixing the position manually')
 
                                 if pos[0] >= sup_x and pos[1] >= sup_y:  # top right angle
@@ -494,31 +494,33 @@ class GenericRobot(object):
                                             i = 5
 
                                 else:  # actually I am not in an angle, probably I am stuck between walls in the middle of the map
-                                    i = 0.5 #0.5 TODO
+                                    i = 0.3 #0.5 TODO
                                     random_update = random.randint(0, 3)  # not in an angle, try randomly
 
-                        elif count == 20:
-                            if manually == 1:
-                                count = 5  # trying again to fix manually
-                                manually = -1
+                        elif count == 15:
+                            if 0 < manually <= 2:
+                                count = 7  # trying again to fix manually
+                                manually = manually + 1
+                                rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing')
                             else:
+                                rospy.loginfo(str(self.robot_id) + ' - trying again from the beginning')
                                 i = 1
                                 count = 1  # restarting
                                 attempt = 0
                                 if manually == 0:
                                     manually = 1
-                                else:
+                                elif manually == 3:
                                     manually = 0
 
-                    if count < 5:
+                    if count < 7:
                         random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
-                    elif 14 <=count < 20: #I try 8 times to fix a position manually, if it is not enough I fix again coords changing them a little
-                        if count == 14:
+                    elif 7 <= count < 15 and manually >= 2: #Trying to fix a position manually, if it is not enough I fix again coords changing them a little
+                        if count == 7:
                             rospy.loginfo(str(self.robot_id) + ' - changing the manual fixing a bit') #Very rare, needed only if two robots have to stop in the same point
                         if i > 1: #if place is large
-                            upd = 1
+                            upd = 2
                         elif 0 < i < 1: #if place is narrow
-                            upd = 0.2
+                            upd = 0.3
 
                         random_upd = random.randint(0, 1)
 
@@ -607,16 +609,18 @@ class GenericRobot(object):
                     if self.other_robot_id % 2 != 0: #if both robots are odd I have to let one of them wait
                         #if self.robot_id > self.other_robot_id:
                         rospy.sleep(rospy.Duration(0.1))
-                    else:
+                    #else:
                     #    if self.robot_id > self.other_robot_id:
-                        rospy.sleep(rospy.Duration(0.2))
+                    #    rospy.sleep(rospy.Duration(0.2))
 
                 else:
-                    if self.other_robot_id % 2 == 0:
+                    #if self.other_robot_id % 2 == 0:
                     #    if self.robot_id > self.other_robot_id: #if both robots are even I have to let one of them wait
-                        rospy.sleep(rospy.Duration(0.2))
-                    else:
+                    #    rospy.sleep(rospy.Duration(0.2))
+                    #else:
                     #    if self.robot_id > self.other_robot_id:
+                    #    rospy.sleep(rospy.Duration(0.1))
+                    if self.other_robot_id % 2 != 0:
                         rospy.sleep(rospy.Duration(0.1))
 
                 rospy.sleep(rospy.Duration(0.1))
@@ -636,7 +640,7 @@ class GenericRobot(object):
                 #rospy.loginfo(str(self.robot_id) + ' - my teammate is waiting an other robot')
                 continue
 
-            rospy.sleep(rospy.Duration(0.2))
+            rospy.sleep(rospy.Duration(0.4))
 
             if self.other_robot_id == self.my_teammate and self.teammate_arrived_nominal_dest and \
                     self.timestep == self.teammate_timestep and self.robot_id == self.teammate_teammate:
@@ -656,8 +660,7 @@ class GenericRobot(object):
             if not self.teammate_got_signal:
                 success = False
             else:
-                rospy.sleep(rospy.Duration(0.5))
-                self.publish_stuff()
+                #rospy.sleep(rospy.Duration(0.5))
                 success = True
             self.publish_stuff()
 
