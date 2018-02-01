@@ -501,9 +501,10 @@ class GenericRobot(object):
                             if 0 < manually <= 2:
                                 count = 7  # trying again to fix manually
                                 manually = manually + 1
-                                rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing')
+                                attempt = 1
+                                rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing, manually: ' + str(manually))
                             else:
-                                rospy.loginfo(str(self.robot_id) + ' - trying again from the beginning')
+                                rospy.loginfo(str(self.robot_id) + ' - trying again from the beginning, manually: ' + str(manually))
                                 i = 1
                                 count = 1  # restarting
                                 attempt = 0
@@ -516,10 +517,10 @@ class GenericRobot(object):
                         random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
                     elif 7 <= count < 15 and manually >= 2: #Trying to fix a position manually, if it is not enough I fix again coords changing them a little
                         if count == 7:
-                            rospy.loginfo(str(self.robot_id) + ' - changing the manual fixing a bit') #Very rare, needed only if two robots have to stop in the same point
+                            rospy.loginfo(str(self.robot_id) + ' - changing the manual fixing a bit, manually: ' + str(manually)) #Very rare, needed only if two robots have to stop in the same point
                         if i > 1: #if place is large
                             upd = 2
-                        elif 0 < i < 1: #if place is narrow
+                        elif i <= 1: #if place is narrow
                             upd = 0.3
 
                         random_upd = random.randint(0, 1)
@@ -609,18 +610,16 @@ class GenericRobot(object):
                     if self.other_robot_id % 2 != 0: #if both robots are odd I have to let one of them wait
                         #if self.robot_id > self.other_robot_id:
                         rospy.sleep(rospy.Duration(0.1))
-                    #else:
+                    else:
                     #    if self.robot_id > self.other_robot_id:
-                    #    rospy.sleep(rospy.Duration(0.2))
+                        rospy.sleep(rospy.Duration(0.2))
 
                 else:
-                    #if self.other_robot_id % 2 == 0:
+                    if self.other_robot_id % 2 == 0:
                     #    if self.robot_id > self.other_robot_id: #if both robots are even I have to let one of them wait
-                    #    rospy.sleep(rospy.Duration(0.2))
-                    #else:
+                        rospy.sleep(rospy.Duration(0.2))
+                    else:
                     #    if self.robot_id > self.other_robot_id:
-                    #    rospy.sleep(rospy.Duration(0.1))
-                    if self.other_robot_id % 2 != 0:
                         rospy.sleep(rospy.Duration(0.1))
 
                 rospy.sleep(rospy.Duration(0.1))
@@ -660,7 +659,7 @@ class GenericRobot(object):
             if not self.teammate_got_signal:
                 success = False
             else:
-                #rospy.sleep(rospy.Duration(0.5))
+                rospy.sleep(rospy.Duration(0.5))
                 success = True
             self.publish_stuff()
 
