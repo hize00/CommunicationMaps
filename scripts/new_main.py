@@ -616,12 +616,14 @@ class GenericRobot(object):
         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_id', Int8, self.id_callback)
         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_strength', Float32, self.strength_callback)
 
-        timer = rospy.Timer(rospy.Duration(0.1), self.publish_callback)
+        #timer = rospy.Timer(rospy.Duration(0.05), self.publish_callback)
 
-        r = rospy.Rate(self.replan_rate)
+        #r = rospy.Rate(self.replan_rate)
 
         while not success:
             self.reset_teammate_stuff()
+
+            self.publish_stuff()
 
             rospy.sleep(rospy.Duration(0.5))
 
@@ -630,24 +632,23 @@ class GenericRobot(object):
                 success = True
             else:
                 if self.other_robot_id != self.my_teammate:
-                    if self.robot_id % 2 != 0:
-                        if self.other_robot_id % 2 != 0:  # if both robots are odd I have to let one of them wait
-                            # if self.robot_id > self.other_robot_id:
-                            rospy.sleep(rospy.Duration(0.05))
+                    if self.robot_id > self.other_robot_id:
+                        if self.robot_id % 2 != 0:
+                            if self.other_robot_id % 2 != 0:  # if both robots are odd I have to let one of them wait
+                                rospy.sleep(rospy.Duration(0.1))
+                            else:
+                                rospy.sleep(rospy.Duration(0.2))
                         else:
-                            #    if self.robot_id > self.other_robot_id:
-                            rospy.sleep(rospy.Duration(0.1))
-
-                    elif self.robot_id % 2 == 0:
-                        if self.other_robot_id % 2 == 0:
-                            #    if self.robot_id > self.other_robot_id: #if both robots are even I have to let one of them wait
-                            rospy.sleep(rospy.Duration(0.1))
-                        else:
-                            #    if self.robot_id > self.other_robot_id:
-                            rospy.sleep(rospy.Duration(0.05))
+                            if self.other_robot_id % 2 == 0: # if both robots are even I have to let one of them wait
+                                 rospy.sleep(rospy.Duration(0.3))
+                            else:
+                                rospy.sleep(rospy.Duration(0.4))
                     else:
-                        rospy.sleep(rospy.Duration(0.1))
-        r.sleep()
+                        continue
+                else:
+                   #rospy.sleep(rospy.Duration(0.1))
+                    continue
+        #r.sleep()
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -661,7 +662,7 @@ class GenericRobot(object):
         success = False
 
         while not success:
-            #self.publish_stuff()
+            self.publish_stuff()
             if not self.teammate_got_signal:
                 success = False
             else:
@@ -686,10 +687,12 @@ class GenericRobot(object):
         #else:
         #    rospy.sleep(rospy.Duration(0.1))
 
-        self.reset_stuff()
-        timer.shutdown()
-        rospy.sleep(rospy.Duration(0.2))
 
+        #timer.shutdown()
+        #rospy.sleep(rospy.Duration(0.2))
+
+        #self.reset_stuff()
+        #self.publish_stuff()
         got.shutdown()
         rospy.sleep(rospy.Duration(0.1))
 
@@ -716,7 +719,7 @@ class GenericRobot(object):
                 if self.is_leader:
                     self.send_plans_to_foll() #leader sends plans to followers
                 else:
-                    rospy.sleep(rospy.Duration(2 * n_robots))  # I have to wait while leader is sending goals to followers
+                    rospy.sleep(rospy.Duration(2.25 * n_robots))  # I have to wait while leader is sending goals to followers
                     self.execute_plan_state = 1
 
             elif self.execute_plan_state == 1:
