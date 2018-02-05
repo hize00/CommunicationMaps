@@ -591,7 +591,7 @@ class GenericRobot(object):
 
             self.publish_stuff()
 
-            rospy.sleep(rospy.Duration(0.5))
+            rospy.sleep(rospy.Duration(0.3))
 
             if self.other_robot_id == self.my_teammate and self.teammate_arrived_nominal_dest and \
                     self.timestep == self.teammate_timestep and self.robot_id == self.teammate_teammate:
@@ -601,14 +601,14 @@ class GenericRobot(object):
                     if self.robot_id > self.other_robot_id:
                         if self.robot_id % 2 != 0:
                             if self.other_robot_id % 2 != 0:  # if both robots are odd I have to let one of them wait
-                                rospy.sleep(rospy.Duration(0.1))
+                                rospy.sleep(rospy.Duration(0.05))
                             else:
-                                rospy.sleep(rospy.Duration(0.2))
+                                rospy.sleep(rospy.Duration(0.1))
                         else:
                             if self.other_robot_id % 2 == 0: # if both robots are even I have to let one of them wait
-                                 rospy.sleep(rospy.Duration(0.3))
+                                 rospy.sleep(rospy.Duration(0.15))
                             else:
-                                rospy.sleep(rospy.Duration(0.4))
+                                rospy.sleep(rospy.Duration(0.2))
                     else:
                         continue
                 else:
