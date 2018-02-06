@@ -381,16 +381,18 @@ class GenericRobot(object):
                         rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
 
                         if pos in self.fixed_wall_poses:
-                            self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
+                            for pose in self.fixed_wall_poses:
+                                if pose == pos:
+                                    self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
                             #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
 
                     elif count > 2:
                         self.rotate_robot()
 
-                        if 3 <= count < 7:
+                        if 4 <= count < 8:
                             i = 1.5
 
-                        if 7 <= count < 15:
+                        if 8 <= count < 15:
                             pos = old_pos
 
                             if attempt == 0:
@@ -400,7 +402,7 @@ class GenericRobot(object):
 
                             elif attempt == 1: # probably I am in an angle of the map, I try manually to fix coordinates
 
-                                if count == 7:
+                                if count == 8:
                                     rospy.loginfo(str(self.robot_id) + ' - fixing the position manually')
 
                                 if pos[0] >= sup_x and pos[1] >= sup_y:  # top right angle
@@ -489,7 +491,7 @@ class GenericRobot(object):
 
                         elif count == 15:
                             if 0 < manually <= 2:
-                                count = 7  # trying again to fix manually
+                                count = 8  # trying again to fix manually
                                 manually = manually + 1
                                 attempt = 1
                                 rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing')
@@ -511,7 +513,7 @@ class GenericRobot(object):
                         if i > 1: #if place is large
                             upd = 2
                         elif i <= 1: #if place is narrow
-                            upd = 0.3
+                            upd = 1.5
 
                         random_upd = random.randint(0, 1)
 
@@ -591,7 +593,7 @@ class GenericRobot(object):
 
             self.publish_stuff()
 
-            rospy.sleep(rospy.Duration(0.3))
+            rospy.sleep(rospy.Duration(0.5))
 
             if self.other_robot_id == self.my_teammate and self.teammate_arrived_nominal_dest and \
                     self.timestep == self.teammate_timestep and self.robot_id == self.teammate_teammate:
@@ -601,18 +603,18 @@ class GenericRobot(object):
                     if self.robot_id > self.other_robot_id:
                         if self.robot_id % 2 != 0:
                             if self.other_robot_id % 2 != 0:  # if both robots are odd I have to let one of them wait
-                                rospy.sleep(rospy.Duration(0.05))
-                            else:
                                 rospy.sleep(rospy.Duration(0.1))
+                            else:
+                                rospy.sleep(rospy.Duration(0.2))
                         else:
                             if self.other_robot_id % 2 == 0: # if both robots are even I have to let one of them wait
-                                 rospy.sleep(rospy.Duration(0.15))
+                                 rospy.sleep(rospy.Duration(0.1))
                             else:
                                 rospy.sleep(rospy.Duration(0.2))
                     else:
-                        continue
+                        rospy.sleep(rospy.Duration(0.05))
                 else:
-                    continue
+                    rospy.sleep(rospy.Duration(0.1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -625,6 +627,7 @@ class GenericRobot(object):
         while not success:
             self.publish_stuff()
             if not self.teammate_got_signal:
+                #rospy.sleep(rospy.Duration(0.05))
                 success = False
             else:
                 rospy.sleep(rospy.Duration(0.5))
@@ -642,21 +645,32 @@ class GenericRobot(object):
 
         all_arrived = False
         n_arrived = 1
+        checked_id = []
+        teammates = self.teammates_id
 
         while not all_arrived:
             if not self.is_leader:
                 self.pub_plan_state.publish(Int8(self.execute_plan_state))
-                rospy.sleep(rospy.Duration(2))
+                self.pub_id.publish(Int8(self.robot_id))
+                rospy.sleep(rospy.Duration(1))
                 continue
             else:
-                for id in self.teammates_id:
+                for id in teammates:
                     rospy.Subscriber('/robot_' + str(id) + '/expl_plan_state', Int8, self.plan_state_callback)
-
-                    if self.teammate_plan_state == 2:
-                        n_arrived += 1
+                    if id not in checked_id:
+                        if id == self.other_robot_id and self.teammate_plan_state == 2:
+                            checked_id.append(id)
+                            n_arrived += 1
+                        else:
+                            break
                     else:
-                        rospy.sleep(rospy.Duration(0.5))
-                        break
+                        teammates.remove(id)
+                        continue
+
+                    self.teammate_plan_state = -2  # reset
+
+                    rospy.sleep(rospy.Duration(0.5))
+
 
                 if n_arrived == n_robots:
                     all_arrived = True
@@ -665,7 +679,6 @@ class GenericRobot(object):
             rospy.loginfo(str(self.robot_id) + ' - All robots have arrived to final destinations. Sending shutdown.')
             os.system("pkill -f ros")
             rospy.sleep(rospy.Duration(2))
-
 
     # -1: plan, 0: plan_set
     # 1: leader/follower arrived and they have to wait for their teammate
