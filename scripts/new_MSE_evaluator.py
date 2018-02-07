@@ -53,7 +53,7 @@ import utils
 
 # Parameters in common, defining environment, number of robots used,
 # and number of repetitions.
-gflags.DEFINE_string("environment", "open", 
+gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 gflags.DEFINE_integer("num_robots", 4,
@@ -97,7 +97,7 @@ gflags.DEFINE_string("task", "evaluate",
     "Script task {evaluate, plot}.")
 
 gflags.DEFINE_string(
-    "log_folder", "~/catkin_ws/src/strategy/log/",
+    "log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
     "Root of log folder.")
     
 # Strategies to be plotted.
@@ -348,9 +348,12 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 
 def plot_values(x_vals, y, yerr, ylabel, filename):
     fig, ax = plt.subplots()
-    for k in strategies[gflags.FLAGS.num_robots]:
-        plt.errorbar(x_vals, y[k], yerr=yerr[k], fmt=plot_format[k][0],
-            label=plot_format[k][1], markersize=10, elinewidth=2)
+    #for k in strategies[gflags.FLAGS.num_robots]:
+    #    plt.errorbar(x_vals, y[k], yerr=yerr[k], fmt=plot_format[k][0],
+    #        label=plot_format[k][1], markersize=10, elinewidth=2)
+
+
+    plt.errorbar(x_vals, y, yerr, fmt=plot_format[0],label=plot_format[1], markersize=10, elinewidth=2)
 
     loc_legend = 2 if "TIME" in filename else 1
     plt.legend(fontsize=20,loc=loc_legend)
@@ -398,7 +401,7 @@ def plot(environment, num_robots, comm_model_path,
         mission_duration (int): seconds for total mission.
     """
     comm_model = CommModel(comm_model_path)
-    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
+    f = open(gflags.FLAGS.log_folder + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
     errors, variances_all, times_all = pickle.load(f)
     f.close()
 
@@ -606,7 +609,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         all_signal_data = []
 
         for robot in range(num_robots):
-            dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_dataset.dat'
+            dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
             all_signal_data += parse_dataset(dataset_filename)
 
         errors[run] = []
@@ -639,10 +642,10 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             if plot_comm_map:
                 print "number of data", len(cur_signal_data)
                 communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
-                communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + strategy + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
+                communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
                 communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
                 if len(communication_figures) > 1:
-                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + strategy + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
+                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
                     communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
             print errors
             print variances_all

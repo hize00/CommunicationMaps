@@ -380,6 +380,7 @@ class GenericRobot(object):
                     if count == 0:
                         rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
 
+                    if count == 0 or count == 1:
                         if pos in self.fixed_wall_poses:
                             for pose in self.fixed_wall_poses:
                                 if pose == pos:
@@ -387,7 +388,9 @@ class GenericRobot(object):
                             #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
 
                     elif count > 2:
+                        self.clear_costmap_service()
                         self.rotate_robot()
+                        self.clear_costmap_service()
 
                         if 4 <= count < 8:
                             i = 1.5
@@ -525,7 +528,6 @@ class GenericRobot(object):
                     pos = list(pos)
                     update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i],
                               4: [i, 0], 5: [-i, 0], 6: [0, i], 7: [0, -i]}
-                            #8: [i, j], 9: [-i, j], 10: [i, -j], 11: [-i, -j]
 
                     pos[0] = pos[0] + update[random_update][0]
                     pos[1] = pos[1] + update[random_update][1]
@@ -535,6 +537,7 @@ class GenericRobot(object):
                     count += 1
                 self.clear_costmap_service()
                 self.rotate_robot()
+                self.clear_costmap_service()
                 round += 1
                 success = False
             elif state == GoalStatus.ABORTED:
@@ -608,13 +611,9 @@ class GenericRobot(object):
                                 rospy.sleep(rospy.Duration(0.2))
                         else:
                             if self.other_robot_id % 2 == 0: # if both robots are even I have to let one of them wait
-                                 rospy.sleep(rospy.Duration(0.1))
+                                 rospy.sleep(rospy.Duration(0.3))
                             else:
-                                rospy.sleep(rospy.Duration(0.2))
-                    else:
-                        rospy.sleep(rospy.Duration(0.05))
-                else:
-                    rospy.sleep(rospy.Duration(0.1))
+                                rospy.sleep(rospy.Duration(0.4))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -627,7 +626,6 @@ class GenericRobot(object):
         while not success:
             self.publish_stuff()
             if not self.teammate_got_signal:
-                #rospy.sleep(rospy.Duration(0.05))
                 success = False
             else:
                 rospy.sleep(rospy.Duration(0.5))
@@ -638,7 +636,7 @@ class GenericRobot(object):
             f1.close()
 
         got.shutdown()
-        rospy.sleep(rospy.Duration(0.1))
+        rospy.sleep(rospy.Duration(0.2))
 
     def end_exploration(self):
         rospy.loginfo(str(self.robot_id) + ' - Signal Strength list: ' + str(self.signal_strengths))
@@ -652,7 +650,7 @@ class GenericRobot(object):
             if not self.is_leader:
                 self.pub_plan_state.publish(Int8(self.execute_plan_state))
                 self.pub_id.publish(Int8(self.robot_id))
-                rospy.sleep(rospy.Duration(1))
+                rospy.sleep(rospy.Duration(0.2))
                 continue
             else:
                 for id in teammates:
@@ -669,7 +667,7 @@ class GenericRobot(object):
 
                     self.teammate_plan_state = -2  # reset
 
-                    rospy.sleep(rospy.Duration(0.5))
+                    rospy.sleep(rospy.Duration(0.1))
 
 
                 if n_arrived == n_robots:
