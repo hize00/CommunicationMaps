@@ -335,38 +335,23 @@ class GenericRobot(object):
                     #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
                 else:
                     if self.fixed_wall_poses:
-                        i = 1
-                        incr_i = 1.5
-                        mid_i = 0.3 #0.5 TODO
-                        max_i = 5
-                        top_i = 12
+                        inc_set = [1, 1.5, 0.3 , 5, 12] #increment set
 
                         for pose in self.fixed_wall_poses:
-                            pos = list(pos)
-                            if (((((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] - incr_i)) or
-                                (pose[0] == (pos[0] - mid_i)) or (pose[0] == (pos[0] - max_i)) or
-                                (pose[0] == (pos[0] - top_i))) or ((pose[0] == (pos[0] + i)) or
-                                (pose[0] == (pos[0] + incr_i)) or (pose[0] == (pos[0] + mid_i)) or
-                                (pose[0] == (pos[0] + max_i)) or (pose[0] == (pos[0] + top_i)))) and
-                                (((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] - incr_i)) or
-                                (pose[1] == (pos[1] - mid_i)) or (pose[1] == (pos[1] - max_i)) or
-                                (pose[1] == (pos[1] - top_i))) or ((pose[1] == (pos[1] + i)) or
-                                (pose[1] == (pos[1] + incr_i))) or (pose[1] == (pos[1] + mid_i)) or
-                                (pose[1] == (pos[1] + max_i)) or (pose[1] == (pos[1] + top_i)))) # if I have fixed both coords of a point
-                                or #if I have fixed only one coord of a point
-                                ((pose[0] == (pos[0] - max_i) and pose[1] == pos[1]) or
-                                 (pose[0] == (pos[0] + max_i) and pose[1] == pos[1]) or
-                                 (pose[0] == (pos[0] - top_i) and pose[1] == pos[1]) or
-                                 (pose[0] == (pos[0] + top_i) and pose[1] == pos[1]) or
-                                (pose[0] == pos[0] and pose[1] == (pos[1] + max_i)) or
-                                 (pose[0] == pos[0] and pose[1] == (pos[1] - max_i)) or
-                                 (pose[0] == pos[0] and pose[1] == (pos[1] + top_i)) or
-                                 (pose[0] == pos[0] and pose[1] == (pos[1] - top_i)))):
+                            for inc in inc_set:
+                                pos = list(pos)
+                                if ((((pose[0] == (pos[0] - inc)) or (pose[0] == (pos[0] + inc))) and
+                                     ((pose[1] == (pos[1] - inc)) or (pose[1] == (pos[1] + inc)))) # if I have fixed both coords
+                                        or #if I have fixed only one coord
+                                        ((pose[0] == (pos[0] - inc) and pose[1] == pos[1]) or
+                                         (pose[0] == (pos[0] + inc) and pose[1] == pos[1]) or
+                                         (pose[0] == pos[0] and pose[1] == (pos[1] + inc)) or
+                                         (pose[0] == pos[0] and pose[1] == (pos[1] - inc)))):
 
-                                rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position found before: ' + str(pose))
-                                pos[0] = pose[0]
-                                pos[1] = pose[1]
-                            pos = tuple(pos)
+                                    rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position found before: ' + str(pose))
+                                    pos[0] = pose[0]
+                                    pos[1] = pose[1]
+                                pos = tuple(pos)
 
                 if round <=3:
                     self.motion_recovery()
@@ -381,8 +366,10 @@ class GenericRobot(object):
                         rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
 
                         if pos in self.fixed_wall_poses:
-                            self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
-                            #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
+                            for pose in self.fixed_wall_poses:
+                                if pose == pos:
+                                    self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
+                                #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
 
                     elif count > 2:
                         self.clear_costmap_service()
@@ -392,7 +379,7 @@ class GenericRobot(object):
                         if 4 <= count < 8:
                             i = 1.5
 
-                        elif 8 <= count < 15:
+                        if 8 <= count < 15:
                             pos = old_pos
 
                             if attempt == 0:
@@ -439,7 +426,7 @@ class GenericRobot(object):
                                         i = 12
 
                                     else:
-                                        random_update = 1
+                                        random_update = 1  # I upgrade both axes
                                         if pos[0] >= (sup_x + 7) and pos[1] <= (inf_x + 7): #8)
                                             i = 12
                                         else:
@@ -495,10 +482,10 @@ class GenericRobot(object):
                                 manually = manually + 1
                                 attempt = 1
                                 rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing')
-                            else: #restarting
+                            else:
                                 rospy.loginfo(str(self.robot_id) + ' - trying again from the beginning')
                                 i = 1
-                                count = 1
+                                count = 1  # restarting
                                 attempt = 0
                                 if manually == 0:
                                     manually = 1
@@ -636,7 +623,7 @@ class GenericRobot(object):
             f1.close()
 
         got.shutdown()
-        rospy.sleep(rospy.Duration(0.5))
+        rospy.sleep(rospy.Duration(0.2))
 
     def end_exploration(self):
         rospy.loginfo(str(self.robot_id) + ' - Signal Strength list: ' + str(self.signal_strengths))
@@ -819,6 +806,10 @@ class Leader(GenericRobot):
             pos = c
             c[0] = float(self.env.dimX - resize_factor * pos[0])
             c[1] = float(resize_factor * pos[1])
+            #c[0] = float(resize_factor * pos[1])
+            #c[1] = float(resize_factor * (self.env.dimX - pos[0]))
+
+
 
         coord = [tuple(l) for l in coord]
 
