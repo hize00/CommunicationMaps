@@ -380,11 +380,8 @@ class GenericRobot(object):
                     if count == 0:
                         rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
 
-                    if count == 0 or count == 1:
                         if pos in self.fixed_wall_poses:
-                            for pose in self.fixed_wall_poses:
-                                if pose == pos:
-                                    self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
+                            self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
                             #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
 
                     elif count > 2:
@@ -395,7 +392,7 @@ class GenericRobot(object):
                         if 4 <= count < 8:
                             i = 1.5
 
-                        if 8 <= count < 15:
+                        elif 8 <= count < 15:
                             pos = old_pos
 
                             if attempt == 0:
@@ -442,7 +439,7 @@ class GenericRobot(object):
                                         i = 12
 
                                     else:
-                                        random_update = 1  # I upgrade both axes
+                                        random_update = 1
                                         if pos[0] >= (sup_x + 7) and pos[1] <= (inf_x + 7): #8)
                                             i = 12
                                         else:
@@ -498,10 +495,10 @@ class GenericRobot(object):
                                 manually = manually + 1
                                 attempt = 1
                                 rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing')
-                            else:
+                            else: #restarting
                                 rospy.loginfo(str(self.robot_id) + ' - trying again from the beginning')
                                 i = 1
-                                count = 1  # restarting
+                                count = 1
                                 attempt = 0
                                 if manually == 0:
                                     manually = 1
