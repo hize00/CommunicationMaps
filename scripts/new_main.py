@@ -508,10 +508,10 @@ class GenericRobot(object):
                                 elif manually == 3:
                                     manually = 0
 
-                    if count < 7:
+                    if count < 8:
                         random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
-                    elif 7 <= count < 15 and manually >= 2: #Trying to fix a position manually, if it is not enough I fix again coords changing them a little
-                        if count == 7:
+                    elif 8 <= count < 15 and manually >= 2: #Trying to fix a position manually, if it is not enough I fix again coords changing them a little
+                        if count == 8:
                             rospy.loginfo(str(self.robot_id) + ' - changing the manual fixing a bit') #Very rare, needed only if two robots have to stop in the same point
                         if i > 1: #if place is large
                             upd = 2
@@ -614,6 +614,9 @@ class GenericRobot(object):
                                  rospy.sleep(rospy.Duration(0.3))
                             else:
                                 rospy.sleep(rospy.Duration(0.4))
+                else:
+                    if self.robot_id > self.other_robot_id:
+                        rospy.sleep(rospy.Duration(0.1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -636,7 +639,7 @@ class GenericRobot(object):
             f1.close()
 
         got.shutdown()
-        rospy.sleep(rospy.Duration(0.2))
+        rospy.sleep(rospy.Duration(0.5))
 
     def end_exploration(self):
         rospy.loginfo(str(self.robot_id) + ' - Signal Strength list: ' + str(self.signal_strengths))
