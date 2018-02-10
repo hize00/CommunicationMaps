@@ -259,12 +259,6 @@ class GenericRobot(object):
             rospy.sleep(rospy.Duration(0.2))
             self.clear_costmap_service()
 
-    def rotate_robot(self):
-        msg = Twist(Vector3(0, 0, 0), Vector3(0, 0, 1.0))
-        self.pub_motion_rec.publish(msg)
-        rospy.sleep(rospy.Duration(0.2))
-        self.clear_costmap_service()
-
     def publish_stuff(self):
         self.pub_got_signal.publish(Bool(self.got_signal))
         self.pub_arrived.publish(Bool(self.arrived_nominal_dest))
@@ -290,13 +284,6 @@ class GenericRobot(object):
         round = 0
         count = 0
         i = 1
-        attempt = 0
-        manually = 0
-
-        inf_x = float(self.env.dimX * 0.25)
-        sup_x = float(self.env.dimX * 0.75)
-        inf_y = float(self.env.dimY * 0.25)
-        sup_y = float(self.env.dimY * 0.75)
 
         while not success:
             goal = MoveBaseGoal()
@@ -328,190 +315,38 @@ class GenericRobot(object):
                 if round == 0:
                     rospy.loginfo(str(self.robot_id) + ' - preempted, using recovery')
 
-                self.clear_costmap_service()
-
-                if pos not in self.problematic_poses:
-                    self.problematic_poses.append(pos)
-                    #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
-                else:
-                    if self.fixed_wall_poses:
-                        inc_set = [1, 1.5, 0.3 , 5, 12] #increment set
-
-                        for pose in self.fixed_wall_poses:
-                            for inc in inc_set:
+                if round < 3:
+                    if pos not in self.problematic_poses:
+                        self.problematic_poses.append(pos)
+                        #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
+                    else:
+                        if self.fixed_wall_poses:
+                            for pose in self.fixed_wall_poses:
                                 pos = list(pos)
-                                if ((((pose[0] == (pos[0] - inc)) or (pose[0] == (pos[0] + inc))) and
-                                     ((pose[1] == (pos[1] - inc)) or (pose[1] == (pos[1] + inc)))) # if I have fixed both coords
-                                        or #if I have fixed only one coord
-                                        ((pose[0] == (pos[0] - inc) and pose[1] == pos[1]) or
-                                         (pose[0] == (pos[0] + inc) and pose[1] == pos[1]) or
-                                         (pose[0] == pos[0] and pose[1] == (pos[1] + inc)) or
-                                         (pose[0] == pos[0] and pose[1] == (pos[1] - inc)))):
+                                if (((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] + i))) and
+                                     ((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] + i)))): # if I have fixed both coords
 
                                     rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position found before: ' + str(pose))
                                     pos[0] = pose[0]
                                     pos[1] = pose[1]
                                 pos = tuple(pos)
 
-                if round <=3:
-                    self.motion_recovery()
                 else:
                     fixing_pose = True
-                    self.clear_costmap_service()
-                    self.motion_recovery()
-                    self.clear_costmap_service()
 
                     #choosing the increment and the upgrade
                     if count == 0:
                         rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
 
                         if pos in self.fixed_wall_poses:
-                            for pose in self.fixed_wall_poses:
-                                if pose == pos:
-                                    self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
-                                #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
-
-                    elif count > 2:
-                        self.clear_costmap_service()
-                        self.rotate_robot()
-                        self.clear_costmap_service()
-
-                        if 4 <= count < 8:
-                            i = 1.5
-
-                        if 8 <= count < 15:
-                            pos = old_pos
-
-                            if attempt == 0:
-                                i = 1
-                                count = 1
-                                attempt = 1
-
-                            elif attempt == 1: # probably I am in an angle of the map, I try manually to fix coordinates
-
-                                if count == 8:
-                                    rospy.loginfo(str(self.robot_id) + ' - fixing the position manually')
-
-                                if pos[0] >= sup_x and pos[1] >= sup_y:  # top right angle
-                                    if pos[0] >= (sup_x + 7) and pos[1] <= (sup_y + 7): #1)
-                                        random_update = 5
-                                        i = 12
-
-                                    elif sup_x <= pos[0] <= (sup_x + 7) and pos[1] <= (sup_y + 7): #2)
-                                        random_update = 5
-                                        i = 5
-
-                                    elif pos[0] <= (sup_x + 7) and pos[1] >= (sup_y + 7): #3)
-                                        random_update = 7
-                                        i = 12
-
-                                    else: #4)
-                                        random_update = 3 # I upgrade both axes
-                                        if pos[0] >= (sup_x + 7) and pos[1] >= (sup_y + 7):
-                                            i = 12
-                                        else:
-                                            i = 5
-
-                                elif pos[0] >= sup_x and pos[1] <= inf_y:  # bottom right angle
-                                    if pos[0] >= (sup_x + 7) and pos[1] >= (inf_y - 7): #5)
-                                        random_update = 5
-                                        i = 12
-
-                                    elif sup_x <= pos[0] <= (sup_x + 7) and pos[1] >= (inf_y - 7): #6)
-                                        random_update = 5
-                                        i = 5
-
-                                    elif pos[0] <= (sup_x + 7) and pos[1] <= (inf_y - 7): #7)
-                                        random_update = 6
-                                        i = 12
-
-                                    else:
-                                        random_update = 1  # I upgrade both axes
-                                        if pos[0] >= (sup_x + 7) and pos[1] <= (inf_x + 7): #8)
-                                            i = 12
-                                        else:
-                                            i = 5
-
-                                elif pos[0] <= inf_x and pos[1] >= sup_y:  # top left angle
-                                    if pos[0] <= (inf_x - 7) and pos[1] <= (sup_y + 7): #9)
-                                        random_update = 4
-                                        i = 12
-
-                                    elif (inf_x - 7) <= pos[0] <= inf_x and pos[1] <= (sup_y + 7): #10)
-                                        random_update = 4
-                                        i = 5
-
-                                    elif pos[0] >= (inf_x - 7) and pos[1] >= (sup_y + 7): #11)
-                                        random_update = 7
-                                        i = 12
-
-                                    else:
-                                        random_update = 2
-                                        if pos[0] <= (inf_x - 7) and pos[1] >= (sup_y + 7): #12)
-                                            i = 12
-                                        else:
-                                            i = 5
-
-                                elif pos[0] <= inf_x and pos[1] <= inf_y:  # bottom left angle
-                                    if pos[0] <= (inf_x - 7) and pos[1] >= (inf_y - 7): #13)
-                                        random_update = 4
-                                        i = 12
-
-                                    elif (inf_x - 7) <= pos[0] <= inf_x  and pos[1] >= (inf_y - 7): #14)
-                                        random_update = 4
-                                        i = 5
-
-                                    elif pos[0] >= (inf_x - 7) and pos[1] <= (inf_y - 7): #15)
-                                        random_update = 6
-                                        i = 12
-
-                                    else:
-                                        random_update = 0
-                                        if pos[0] <= (inf_x -7) and pos[1] <= (inf_y - 7): #16)
-                                            i = 12
-                                        else:
-                                            i = 5
-
-                                else:  # actually I am not in an angle, probably I am stuck between walls in the middle of the map
-                                    i = 0.3 #0.5 TODO
-                                    random_update = random.randint(0, 3)  # not in an angle, try randomly
-
-                        elif count == 15:
-                            if 0 < manually <= 2:
-                                count = 8  # trying again to fix manually
-                                manually = manually + 1
-                                attempt = 1
-                                rospy.loginfo(str(self.robot_id) + ' - trying again the manual fixing')
-                            else:
-                                rospy.loginfo(str(self.robot_id) + ' - trying again from the beginning')
-                                i = 1
-                                count = 1  # restarting
-                                attempt = 0
-                                if manually == 0:
-                                    manually = 1
-                                elif manually == 3:
-                                    manually = 0
-
-                    if count < 8:
-                        random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
-                    elif 8 <= count < 15 and manually >= 2: #Trying to fix a position manually, if it is not enough I fix again coords changing them a little
-                        if count == 8:
-                            rospy.loginfo(str(self.robot_id) + ' - changing the manual fixing a bit') #Very rare, needed only if two robots have to stop in the same point
-                        if i > 1: #if place is large
-                            upd = 2
-                        elif i <= 1: #if place is narrow
-                            upd = 1.5
-
-                        random_upd = random.randint(0, 1)
-
-                        update = {0: upd, 1: -upd}
-                        i = i + update[random_upd] #adding a random update for the manual fixing
+                            self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
+                            #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
 
                     # fixing the position
                     pos = old_pos
                     pos = list(pos)
-                    update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i],
-                              4: [i, 0], 5: [-i, 0], 6: [0, i], 7: [0, -i]}
+                    update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i]}
+                    random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
 
                     pos[0] = pos[0] + update[random_update][0]
                     pos[1] = pos[1] + update[random_update][1]
@@ -519,9 +354,11 @@ class GenericRobot(object):
                     pos = tuple(pos)
                     rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
                     count += 1
+
                 self.clear_costmap_service()
-                self.rotate_robot()
+                self.motion_recovery()
                 self.clear_costmap_service()
+
                 round += 1
                 success = False
             elif state == GoalStatus.ABORTED:
@@ -601,6 +438,8 @@ class GenericRobot(object):
                 else:
                     if self.robot_id > self.other_robot_id:
                         rospy.sleep(rospy.Duration(0.1))
+
+        self.comm_module.get_sim_signal_strength(self.my_teammate)
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -804,12 +643,8 @@ class Leader(GenericRobot):
         # converting from pixels to meters
         for c in coord:
             pos = c
-            c[0] = float(self.env.dimX - resize_factor * pos[0])
-            c[1] = float(resize_factor * pos[1])
-            #c[0] = float(resize_factor * pos[1])
-            #c[1] = float(resize_factor * (self.env.dimX - pos[0]))
-
-
+            c[0] = float(resize_factor * pos[0])
+            c[1] = float(self.env.dimY - resize_factor * pos[1])
 
         coord = [tuple(l) for l in coord]
 
