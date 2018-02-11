@@ -63,9 +63,9 @@ class GenericRobot(object):
         self.errors_filename = errors_filename
         self.error_count = 0
 
-        #for ending the mission
-        #self.duration = rospy.Duration(duration)
-        #self.mission_start_time = rospy.Time.now()
+        # for ending the mission
+        self.duration = rospy.Duration(duration)
+        self.mission_start_time = rospy.Time.now()
 
         # for handling motion
         self.client_topic = client_topic
@@ -84,7 +84,7 @@ class GenericRobot(object):
         self.log_filename = log_filename
         log_file = open(log_filename, "w")
         log_file.close()
-        #rospy.Timer(rospy.Duration(10), self.distance_logger)
+        rospy.Timer(rospy.Duration(10), self.distance_logger_callback)
 
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
@@ -101,8 +101,17 @@ class GenericRobot(object):
         #estimated position
         self.listener = tf.TransformListener()
         rospy.Timer(rospy.Duration(0.1), self.tf_callback)
+        self.pub_my_pose = rospy.Publisher("updated_pose", Point, queue_size=100)
+
+        rospy.Subscriber('/robot_' + str(self.robot_id) + '/updated_pose', Point, self.pose_callback)
+        #rospy.Subscriber('updated_pose', Point, self.pose_callback)
+        self.x = 0.0
+        self.y = 0.0
+        self.last_x = None
+        self.last_y = None
+        self.traveled_dist = 0.0
+
         self.robots_pos = [(0.0, 0.0) for _ in xrange(n_robots)]
-        self.pub_my_pose = rospy.Publisher("/updated_pose", Point, queue_size=100)
 
         for i in xrange(n_robots):
             if i == robot_id: continue
@@ -130,6 +139,12 @@ class GenericRobot(object):
         self.strength = 0
         self.other_robot_id = -1
         self.teammate_plan_state = -2
+        self.other_x = 0.0
+        self.other_y = 0.0
+
+        if self.is_leader:
+            self.plan_folder = '/home/andrea/catkin_ws/src/strategy/data'
+
         self.txt_filename = '/home/andrea/catkin_ws/src/strategy/data/strengths/' + str(self.robot_id) + '_' \
                        + 'signal_strengths_' + str(self.n_robots) + '.txt'
 
@@ -159,7 +174,7 @@ class GenericRobot(object):
         try:
             (trans, rot) = self.listener.lookupTransform('/map', rospy.get_namespace() + 'base_link', rospy.Time(0))
             self.robots_pos[self.robot_id] = (trans[0],trans[1])
-            pub_my_pose.publish(Point(trans[0],trans[1],0.0))
+            self.pub_my_pose.publish(Point(trans[0],trans[1],0.0))
         except Exception as e:
             pass
 
@@ -180,6 +195,20 @@ class GenericRobot(object):
 
     def plan_state_callback(self,msg):
         self.teammate_plan_state = msg.data
+
+    def position_callback(self, msg):
+        self.other_x = msg.x
+        self.other_y = msg.y
+
+    def pose_callback(self, msg):
+        self.x = msg.x
+        self.y = msg.y
+
+        if(self.last_x is not None):
+            self.traveled_dist += utils.eucl_dist((self.x, self.y),(self.last_x, self.last_y))
+
+        self.last_x = self.x
+        self.last_y = self.y
 
     def reset_stuff(self):
         self.arrived_nominal_dest = False
@@ -258,6 +287,15 @@ class GenericRobot(object):
             self.pub_motion_rec.publish(msg)
             rospy.sleep(rospy.Duration(0.2))
             self.clear_costmap_service()
+
+    def distance_logger_callback(self, event):
+        f = open(self.log_filename, "a")
+        f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
+        f.close()
+
+        if ((rospy.Time.now() - self.mission_start_time) >= self.duration):
+            rospy.loginfo("Sending shutdown...")
+            os.system("pkill -f ros")
 
     def publish_stuff(self):
         self.pub_got_signal.publish(Bool(self.got_signal))
@@ -411,6 +449,7 @@ class GenericRobot(object):
         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_teammate', Int8, self.teammate_callback)
         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_got_signal', Bool, self.got_signal_callback)
         rospy.Subscriber('/robot_' + str(self.my_teammate) + '/expl_id', Int8, self.id_callback)
+        rospy.Subscriber('/robot_' + str(self.my_teammate) + '/updated_pose', Point, self.position_callback)
 
         while not success:
             self.reset_teammate_stuff()
@@ -457,9 +496,11 @@ class GenericRobot(object):
                 rospy.sleep(rospy.Duration(0.5))
                 success = True
 
-        with open(self.txt_filename,'a') as f1: #writing the signal strength in my txt file
-            f1.write(str(self.timestep) + ': ' + str(self.strength) + ';\n')
-            f1.close()
+        f = open(self.comm_dataset_filename, "a")
+        f.write(str(self.timestep) + ' ' + str(self.x) + ' ' + str(self.y) +
+                ' ' + str(self.other_x) + ' ' + str(self.other_y) +
+                ' ' + str(self.strength) + '\n')
+        f.close()
 
         got.shutdown()
         rospy.sleep(rospy.Duration(0.2))
@@ -516,8 +557,6 @@ class GenericRobot(object):
                 open(self.txt_filename,'w').close()
 
                 if self.is_leader:
-                    # cleaning a signal_strengths.txt file created before
-                    open('/home/andrea/catkin_ws/src/strategy/data/strengths/signal_strengths.txt', 'w').close()
                     self.calculate_plan() #leader calculate plan
                 else:
                     self.execute_plan_state = 0
@@ -594,7 +633,7 @@ class Leader(GenericRobot):
         reading_RM = 0
         reading_TT = 0
 
-        with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_4_robots.txt', 'r') as file:
+        with open(self.plan_folder + '/solution_plan_' + str(self.n_robots) + '_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
