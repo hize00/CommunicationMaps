@@ -104,7 +104,6 @@ class GenericRobot(object):
         self.pub_my_pose = rospy.Publisher("updated_pose", Point, queue_size=100)
 
         rospy.Subscriber('/robot_' + str(self.robot_id) + '/updated_pose', Point, self.pose_callback)
-        #rospy.Subscriber('updated_pose', Point, self.pose_callback)
         self.x = 0.0
         self.y = 0.0
         self.last_x = None
@@ -144,9 +143,6 @@ class GenericRobot(object):
 
         if self.is_leader:
             self.plan_folder = '/home/andrea/catkin_ws/src/strategy/data'
-
-        self.txt_filename = '/home/andrea/catkin_ws/src/strategy/data/strengths/' + str(self.robot_id) + '_' \
-                       + 'signal_strengths_' + str(self.n_robots) + '.txt'
 
         # (reduced) arrived state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_arrived = rospy.Publisher('expl_arrived', Bool, queue_size=10)
@@ -204,7 +200,7 @@ class GenericRobot(object):
         self.x = msg.x
         self.y = msg.y
 
-        if(self.last_x is not None):
+        if self.last_x is not None:
             self.traveled_dist += utils.eucl_dist((self.x, self.y),(self.last_x, self.last_y))
 
         self.last_x = self.x
@@ -353,7 +349,7 @@ class GenericRobot(object):
                 if round == 0:
                     rospy.loginfo(str(self.robot_id) + ' - preempted, using recovery')
 
-                if round < 3:
+                if round < 4:
                     if pos not in self.problematic_poses:
                         self.problematic_poses.append(pos)
                         #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
@@ -553,9 +549,6 @@ class GenericRobot(object):
 
         while not rospy.is_shutdown():
             if self.execute_plan_state == -1:
-
-                open(self.txt_filename,'w').close()
-
                 if self.is_leader:
                     self.calculate_plan() #leader calculate plan
                 else:
