@@ -289,7 +289,7 @@ class GenericRobot(object):
         f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
         f.close()
 
-        if ((rospy.Time.now() - self.mission_start_time) >= self.duration):
+        if (rospy.Time.now() - self.mission_start_time) >= self.duration:
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
@@ -452,29 +452,26 @@ class GenericRobot(object):
 
             self.publish_stuff()
 
-            rospy.sleep(rospy.Duration(0.5))
+            rospy.sleep(rospy.Duration(0.25))
 
             if self.other_robot_id == self.my_teammate and self.teammate_arrived_nominal_dest and \
                     self.timestep == self.teammate_timestep and self.robot_id == self.teammate_teammate:
                 success = True
             else:
-                if self.other_robot_id != self.my_teammate:
-                    if self.robot_id > self.other_robot_id:
+                if self.robot_id > self.other_robot_id:
+                    if self.other_robot_id != self.my_teammate:
                         if self.robot_id % 2 != 0:
                             if self.other_robot_id % 2 != 0:  # if both robots are odd I have to let one of them wait
+                                rospy.sleep(rospy.Duration(0.05))
+                            else:
                                 rospy.sleep(rospy.Duration(0.1))
+                        else:
+                            if self.other_robot_id % 2 == 0:  # if both robots are even I have to let one of them wait
+                                rospy.sleep(rospy.Duration(0.15))
                             else:
                                 rospy.sleep(rospy.Duration(0.2))
-                        else:
-                            if self.other_robot_id % 2 == 0: # if both robots are even I have to let one of them wait
-                                 rospy.sleep(rospy.Duration(0.3))
-                            else:
-                                rospy.sleep(rospy.Duration(0.4))
-                else:
-                    if self.robot_id > self.other_robot_id:
-                        rospy.sleep(rospy.Duration(0.1))
-
-        self.comm_module.get_sim_signal_strength(self.my_teammate)
+                    else:
+                        rospy.sleep(rospy.Duration(0.15))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.my_teammate))
         self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe = False)
@@ -489,7 +486,7 @@ class GenericRobot(object):
             if not self.teammate_got_signal:
                 success = False
             else:
-                rospy.sleep(rospy.Duration(0.5))
+                rospy.sleep(rospy.Duration(0.25))
                 success = True
 
         f = open(self.comm_dataset_filename, "a")
@@ -499,10 +496,10 @@ class GenericRobot(object):
         f.close()
 
         got.shutdown()
-        rospy.sleep(rospy.Duration(0.2))
 
     def end_exploration(self):
-        rospy.loginfo(str(self.robot_id) + ' - Signal Strength list: ' + str(self.signal_strengths))
+        #rospy.loginfo(str(self.robot_id) + ' - Signal Strength list: ' + str(self.signal_strengths))
+        rospy.loginfo(str(self.robot_id) + ' - Arrived to final destination.')
 
         all_arrived = False
         n_arrived = 1
@@ -535,6 +532,8 @@ class GenericRobot(object):
 
                 if n_arrived == n_robots:
                     all_arrived = True
+
+        rospy.sleep(rospy.Duration(2))
 
         if self.is_leader:
             rospy.loginfo(str(self.robot_id) + ' - All robots have arrived to final destinations. Sending shutdown.')

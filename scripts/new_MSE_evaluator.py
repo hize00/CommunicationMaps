@@ -16,8 +16,8 @@ It creates in figs directory the following:
 
 Run:
 - from expl_comm_maps/strategy
-python MSE_evaluator.py --plot_communication_map
-python MSE_evaluator.py --task=plot
+python new_MSE_evaluator.py --plot_communication_map
+python new_MSE_evaluator.py --task=plot
 
 TODO Change in such a way that directory can be specified.
 """
@@ -53,7 +53,7 @@ import utils
 
 # Parameters in common, defining environment, number of robots used,
 # and number of repetitions.
-gflags.DEFINE_string("environment", "office",
+gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 gflags.DEFINE_integer("num_robots", 4,
@@ -70,13 +70,13 @@ gflags.DEFINE_integer("test_set_size", 10000,
 
 #MUST BE COHERENT!!!
 # Parameters for communication model.
-gflags.DEFINE_string("communication_model_path", "./data/comm_model_50.xml",
+gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 1801,
+gflags.DEFINE_integer("mission_duration", 5001,
     "Mission duration (seconds).")
 
 
@@ -89,8 +89,11 @@ gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 gflags.DEFINE_string("task", "evaluate",
     "Script task {evaluate, plot}.")
 
+#gflags.DEFINE_string(
+#    "log_folder", "~/catkin_ws/src/strategy/log/",
+#    "Root of log folder.")
 gflags.DEFINE_string(
-    "log_folder", "~/catkin_ws/src/strategy/log/",
+    "log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
     "Root of log folder.")
 
 #plot_format = {'random': ['g:o', 'RAND'],
@@ -375,124 +378,116 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
         mission_duration (int): seconds for total mission.
     """
     comm_model = CommModel(comm_model_path)
-    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
-    errors, variances_all, times_all = pickle.load(f)
-    f.close()
+
+    seed = 0
+
+    for robot in xrange(num_robots):
+        f = open(gflags.FLAGS.log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' +
+                 str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
+        errors, variances_all, times_all = pickle.load(f)
+        f.close()
 
     x = range(granularity, mission_duration + 1, granularity)
     x = map(lambda x: x/60.0, x)
 
-    mse_avg = {}
-    rmse_avg = {}
-    mse_yerr = {}
+    #mse_avg = {}
+    #rmse_avg = {}
+    #mse_yerr = {}
 
-    rmse_yerr = {}
+    #rmse_yerr = {}
 
-    var_avg = {}
-    rvar_avg = {}
-    conf_avg = {}
-    var_yerr = {}
-    rvar_yerr = {}
-    conf_yerr = {}
+    #var_avg = {}
+    #rvar_avg = {}
+    #conf_avg = {}
+    #var_yerr = {}
+    #rvar_yerr = {}
+    #conf_yerr = {}
 
-    times_avg = {}
-    times_yerr = {}
+    #times_avg = {}
+    #times_yerr = {}
 
-    cur_rmse_values_maxvar = None
-    cur_rvar_values_maxvar = None
-    cur_rmse_values_random = None
-    cur_rvar_values_random = None
+    cur_rmse_values = None
+    cur_rvar_values = None
 
-    for strategy in strategies[gflags.FLAGS.num_robots]:
-        print "Strategy:", strategy
-        mse_avg[strategy] = []
-        rmse_avg[strategy] = []
-        mse_yerr[strategy] = []
-        rmse_yerr[strategy] = []
+    mse_avg = []
+    rmse_avg = []
+    mse_yerr = []
+    rmse_yerr = []
 
-        var_avg[strategy] = []
-        rvar_avg[strategy] = []
-        var_yerr[strategy] = []
-        rvar_yerr[strategy] = []
-        conf_avg[strategy] = []
-        conf_yerr[strategy] = []
+    var_avg = []
+    rvar_avg = []
+    var_yerr = []
+    rvar_yerr = []
+    conf_avg = []
+    conf_yerr = []
 
-        times_avg[strategy] = []
-        times_yerr[strategy] = []
+    times_avg = []
+    times_yerr = []
 
-        for stamp in range(len(x)):
-            cur_mse_avg = 0.0
-            cur_rmse_avg = 0.0
-            cur_mse_values = []
-            cur_rmse_values = []
+    for stamp in range(len(x)):
+        cur_mse_avg = 0.0
+        cur_rmse_avg = 0.0
+        cur_mse_values = []
+        cur_rmse_values = []
 
-            cur_var_avg = 0.0
-            cur_rvar_avg = 0.0
-            cur_conf_avg = 0.0
-            cur_var_values = []
-            cur_rvar_values = []
-            cur_conf_values = []
+        cur_var_avg = 0.0
+        cur_rvar_avg = 0.0
+        cur_conf_avg = 0.0
+        cur_var_values = []
+        cur_rvar_values = []
+        cur_conf_values = []
 
-            cur_times_avg = 0.0
-            cur_times_values = []
+        cur_times_avg = 0.0
+        cur_times_values = []
 
-            for run in errors[strategy].keys():
-                cur_mse_avg += errors[strategy][run][stamp][0]
-                cur_rmse_avg += errors[strategy][run][stamp][1]
-                cur_mse_values.append(errors[strategy][run][stamp][0])
-                cur_rmse_values.append(errors[strategy][run][stamp][1])
+        for run in errors.keys():
+            cur_mse_avg += errors[run][stamp][0]
+            cur_rmse_avg += errors[run][stamp][1]
+            cur_mse_values.append(errors[run][stamp][0])
+            cur_rmse_values.append(errors[run][stamp][1])
 
-                cur_var_avg += variances_all[strategy][run][stamp][0]
-                cur_rvar_avg += variances_all[strategy][run][stamp][2]
-                cur_conf_avg += variances_all[strategy][run][stamp][4]
-                cur_var_values.append(variances_all[strategy][run][stamp][0])
-                cur_rvar_values.append(variances_all[strategy][run][stamp][2])
-                cur_conf_values.append(variances_all[strategy][run][stamp][4])
-                
+            cur_var_avg += variances_all[run][stamp][0]
+            cur_rvar_avg += variances_all[run][stamp][2]
+            cur_conf_avg += variances_all[run][stamp][4]
+            cur_var_values.append(variances_all[run][stamp][0])
+            cur_rvar_values.append(variances_all[run][stamp][2])
+            cur_conf_values.append(variances_all[run][stamp][4])
 
-                cur_times_avg += times_all[strategy][run][stamp]
-                cur_times_values.append(times_all[strategy][run][stamp])
 
-            cur_mse_avg = cur_mse_avg/len(errors[strategy].keys())
-            cur_rmse_avg = cur_rmse_avg/len(errors[strategy].keys())
-            cur_var_avg = cur_var_avg/len(errors[strategy].keys())
-            cur_conf_avg = cur_conf_avg/len(errors[strategy].keys())
-            cur_rvar_avg = cur_rvar_avg/len(errors[strategy].keys())
-            cur_times_avg = cur_times_avg/len(errors[strategy].keys())
+            cur_times_avg += times_all[run][stamp]
+            cur_times_values.append(times_all[run][stamp])
 
-            mse_avg[strategy].append(cur_mse_avg)
-            rmse_avg[strategy].append(cur_rmse_avg)
-            mse_yerr[strategy].append(np.std(cur_mse_values))
-            rmse_yerr[strategy].append(np.std(cur_rmse_values))
+        cur_mse_avg = cur_mse_avg/len(errors.keys())
+        cur_rmse_avg = cur_rmse_avg/len(errors.keys())
+        cur_var_avg = cur_var_avg/len(errors.keys())
+        cur_conf_avg = cur_conf_avg/len(errors.keys())
+        cur_rvar_avg = cur_rvar_avg/len(errors.keys())
+        cur_times_avg = cur_times_avg/len(errors.keys())
 
-            var_avg[strategy].append(cur_var_avg)
-            rvar_avg[strategy].append(cur_rvar_avg)
-            conf_avg[strategy].append(cur_conf_avg)
-            var_yerr[strategy].append(np.std(cur_var_values))
-            rvar_yerr[strategy].append(np.std(cur_rvar_values))
-            conf_yerr[strategy].append(np.std(cur_conf_values))
+        mse_avg.append(cur_mse_avg)
+        rmse_avg.append(cur_rmse_avg)
+        mse_yerr.append(np.std(cur_mse_values))
+        rmse_yerr.append(np.std(cur_rmse_values))
 
-            times_avg[strategy].append(cur_times_avg)
-            times_yerr[strategy].append(np.std(cur_times_values))
+        var_avg.append(cur_var_avg)
+        rvar_avg.append(cur_rvar_avg)
+        conf_avg.append(cur_conf_avg)
+        var_yerr.append(np.std(cur_var_values))
+        rvar_yerr.append(np.std(cur_rvar_values))
+        conf_yerr.append(np.std(cur_conf_values))
 
-            if stamp == range(len(x))[-1]:
-                if strategy == "max_variance":
-                    cur_rmse_values_maxvar = cur_rmse_values
-                    cur_rvar_values_maxvar = cur_rvar_values
-                    print cur_rmse_values_maxvar
-                    print cur_rvar_values_maxvar
+        times_avg.append(cur_times_avg)
+        times_yerr.append(np.std(cur_times_values))
 
-                elif strategy == "random":
-                    cur_rmse_values_random = cur_rmse_values
-                    cur_rvar_values_random = cur_rvar_values
-                    print cur_rmse_values_random
-                    print cur_rvar_values_random
+        if stamp == range(len(x))[-1]:
+            print cur_rmse_values
+            print cur_rvar_values
 
-    print "P-value RMSE:"
-    compute_p_values(cur_rmse_values_maxvar, cur_rmse_values_random)
+    #print "P-value RMSE:"
+    #compute_p_values(cur_rmse_values_maxvar, cur_rmse_values_random)
 
-    print "P-value STD DEV:"
-    compute_p_values(cur_rvar_values_maxvar, cur_rvar_values_random)
+    #print "P-value STD DEV:"
+    #compute_p_values(cur_rvar_values_maxvar, cur_rvar_values_random)
 
     plot_values(x, rmse_avg, rmse_yerr, "RMSE", os.getcwd() + '/figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
     plot_values(x, mse_avg, mse_yerr, "MSE", os.getcwd() + '/figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
@@ -569,7 +564,10 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model = CommModel(comm_model_path)
 
     # Reading environment image.
-    environment_yaml_path = os.getcwd() + '/envs/' + environment + '.yaml'
+    #environment_yaml_path = os.getcwd() + '/envs/' + environment + '.yaml'
+
+    environment_yaml_path = log_folder + '../envs/' + environment + '.yaml'
+
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
     
@@ -601,65 +599,61 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     variances_all = {}
     times_all = {}
 
-    for strategy in strategies[gflags.FLAGS.num_robots]:
-        print 'Strategy: ' + str(strategy)
-        errors[strategy] = {}
-        variances_all[strategy] = {}
-        times_all[strategy] = {}
+    for run in runs:
+        print 'Run: ' + str(run)
 
-        for run in runs:
-            print 'Run: ' + str(run)
+        all_signal_data = []
 
-            all_signal_data = []
-        
-            for robot in range(num_robots):
-                dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + strategy + '_dataset.dat'
-                all_signal_data += parse_dataset(dataset_filename)
-        
-            errors[strategy][run] = []
-            variances_all[strategy][run] = []
-            times_all[strategy][run] = []
+        for robot in range(num_robots):
+            dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
+            all_signal_data += parse_dataset(dataset_filename)
 
-            all_secs = range(granularity, mission_duration + 1, granularity)
-            for secs in all_secs:
-                cur_signal_data = []
-                for datum in all_signal_data:
-                    if datum.timestep <= secs:
-                        cur_signal_data.append(datum)
+        errors[run] = []
+        variances_all[run] = []
+        times_all[run] = []
 
-                start = time.time()
-                
-                comm_map = GPmodel(dimX, dimY, comm_model.COMM_RANGE, False)
-                comm_map.update_model(cur_signal_data)
-                end = time.time()
+        all_secs = range(granularity, mission_duration + 1, granularity)
+        for secs in all_secs:
+            cur_signal_data = []
+            for datum in all_signal_data:
+                if datum.timestep <= secs:
+                    cur_signal_data.append(datum)
 
-                predictions_all = comm_map.predict(XTest)
-                predictions = map(lambda x: x[0], predictions_all)
-                variances = map(lambda x: x[1], predictions_all)
-                std_devs = map(lambda x: math.sqrt(x), variances)
-                conf_95 = map(lambda x: 1.96*x, std_devs)
+            start = time.time()
 
-                errors[strategy][run].append((mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
-                variances_all[strategy][run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs), np.mean(conf_95), np.std(conf_95)))
-                times_all[strategy][run].append(end-start)
+            comm_map = GPmodel(dimX, dimY, comm_model.COMM_RANGE, False)
+            comm_map.update_model(cur_signal_data)
+            end = time.time()
 
-                if plot_comm_map:
-                    print "number of data", len(cur_signal_data)
-                    communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
-                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + strategy + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
-                    communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
-                    if len(communication_figures) > 1:
-                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + strategy + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
-                        communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')                        
-                print errors 
-                print variances_all
-                print times_all
+            predictions_all = comm_map.predict(XTest)
+            predictions = map(lambda x: x[0], predictions_all)
+            variances = map(lambda x: x[1], predictions_all)
+            std_devs = map(lambda x: math.sqrt(x), variances)
+            conf_95 = map(lambda x: 1.96*x, std_devs)
 
+            errors[run].append((mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
+            variances_all[run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs), np.mean(conf_95), np.std(conf_95)))
+            times_all[run].append(end-start)
 
-    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
-    pickle.dump((errors, variances_all, times_all), f)
-    f.close()
+            if plot_comm_map:
+                print "number of data", len(cur_signal_data)
+                communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
+                communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
+                communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
+                if len(communication_figures) > 1:
+                    communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
+                    communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
+            print errors
+            print variances_all
+            print times_all
 
+    seed = 0
+
+    for robot in xrange(num_robots):
+        f = open(log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' +
+                 str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
+        pickle.dump((errors, variances_all, times_all), f)
+        f.close()
 
 if __name__ == '__main__':
     # Parsing of gflags.
