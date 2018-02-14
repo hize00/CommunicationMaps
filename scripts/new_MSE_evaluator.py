@@ -56,7 +56,7 @@ import utils
 gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
-gflags.DEFINE_integer("num_robots", 4,
+gflags.DEFINE_integer("num_robots", 2,
     "Number of robots used in the experiment.")
 gflags.DEFINE_integer("num_runs", 5,
     "Number of repetitions for an experiment.")
@@ -76,7 +76,7 @@ gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 5001,
+gflags.DEFINE_integer("mission_duration", 1801,
     "Mission duration (seconds).")
 
 
@@ -92,14 +92,25 @@ gflags.DEFINE_string("task", "evaluate",
 #gflags.DEFINE_string(
 #    "log_folder", "~/catkin_ws/src/strategy/log/",
 #    "Root of log folder.")
-gflags.DEFINE_string(
-    "log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
+gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
     "Root of log folder.")
+
+# PLOT Parameters. # TODO more flexible instead of changing it here.
+#strategies = ["random", "max_variance", "multi2-2", "multi2-4"] #"multi2-6"]
+#strategies = {}
+
+#strategies[2] = ["multi2-2"]
+#strategies[4] = ["max_variance", "random", "multi2-2", "multi2-4"]
+#strategies[6] = ["max_variance", "random", "multi2-3", "multi2-6"]
+#strategies[4] = ["multi2-4", "max_variance"]
 
 #plot_format = {'random': ['g:o', 'RAND'],
 #    'max_variance': ['r-^', 'PM'],
 #    'multi2-2': ['b--s', 'RM-2'], 'multi2-3': ['b--s', 'RM-3'],
 #    'multi2-4': ['k-.*', 'RM-4'], 'multi2-6': ['k-.*', 'RM-6']}
+
+plot_format = {'prova': ['b--s', 'RM-2']}
+
 
 FONTSIZE = 16
 
@@ -143,8 +154,7 @@ def create_test_set(im_array, comm_model, test_set_size,
             x2 = dimX*random.random()
             y2 = dimY*random.random()
             if (utils.eucl_dist((x1,y1),(x2,y2)) < comm_model.MIN_DIST
-                or utils.eucl_dist((x1,y1),(x2,y2)) 
-                    > comm_model.COMM_RANGE):
+                or utils.eucl_dist((x1,y1),(x2,y2)) > comm_model.COMM_RANGE):
                 continue
 
             i2 = I - int(y2/resize_factor)
@@ -153,9 +163,8 @@ def create_test_set(im_array, comm_model, test_set_size,
             if(all_free(i2,j2,I,J, environment.WALL_DIST)):
                 break        
 
-        num_obstacles = numObstaclesBetweenRobots(im_array, 
-            I, (x1,y1), (x2,y2), resize_factor)
-        signal_strength = (comm_model.REF_SIGNAL 
+        num_obstacles = numObstaclesBetweenRobots(im_array, I, (x1,y1), (x2,y2), resize_factor)
+        signal_strength = (comm_model.REF_SIGNAL
             - 10*comm_model.PATH_LOSS*math.log10(
                 utils.eucl_dist((x1,y1),(x2,y2))/comm_model.REF_DIST)
             - min(comm_model.MAX_WALL,
@@ -232,23 +241,19 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
     if np.amax(img) > 1.0:
         img = img/255
-    center_px = (int(center[0]/resize_factor), 
-        int(center[1]/resize_factor))
+    center_px = (int(center[0]/resize_factor), int(center[1]/resize_factor))
     cv2.circle(img, center_px, 5, (1,0,0))
 
     x, y = ogrid[0:img.shape[0], 0:img.shape[1]]
 
     fig_comm = plt.figure()
     ax_comm = fig_comm.gca(projection='3d')
-    ax_comm.auto_scale_xyz([0, img.shape[0]], [0, img.shape[1]],
-        [-100, 0])
+    ax_comm.auto_scale_xyz([0, img.shape[0]], [0, img.shape[1]],[-100, 0])
     #ax_var.set_zlim([0.0, 100.0])
     ax_comm.set_zlabel('Signal strength (dBm)', fontsize=FONTSIZE)
-    ax_comm.plot_surface(y,x, -100, rstride=1, cstride=1, 
-        facecolors=img)
+    ax_comm.plot_surface(y,x, -100, rstride=1, cstride=1, facecolors=img)
 
-    surf = ax_comm.plot_surface(X, Y, Z, rstride=1, cstride=1, 
-        cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.4)
+    surf = ax_comm.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.4)
     fig_comm.colorbar(surf, shrink=0.5, aspect=5)
 
     ax_comm.view_init(elev=46)
@@ -257,9 +262,7 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
 
 
     if all_signal_data is not None:
-        X_points, Y_points, Z_points = get_scatter_plot(all_signal_data,
-            dimX, dimY, center,
-            resize_factor)
+        X_points, Y_points, Z_points = get_scatter_plot(all_signal_data, dimX, dimY, center, resize_factor)
         ax_comm.autoscale(enable=False)
         ax_comm.scatter(X_points, Y_points, Z_points)
 
@@ -267,17 +270,13 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
     if plot_variance:
         fig_var = plt.figure()
         ax_var = fig_var.gca(projection='3d')
-        ax_var.auto_scale_xyz([0, img.shape[0]], [0, img.shape[1]],
-            [-10, 100])
+        ax_var.auto_scale_xyz([0, img.shape[0]], [0, img.shape[1]], [-10, 100])
         #ax_var.set_zlim([0.0, 100.0])
-        ax_var.set_zlabel('STD Signal strength (dBm)',
-            fontsize=FONTSIZE)
-        ax_var.plot_surface(y,x, 0, rstride=1, cstride=1,
-            facecolors=img)
+        ax_var.set_zlabel('STD Signal strength (dBm)', fontsize=FONTSIZE)
+        ax_var.plot_surface(y,x, 0, rstride=1, cstride=1, facecolors=img)
 
-        surf = ax_var.plot_surface(X, Y, np.sqrt(V),
-            rstride=1, cstride=1, 
-            cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.4)
+        surf = ax_var.plot_surface(X, Y, np.sqrt(V), rstride=1, cstride=1,
+                                   cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.4)
         fig_var.colorbar(surf, shrink=0.5, aspect=5)
 
         ax_var.view_init(elev=46)
@@ -289,16 +288,13 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
 
 
 
-def get_prediction_plot(comm_map, center, dimX, dimY, comm_model, 
-    resize_factor=0.1):
+def get_prediction_plot(comm_map, center, dimX, dimY, comm_model, resize_factor=0.1):
     print center
     center_px = (center[0]/resize_factor, center[1]/resize_factor)
     comm_range = comm_model.COMM_RANGE
-    X = np.arange(max(0, int(center_px[0] - comm_range/resize_factor)),
-        min(int(center_px[0] + comm_range/resize_factor), 
+    X = np.arange(max(0, int(center_px[0] - comm_range/resize_factor)), min(int(center_px[0] + comm_range/resize_factor),
             int(math.floor(dimX/resize_factor))), 5)
-    Y = np.arange(max(0, int(center_px[1] - comm_range/resize_factor)),
-        min(int(center_px[1] + comm_range/resize_factor), 
+    Y = np.arange(max(0, int(center_px[1] - comm_range/resize_factor)), min(int(center_px[1] + comm_range/resize_factor),
             int(math.floor(dimY/resize_factor))), 5)   
     X, Y = np.meshgrid(X, Y)
 
@@ -306,8 +302,7 @@ def get_prediction_plot(comm_map, center, dimX, dimY, comm_model,
     V = np.zeros(np.shape(X))
     for i in xrange(np.shape(X)[0]):
         for j in xrange(np.shape(X)[1]):
-            datum = (X[i][j]*resize_factor, Y[i][j]*resize_factor, 
-                center[0], center[1])
+            datum = (X[i][j]*resize_factor, Y[i][j]*resize_factor, center[0], center[1])
             predictions = comm_map.predict([datum])
             Z[i][j] = predictions[0][0]
             V[i][j] = predictions[0][1]
@@ -319,8 +314,7 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
     Y = []
     Z = []
     for d in data:
-        if np.linalg.norm(np.array(center)
-            - np.array([d.teammate_pos.pose.position.x,
+        if np.linalg.norm(np.array(center) - np.array([d.teammate_pos.pose.position.x,
                 d.teammate_pos.pose.position.y])) < 1.0:
             X.append(d.my_pos.pose.position.x/resize_factor)
             Y.append(d.my_pos.pose.position.y/resize_factor)
@@ -331,7 +325,7 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 def plot_values(x_vals, y, yerr, ylabel, filename):
     fig, ax = plt.subplots()
 
-    plt.errorbar(x_vals, y, yerr, fmt=plot_format[0], label=plot_format[1], markersize=10, elinewidth=2)
+    plt.errorbar(x_vals, y, yerr, fmt=plot_format[0],label=plot_format[1], markersize=10, elinewidth=2)
 
     loc_legend = 2 if "TIME" in filename else 1
     plt.legend(fontsize=20,loc=loc_legend)
@@ -379,32 +373,28 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     """
     comm_model = CommModel(comm_model_path)
 
-    seed = 0
-
-    for robot in xrange(num_robots):
-        f = open(gflags.FLAGS.log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' +
-                 str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
-        errors, variances_all, times_all = pickle.load(f)
-        f.close()
+    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
+    errors, variances_all, times_all = pickle.load(f)
+    f.close()
 
     x = range(granularity, mission_duration + 1, granularity)
     x = map(lambda x: x/60.0, x)
 
-    #mse_avg = {}
-    #rmse_avg = {}
-    #mse_yerr = {}
+    mse_avg = {}
+    rmse_avg = {}
+    mse_yerr = {}
 
-    #rmse_yerr = {}
+    rmse_yerr = {}
 
-    #var_avg = {}
-    #rvar_avg = {}
-    #conf_avg = {}
-    #var_yerr = {}
-    #rvar_yerr = {}
-    #conf_yerr = {}
+    var_avg = {}
+    rvar_avg = {}
+    conf_avg = {}
+    var_yerr = {}
+    rvar_yerr = {}
+    conf_yerr = {}
 
-    #times_avg = {}
-    #times_yerr = {}
+    times_avg = {}
+    times_yerr = {}
 
     cur_rmse_values = None
     cur_rvar_values = None
@@ -453,16 +443,15 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
             cur_rvar_values.append(variances_all[run][stamp][2])
             cur_conf_values.append(variances_all[run][stamp][4])
 
-
             cur_times_avg += times_all[run][stamp]
             cur_times_values.append(times_all[run][stamp])
 
-        cur_mse_avg = cur_mse_avg/len(errors.keys())
-        cur_rmse_avg = cur_rmse_avg/len(errors.keys())
-        cur_var_avg = cur_var_avg/len(errors.keys())
-        cur_conf_avg = cur_conf_avg/len(errors.keys())
-        cur_rvar_avg = cur_rvar_avg/len(errors.keys())
-        cur_times_avg = cur_times_avg/len(errors.keys())
+        cur_mse_avg = cur_mse_avg / len(errors.keys())
+        cur_rmse_avg = cur_rmse_avg / len(errors.keys())
+        cur_var_avg = cur_var_avg / len(errors.keys())
+        cur_conf_avg = cur_conf_avg / len(errors.keys())
+        cur_rvar_avg = cur_rvar_avg / len(errors.keys())
+        cur_times_avg = cur_times_avg / len(errors.keys())
 
         mse_avg.append(cur_mse_avg)
         rmse_avg.append(cur_rmse_avg)
@@ -479,9 +468,9 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
         times_avg.append(cur_times_avg)
         times_yerr.append(np.std(cur_times_values))
 
-        if stamp == range(len(x))[-1]:
-            print cur_rmse_values
-            print cur_rvar_values
+        #if stamp == range(len(x))[-1]:
+        #    print cur_rmse_values
+        #    print cur_rvar_values
 
     #print "P-value RMSE:"
     #compute_p_values(cur_rmse_values_maxvar, cur_rmse_values_random)
@@ -489,20 +478,36 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     #print "P-value STD DEV:"
     #compute_p_values(cur_rvar_values_maxvar, cur_rvar_values_random)
 
-    plot_values(x, rmse_avg, rmse_yerr, "RMSE", os.getcwd() + '/figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", os.getcwd() + '/figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    print mse_avg
+    print rmse_avg
+    print mse_yerr
+    print rmse_yerr
 
-    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", os.getcwd() + '/figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, var_avg, var_yerr, "Pred. Variance", os.getcwd() + '/figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    print var_avg
+    print rvar_avg
+    print var_yerr
+    print rvar_yerr
+    print conf_avg
+    print conf_yerr
 
-    plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    print times_avg
+    print times_yerr
+
+    plot_values(x, rmse_avg, rmse_yerr, "RMSE", gflags.FLAGS.log_folder + '../figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", gflags.FLAGS.log_folder + '../figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+
+    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", gflags.FLAGS.log_folder + '../figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, var_avg, var_yerr, "Pred. Variance", gflags.FLAGS.log_folder + '../figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", gflags.FLAGS.log_folder + '../figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+
+    plot_values(x, times_avg, times_yerr, "GP Training Time", gflags.FLAGS.log_folder + '../figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
           
 def create_test_set_from_signal_data(all_signal_data):
     XTest = []
     YTest = []
     for d in all_signal_data:
-        XTest.append((d.my_pos.pose.position.x, d.my_pos.pose.position.y, d.teammate_pos.pose.position.x, d.teammate_pos.pose.position.x))
+        XTest.append((d.my_pos.pose.position.x, d.my_pos.pose.position.y, d.teammate_pos.pose.position.x,
+                      d.teammate_pos.pose.position.x))
         YTest.append(d.signal_strength)
     return XTest, YTest
     
@@ -522,13 +527,10 @@ def read_environment(environment_yaml_path):
         try:
             environment_yaml = yaml.load(environment_yaml_file)
             resolution = environment_yaml["resolution"]
-            environment_image_path = os.path.join(
-                os.path.dirname(environment_yaml_path),
-                environment_yaml["image"])
+            environment_image_path = os.path.join(os.path.dirname(environment_yaml_path),environment_yaml["image"])
             environment_image = cv2.imread(environment_image_path)
             if len(environment_image.shape) > 2:
-                environment_image = cv2.cvtColor(environment_image,
-                    cv2.COLOR_BGR2GRAY)
+                environment_image = cv2.cvtColor(environment_image,cv2.COLOR_BGR2GRAY)
             return environment_image, resolution
         except yaml.YAMLError as exc:
             print(exc)
@@ -541,7 +543,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
     It processes the dat files containing the collected data from the robots.
     It outputs a pickle file, containing errors, variances, and GP comm_map,
-    according to run, environment, strategy, robot.
+    according to run, environment, robot.
 
     Args:
         environment (str): name of environment used for saving data.
@@ -564,8 +566,6 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model = CommModel(comm_model_path)
 
     # Reading environment image.
-    #environment_yaml_path = os.getcwd() + '/envs/' + environment + '.yaml'
-
     environment_yaml_path = log_folder + '../envs/' + environment + '.yaml'
 
     im_array, resolution = read_environment(environment_yaml_path)
@@ -576,22 +576,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         # In simulation.
         random.seed(0)
         np.random.seed(0)
-        dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,
-            test_set_size, resolution)
-    else:
-        # For real robots.
-        dimX = np.size(im_array,1)*resolution
-        dimY = np.size(im_array,0)*resolution
-        test_set_runs = range(NUM_TEST_SET_RUNS)
-        for run in test_set_runs:
-            print 'Run: ' + str(run)
-
-            all_signal_data = []
-        
-            for robot in range(num_robots):
-                dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + STRATEGY_FOR_TEST_SET+ '_dataset.dat' # TODO NOT HARDCODED!!!!!! # TODO add communication model
-                all_signal_data += parse_dataset(dataset_filename)
-        XTest, YTest = create_test_set_from_signal_data(all_signal_data)
+        dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
 
     runs = range(num_runs)
 
@@ -604,8 +589,10 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
         all_signal_data = []
 
+        seed = 0
+
         for robot in range(num_robots):
-            dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
+            dataset_filename = log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
             all_signal_data += parse_dataset(dataset_filename)
 
         errors[run] = []
@@ -647,13 +634,12 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             print variances_all
             print times_all
 
-    seed = 0
+    	plt.close('all')
 
-    for robot in xrange(num_robots):
-        f = open(log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' +
-                 str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
-        pickle.dump((errors, variances_all, times_all), f)
-        f.close()
+
+    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
+    pickle.dump((errors, variances_all, times_all), f)
+    f.close()
 
 if __name__ == '__main__':
     # Parsing of gflags.
