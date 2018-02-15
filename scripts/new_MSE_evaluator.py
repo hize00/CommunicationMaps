@@ -109,7 +109,7 @@ gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
 #    'multi2-2': ['b--s', 'RM-2'], 'multi2-3': ['b--s', 'RM-3'],
 #    'multi2-4': ['k-.*', 'RM-4'], 'multi2-6': ['k-.*', 'RM-6']}
 
-plot_format = {'prova': ['b--s', 'RM-2']}
+plot_format = {'prova': ['b--s', 'AC']}
 
 
 FONTSIZE = 16
@@ -325,7 +325,8 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 def plot_values(x_vals, y, yerr, ylabel, filename):
     fig, ax = plt.subplots()
 
-    plt.errorbar(x_vals, y, yerr, fmt=plot_format[0],label=plot_format[1], markersize=10, elinewidth=2)
+    for key in plot_format.keys():
+        plt.errorbar(x_vals, y, yerr, fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
 
     loc_legend = 2 if "TIME" in filename else 1
     plt.legend(fontsize=20,loc=loc_legend)
@@ -379,22 +380,6 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
 
     x = range(granularity, mission_duration + 1, granularity)
     x = map(lambda x: x/60.0, x)
-
-    mse_avg = {}
-    rmse_avg = {}
-    mse_yerr = {}
-
-    rmse_yerr = {}
-
-    var_avg = {}
-    rvar_avg = {}
-    conf_avg = {}
-    var_yerr = {}
-    rvar_yerr = {}
-    conf_yerr = {}
-
-    times_avg = {}
-    times_yerr = {}
 
     cur_rmse_values = None
     cur_rvar_values = None
@@ -467,31 +452,6 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
 
         times_avg.append(cur_times_avg)
         times_yerr.append(np.std(cur_times_values))
-
-        #if stamp == range(len(x))[-1]:
-        #    print cur_rmse_values
-        #    print cur_rvar_values
-
-    #print "P-value RMSE:"
-    #compute_p_values(cur_rmse_values_maxvar, cur_rmse_values_random)
-
-    #print "P-value STD DEV:"
-    #compute_p_values(cur_rvar_values_maxvar, cur_rvar_values_random)
-
-    print mse_avg
-    print rmse_avg
-    print mse_yerr
-    print rmse_yerr
-
-    print var_avg
-    print rvar_avg
-    print var_yerr
-    print rvar_yerr
-    print conf_avg
-    print conf_yerr
-
-    print times_avg
-    print times_yerr
 
     plot_values(x, rmse_avg, rmse_yerr, "RMSE", gflags.FLAGS.log_folder + '../figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
     plot_values(x, mse_avg, mse_yerr, "MSE", gflags.FLAGS.log_folder + '../figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
