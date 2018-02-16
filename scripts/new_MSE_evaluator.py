@@ -79,19 +79,19 @@ gflags.DEFINE_integer("granularity", 300,
 gflags.DEFINE_integer("mission_duration", 1801,
     "Mission duration (seconds).")
 
-
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
-gflags.DEFINE_bool("plot_communication_map", False,
+gflags.DEFINE_bool("plot_communication_map", True,
     "If True, plot and save communication map in figure.")
 gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")
 gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 
+#Parameter for parsing
+gflags.DEFINE_bool("filter_dat", False,
+    "If True, in dat files consider only information found by Carlo algorithm")
+
 gflags.DEFINE_string("task", "evaluate",
     "Script task {evaluate, plot}.")
 
-#gflags.DEFINE_string(
-#    "log_folder", "~/catkin_ws/src/strategy/log/",
-#    "Root of log folder.")
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
     "Root of log folder.")
 
@@ -183,25 +183,26 @@ def create_test_set(im_array, comm_model, test_set_size,
 
     return dimX, dimY, XTest, YTest
 
-def parse_dataset(filename):
+def parse_dataset(filename, filter):
     dataset = []
     f = open(filename, "r")
     lines = f.readlines()
     prev_time = 0
     for line in lines:
         s = line.split()
-        if len(dataset) > 0:
-            prev_time = dataset[-1].timestep
-        if (float(s[0]) - prev_time) > 1.0: # TODO parameter.
-            new_data = SignalData()
-            new_data.timestep = float(s[0])
-            new_data.my_pos.pose.position.x = float(s[1])
-            new_data.my_pos.pose.position.y = float(s[2])
-            new_data.teammate_pos.pose.position.x = float(s[3])
-            new_data.teammate_pos.pose.position.y = float(s[4])
-            new_data.signal_strength = float(s[5])
+        if (filter and s[-1] == 'C') or not filter:
+            if len(dataset) > 0:
+                prev_time = dataset[-1].timestep
+            if (float(s[0]) - prev_time) > 1.0: # TODO parameter.
+                new_data = SignalData()
+                new_data.timestep = float(s[0])
+                new_data.my_pos.pose.position.x = float(s[1])
+                new_data.my_pos.pose.position.y = float(s[2])
+                new_data.teammate_pos.pose.position.x = float(s[3])
+                new_data.teammate_pos.pose.position.y = float(s[4])
+                new_data.signal_strength = float(s[5])
 
-            dataset.append(new_data)
+                dataset.append(new_data)
 
     return dataset
 
@@ -286,10 +287,8 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
     else:
         return [fig_comm]
 
-
-
 def get_prediction_plot(comm_map, center, dimX, dimY, comm_model, resize_factor=0.1):
-    print center
+    #print center
     center_px = (center[0]/resize_factor, center[1]/resize_factor)
     comm_range = comm_model.COMM_RANGE
     X = np.arange(max(0, int(center_px[0] - comm_range/resize_factor)), min(int(center_px[0] + comm_range/resize_factor),
@@ -498,7 +497,7 @@ def read_environment(environment_yaml_path):
 
 def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model_path, granularity, mission_duration,
-    plot_comm_map, fixed_robot, test_set_size, log_folder):
+    plot_comm_map, fixed_robot, filter_dat, test_set_size, log_folder):
     """Create pickle files containing data to be plotted.
 
     It processes the dat files containing the collected data from the robots.
@@ -516,6 +515,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         mission_duration (int): seconds for total mission.
         plot_comm_map (bool): If True, plot communication map.
         fixed_robot (tuple of float): x,y of robot in meters.
+        filter_dat (bool): If True, consider ony information found by Carlo algorithm
         test_set_size (int): number of samples in the test set
         log_folder (str): folder where logs are saved.
     """
@@ -530,6 +530,9 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
+
+    #parsing filter
+    filter = gflags.FLAGS.filter_dat
     
     # Generation of test set.
     if is_simulation:
@@ -553,7 +556,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
         for robot in range(num_robots):
             dataset_filename = log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
-            all_signal_data += parse_dataset(dataset_filename)
+            all_signal_data += parse_dataset(dataset_filename, filter)
 
         errors[run] = []
         variances_all[run] = []
@@ -594,8 +597,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             print variances_all
             print times_all
 
-    	plt.close('all')
-
+            plt.close('all')
 
     f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
     pickle.dump((errors, variances_all, times_all), f)
@@ -616,6 +618,7 @@ if __name__ == '__main__':
             gflags.FLAGS.granularity, gflags.FLAGS.mission_duration,
             gflags.FLAGS.plot_communication_map,
             (gflags.FLAGS.fixed_robot_x, gflags.FLAGS.fixed_robot_y),
+            gflags.FLAGS.filter_dat,
             gflags.FLAGS.test_set_size,
             gflags.FLAGS.log_folder)
     elif gflags.FLAGS.task == 'plot':
