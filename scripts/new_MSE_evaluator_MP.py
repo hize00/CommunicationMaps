@@ -525,9 +525,6 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
         test_set_size (int): number of samples in the test set
         log_folder (str): folder where logs are saved.
     """
-    #log_folder = os.path.expanduser()
-
-    #log_folder = gflags.FLAGS.log_folder
 
     # Reading of the communication parameters necessary to produce correct
     # test set.
@@ -538,9 +535,6 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
-
-    #parsing filter
-    #filter = gflags.FLAGS.filter_dat
     
     # Generation of test set.
     if is_simulation:
@@ -554,13 +548,27 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
         runs = range(num_runs)
     elif n == 1:
         num_runs = num_runs / 2 + num_runs % 2
-        runs = range(num_runs,1,-1)
+        runs = range(num_runs, 1, -1)
         runs = list(reversed(runs))
+        #runs = range(num_runs - 1, 1, -1) #for four sets
+        #runs = range(num_runs + 1, 1,-1)  #for only two sets
     elif n == 2:
         num_runs = num_runs / 2 + num_runs % 2
         runs = range(num_runs + 1, 3, -1)
+        runs = list(reversed(runs))
+        #runs = range(num_runs, 2, -1)
+    #else: #n = 3
+    #    num_runs = num_runs / 2 + num_runs % 2
+    #    runs = range(num_runs + 1, 3, -1)
 
-    time.sleep(2 * n)
+    time.sleep(2.5 * n)
+
+    print n
+    print runs
+
+    errors = {}
+    variances_all = {}
+    times_all = {}
 
     for run in runs:
         print 'Run: ' + str(run)
@@ -609,19 +617,24 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
                     communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
                     communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
 
-            #print errors
-            #print variances_all
-            #print times_all
-
             plt.close('all')
 
-        dict_list[0][run] = errors[run]
-        dict_list[1][run] = variances_all[run]
-        dict_list[2][run] = times_all[run]
 
-        print dict_list
+    er = dict_list[0].copy()
+    er.update(errors)
+    dict_list[0] = er.copy()
+
+    v = dict_list[1].copy()
+    v.update(variances_all)
+    dict_list[1] = v.copy()
+
+    t = dict_list[2].copy()
+    t.update(times_all)
+    dict_list[2] = t.copy()
 
 if __name__ == '__main__':
+    start_time = time.time()
+
     # Parsing of gflags.
     try:
         sys.argv = gflags.FLAGS(sys.argv)  # parse flags
@@ -630,25 +643,17 @@ if __name__ == '__main__':
             gflags.FLAGS)
         sys.exit(1)
     if gflags.FLAGS.task == 'evaluate':
-        errors = {}
-        variances_all = {}
-        times_all = {}
-
-        for r in range(gflags.FLAGS.num_runs):
-            errors[r] = []
-            variances_all[r] = []
-            times_all[r] = []
 
         mgr = Manager()
         dict_list = mgr.list()
-        dict_list.append(errors)
-        dict_list.append(variances_all)
-        dict_list.append(times_all)
 
-        procs = []
+        for i in range (3):
+            dict_list.append({})
+            dict_list[i] = mgr.dict()
 
-        for n in range (4 - 1): #4 = multiprocessing.cpu_count()
-            p = multiprocessing.Process(target = evaluate, args = (n, dict_list, gflags.FLAGS.environment, gflags.FLAGS.num_robots,
+        pool = multiprocessing.Pool((multiprocessing.cpu_count() - 1))
+        for n in xrange(0, multiprocessing.cpu_count() - 1):
+            pool.apply_async(evaluate, args=(n, dict_list, gflags.FLAGS.environment, gflags.FLAGS.num_robots,
                 gflags.FLAGS.num_runs, gflags.FLAGS.is_simulation,
                 gflags.FLAGS.communication_model_path,
                 gflags.FLAGS.granularity, gflags.FLAGS.mission_duration,
@@ -657,24 +662,27 @@ if __name__ == '__main__':
                 gflags.FLAGS.filter_dat,
                 gflags.FLAGS.test_set_size,
                 gflags.FLAGS.log_folder, ))
-            procs.append(p)
-            p.start()
 
-        while len(procs) > 0:
-            procs = [p for p in procs if p.is_alive()]
-            time.sleep(1)
+        pool.close()
+        pool.join()
 
         f = open(gflags.FLAGS.log_folder + str(gflags.FLAGS.num_robots) + '_' +
                  gflags.FLAGS.environment + '_' +
                  str(int(CommModel(gflags.FLAGS.communication_model_path).COMM_RANGE)) + '.dat',
                  "wb")
 
-        errors = dict_list[0]
-        variances_all = dict_list[1]
-        times_all = dict_list[2]
+        errors_tot = dict_list[0]
+        variances_tot = dict_list[1]
+        times_tot = dict_list[2]
 
-        pickle.dump((errors, variances_all, times_all), f)
+        print errors_tot
+        print variances_tot
+        print times_tot
+
+        pickle.dump((errors_tot, variances_tot, times_tot), f)
         f.close()
+
+        print("--- %s seconds 4 processes --- POOL 4 PROCS" % (time.time() - start_time))
 
     elif gflags.FLAGS.task == 'plot':
         plot(gflags.FLAGS.environment, gflags.FLAGS.num_robots,
