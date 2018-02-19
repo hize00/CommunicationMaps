@@ -51,6 +51,9 @@ from strategy.msg import SignalData
 from GPmodel import GPmodel
 import utils
 
+import multiprocessing
+from multiprocessing import Process, Manager
+
 # Parameters in common, defining environment, number of robots used,
 # and number of repetitions.
 gflags.DEFINE_string("environment", "offices",
@@ -76,7 +79,7 @@ gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 1801,
+gflags.DEFINE_integer("mission_duration", 1391,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -84,6 +87,8 @@ gflags.DEFINE_bool("plot_communication_map", True,
     "If True, plot and save communication map in figure.")
 gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")
 gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
+#gflags.DEFINE_float("fixed_robot_x", 48.0, "x-coordinate for source (meter).")
+#gflags.DEFINE_float("fixed_robot_y", 22.0, "y-coordinate for source (meter).")
 
 #Parameter for parsing
 gflags.DEFINE_bool("filter_dat", False,
@@ -109,7 +114,7 @@ gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
 #    'multi2-2': ['b--s', 'RM-2'], 'multi2-3': ['b--s', 'RM-3'],
 #    'multi2-4': ['k-.*', 'RM-4'], 'multi2-6': ['k-.*', 'RM-6']}
 
-plot_format = {'prova': ['b--s', 'AC']}
+plot_format = {'graph': ['b--s', 'AC']}
 
 
 FONTSIZE = 16
@@ -495,9 +500,10 @@ def read_environment(environment_yaml_path):
             print(exc)
             return None
 
-def evaluate(environment, num_robots, num_runs, is_simulation,
+def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
     comm_model_path, granularity, mission_duration,
-    plot_comm_map, fixed_robot, filter_dat, test_set_size, log_folder):
+    plot_comm_map, fixed_robot, filter, test_set_size, log_folder):
+
     """Create pickle files containing data to be plotted.
 
     It processes the dat files containing the collected data from the robots.
@@ -505,7 +511,9 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     according to run, environment, robot.
 
     Args:
-        environment (str): name of environment used for saving data.
+        n (int): number of process
+        dict_list (dict): shared between processes
+        env (str): name of environment used for saving data.
         num_robots (int): number of robots.
         num_runs (int): number of repeated experiments.
         is_simulation(bool): True, if data generated from simulation.
@@ -515,24 +523,20 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         mission_duration (int): seconds for total mission.
         plot_comm_map (bool): If True, plot communication map.
         fixed_robot (tuple of float): x,y of robot in meters.
-        filter_dat (bool): If True, consider ony information found by Carlo algorithm
+        filter (bool): If True, consider ony information found by Carlo algorithm
         test_set_size (int): number of samples in the test set
         log_folder (str): folder where logs are saved.
     """
-    log_folder = os.path.expanduser(log_folder)
-    
+
     # Reading of the communication parameters necessary to produce correct
     # test set.
     comm_model = CommModel(comm_model_path)
 
     # Reading environment image.
-    environment_yaml_path = log_folder + '../envs/' + environment + '.yaml'
+    environment_yaml_path = log_folder + '../envs/' + env + '.yaml'
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
-
-    #parsing filter
-    filter = gflags.FLAGS.filter_dat
     
     # Generation of test set.
     if is_simulation:
@@ -541,7 +545,26 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         np.random.seed(0)
         dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
 
-    runs = range(num_runs)
+    if n == 0:
+        num_runs = num_runs / 2
+        runs = range(num_runs)
+    elif n == 1:
+        num_runs = num_runs / 2 + num_runs % 2
+        runs = range(num_runs, 1, -1)  # for three sets
+        runs = list(reversed(runs))
+        # runs = range(num_runs + 1, 1,-1)  #for two sets
+        # runs = range(num_runs, 1, -1) #for three sets
+        #runs = range(num_runs - 1, 1, -1) #for four sets
+    else:
+        num_runs = num_runs / 2 + num_runs % 2
+        runs = range(num_runs + 1, 3, -1)
+        runs = list(reversed(runs))
+        #runs = range(num_runs, 2, -1)
+    #else: #n = 3
+    #    num_runs = num_runs / 2 + num_runs % 2
+    #    runs = range(num_runs + 1, 3, -1)
+
+    time.sleep(2.5 * n)
 
     errors = {}
     variances_all = {}
@@ -555,7 +578,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         seed = 0
 
         for robot in range(num_robots):
-            dataset_filename = log_folder + str(seed) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
+            dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
             all_signal_data += parse_dataset(dataset_filename, filter)
 
         errors[run] = []
@@ -588,22 +611,30 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             if plot_comm_map:
                 print "number of data", len(cur_signal_data)
                 communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
-                communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
+                communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
                 communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
                 if len(communication_figures) > 1:
-                    communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
+                    communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
                     communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
-            print errors
-            print variances_all
-            print times_all
 
             plt.close('all')
 
-    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
-    pickle.dump((errors, variances_all, times_all), f)
-    f.close()
+
+    er = dict_list[0].copy()
+    er.update(errors)
+    dict_list[0] = er.copy()
+
+    v = dict_list[1].copy()
+    v.update(variances_all)
+    dict_list[1] = v.copy()
+
+    t = dict_list[2].copy()
+    t.update(times_all)
+    dict_list[2] = t.copy()
 
 if __name__ == '__main__':
+    start_time = time.time()
+
     # Parsing of gflags.
     try:
         sys.argv = gflags.FLAGS(sys.argv)  # parse flags
@@ -612,15 +643,49 @@ if __name__ == '__main__':
             gflags.FLAGS)
         sys.exit(1)
     if gflags.FLAGS.task == 'evaluate':
-        evaluate(gflags.FLAGS.environment, gflags.FLAGS.num_robots,
-            gflags.FLAGS.num_runs, gflags.FLAGS.is_simulation,
-            gflags.FLAGS.communication_model_path,
-            gflags.FLAGS.granularity, gflags.FLAGS.mission_duration,
-            gflags.FLAGS.plot_communication_map,
-            (gflags.FLAGS.fixed_robot_x, gflags.FLAGS.fixed_robot_y),
-            gflags.FLAGS.filter_dat,
-            gflags.FLAGS.test_set_size,
-            gflags.FLAGS.log_folder)
+
+        mgr = Manager()
+        dict_list = mgr.list()
+
+        for i in range (3):
+            dict_list.append({})
+            dict_list[i] = mgr.dict()
+
+        procs = []
+
+        for n in range(multiprocessing.cpu_count() - 1):
+            p = multiprocessing.Process(target=evaluate,args=(n, dict_list,
+                gflags.FLAGS.environment, gflags.FLAGS.num_robots,
+                gflags.FLAGS.num_runs, gflags.FLAGS.is_simulation,
+                gflags.FLAGS.communication_model_path,
+                gflags.FLAGS.granularity, gflags.FLAGS.mission_duration,
+                gflags.FLAGS.plot_communication_map,
+                (gflags.FLAGS.fixed_robot_x, gflags.FLAGS.fixed_robot_y),
+                gflags.FLAGS.filter_dat,
+                gflags.FLAGS.test_set_size,
+                gflags.FLAGS.log_folder, ))
+            procs.append(p)
+            p.start()
+
+        for p in procs:
+            p.join()
+
+        f = open(gflags.FLAGS.log_folder + str(gflags.FLAGS.num_robots) + '_' +
+                 gflags.FLAGS.environment + '_' +
+                 str(int(CommModel(gflags.FLAGS.communication_model_path).COMM_RANGE)) + '.dat',
+                 "wb")
+
+        errors_tot = dict_list[0]
+        variances_tot = dict_list[1]
+        times_tot = dict_list[2]
+
+        print errors_tot
+        print variances_tot
+        print times_tot
+
+        pickle.dump((errors_tot, variances_tot, times_tot), f)
+        f.close()
+
     elif gflags.FLAGS.task == 'plot':
         plot(gflags.FLAGS.environment, gflags.FLAGS.num_robots,
             gflags.FLAGS.communication_model_path,

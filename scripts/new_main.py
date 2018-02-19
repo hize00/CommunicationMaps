@@ -86,9 +86,12 @@ class GenericRobot(object):
         log_file.close()
         rospy.Timer(rospy.Duration(10), self.distance_logger_callback)
 
+
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
+        rospy.Timer(rospy.Duration(10), self.strength_callback)
+
 
         # recovery
         self.last_feedback_pose = None
@@ -234,7 +237,7 @@ class GenericRobot(object):
 
     def feedback_motion_cb(self, feedback):
         if (self.last_feedback_pose is not None and abs(
-                    feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
+                feedback.base_position.pose.position.x - self.last_feedback_pose[0]) <= 1e-3 and
                     abs(feedback.base_position.pose.position.y - self.last_feedback_pose[1]) <= 1e-3):
             if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
                 self.error_count += 1
@@ -292,6 +295,25 @@ class GenericRobot(object):
         if (rospy.Time.now() - self.mission_start_time) >= self.duration:
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
+
+    def strength_callback(self, event):
+        for robot in range(n_robots):
+            try:
+                if robot!= self.robot_id and self.comm_module.can_communicate:
+                    #self.comm_module.can_communicate_sim(self.robot_id, robot):
+                    rospy.Subscriber('/robot_' + str(robot) + '/updated_pose', Point, self.pose_callback)
+
+                    self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe=False)
+
+                    f = open(self.comm_dataset_filename, "a")
+                    f.write(str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.x) + ' ' + str(self.y) +
+                            ' ' + str(self.other_x) + ' ' + str(self.other_y) +
+                            ' ' + str(self.strength) + '\n')
+                    f.close()
+
+                    self.strength = 0 #reset
+            except Exception as e:
+                pass
 
     def publish_stuff(self):
         self.pub_got_signal.publish(Bool(self.got_signal))
@@ -492,7 +514,7 @@ class GenericRobot(object):
         f = open(self.comm_dataset_filename, "a")
         f.write(str(self.timestep) + ' ' + str(self.x) + ' ' + str(self.y) +
                 ' ' + str(self.other_x) + ' ' + str(self.other_y) +
-                ' ' + str(self.strength) + '\n')
+                ' ' + str(self.strength) + ' C\n') #the last C is a flag for strengths found with the algorithm made by Carlo
         f.close()
 
         got.shutdown()
@@ -537,6 +559,7 @@ class GenericRobot(object):
 
         if self.is_leader:
             rospy.loginfo(str(self.robot_id) + ' - All robots have arrived to final destinations. Sending shutdown.')
+            print("--- MISSION DURATION: %s seconds ---" % (rospy.Time.now() - self.mission_start_time))
             os.system("pkill -f ros")
             rospy.sleep(rospy.Duration(2))
 
