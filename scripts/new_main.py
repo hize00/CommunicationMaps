@@ -86,12 +86,10 @@ class GenericRobot(object):
         log_file.close()
         rospy.Timer(rospy.Duration(10), self.distance_logger_callback)
 
-
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
         rospy.Timer(rospy.Duration(10), self.strength_callback)
-
 
         # recovery
         self.last_feedback_pose = None
@@ -145,7 +143,7 @@ class GenericRobot(object):
         self.other_y = 0.0
 
         if self.is_leader:
-            self.plan_folder = '/home/andrea/catkin_ws/src/strategy/data'
+            self.plan_folder = '/home/andrea/catkin_ws/src/strategy/data/'
 
         # (reduced) arrived state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
         self.pub_arrived = rospy.Publisher('expl_arrived', Bool, queue_size=10)
@@ -229,6 +227,15 @@ class GenericRobot(object):
         self.teammate_teammate = -2
         self.teammate_got_signal = False
 
+    def publish_stuff(self):
+        self.pub_got_signal.publish(Bool(self.got_signal))
+        self.pub_arrived.publish(Bool(self.arrived_nominal_dest))
+        self.pub_teammate.publish(Int8(self.my_teammate))
+        self.pub_timestep.publish(Int32(self.timestep))
+        self.pub_id.publish(Int8(self.robot_id))
+
+    def pub_got_signal_callback(self, event):
+        self.pub_got_signal.publish(Bool(self.got_signal))
 
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
@@ -300,7 +307,6 @@ class GenericRobot(object):
         for robot in range(n_robots):
             try:
                 if robot!= self.robot_id and self.comm_module.can_communicate:
-                    #self.comm_module.can_communicate_sim(self.robot_id, robot):
                     rospy.Subscriber('/robot_' + str(robot) + '/updated_pose', Point, self.pose_callback)
 
                     self.strength = self.comm_module.get_signal_strength(self.my_teammate, safe=False)
@@ -312,19 +318,13 @@ class GenericRobot(object):
                     f.close()
 
                     self.strength = 0 #reset
+
+                    if (rospy.Time.now() - self.mission_start_time) >= self.duration:
+                        rospy.loginfo("Sending shutdown...")
+                        os.system("pkill -f ros")
+
             except Exception as e:
                 pass
-
-    def publish_stuff(self):
-        self.pub_got_signal.publish(Bool(self.got_signal))
-        self.pub_arrived.publish(Bool(self.arrived_nominal_dest))
-        self.pub_teammate.publish(Int8(self.my_teammate))
-        self.pub_timestep.publish(Int32(self.timestep))
-        self.pub_id.publish(Int8(self.robot_id))
-
-    def pub_got_signal_callback(self, event):
-        self.pub_got_signal.publish(Bool(self.got_signal))
-
 
     def go_to_pose(self, pos):
         if self.starting_poses:
@@ -409,7 +409,7 @@ class GenericRobot(object):
 
                     pos = tuple(pos)
                     rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
-                    count += 1
+                    count = 1
 
                 self.clear_costmap_service()
                 self.motion_recovery()
@@ -551,7 +551,6 @@ class GenericRobot(object):
 
                     rospy.sleep(rospy.Duration(0.1))
 
-
                 if n_arrived == n_robots:
                     all_arrived = True
 
@@ -594,6 +593,7 @@ class GenericRobot(object):
                 self.end_exploration()
 
         r.sleep()
+
 
 class Leader(GenericRobot):
     def __init__(self, seed, robot_id, sim, comm_range, map_filename,
@@ -648,7 +648,7 @@ class Leader(GenericRobot):
         reading_RM = 0
         reading_TT = 0
 
-        with open(self.plan_folder + '/solution_plan_' + str(self.n_robots) + '_robots.txt', 'r') as file:
+        with open(self.plan_folder + 'solution_plan_' + str(self.n_robots) + '_robots.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -778,12 +778,6 @@ class Leader(GenericRobot):
         # grouping plan elements by robot_id
         robot_ids = set(map(lambda x: x[0], plans))
         plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
-
-        #if len(robot_ids) < N_ROBOTS:
-        #    for i in xrange(N_ROBOTS):
-        #        if i not in robot_ids:
-        #            plan_id.insert(i, ())  # if a robot never moves, his plan will be empty
-
         plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
         self.plans = plan_id
@@ -845,8 +839,6 @@ class Leader(GenericRobot):
 
         self.clients_signal[teammate_id].wait_for_result()
         rospy.loginfo(str(self.robot_id) + ' - Leader - received the result of ' + str(teammate_id))
-
-
 
 
 class Follower(GenericRobot):

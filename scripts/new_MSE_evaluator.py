@@ -54,8 +54,7 @@ import utils
 import multiprocessing
 from multiprocessing import Process, Manager
 
-# Parameters in common, defining environment, number of robots used,
-# and number of repetitions.
+# Parameters in common, defining environment, number of robots used and number of repetitions.
 gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
@@ -79,7 +78,7 @@ gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 1391,
+gflags.DEFINE_integer("mission_duration", 3492,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -91,7 +90,7 @@ gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 #gflags.DEFINE_float("fixed_robot_y", 22.0, "y-coordinate for source (meter).")
 
 #Parameter for parsing
-gflags.DEFINE_bool("filter_dat", False,
+gflags.DEFINE_bool("filter_dat", True,
     "If True, in dat files consider only information found by Carlo algorithm")
 
 gflags.DEFINE_string("task", "evaluate",
@@ -101,21 +100,8 @@ gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
     "Root of log folder.")
 
 # PLOT Parameters. # TODO more flexible instead of changing it here.
-#strategies = ["random", "max_variance", "multi2-2", "multi2-4"] #"multi2-6"]
-#strategies = {}
-
-#strategies[2] = ["multi2-2"]
-#strategies[4] = ["max_variance", "random", "multi2-2", "multi2-4"]
-#strategies[6] = ["max_variance", "random", "multi2-3", "multi2-6"]
-#strategies[4] = ["multi2-4", "max_variance"]
-
-#plot_format = {'random': ['g:o', 'RAND'],
-#    'max_variance': ['r-^', 'PM'],
-#    'multi2-2': ['b--s', 'RM-2'], 'multi2-3': ['b--s', 'RM-3'],
-#    'multi2-4': ['k-.*', 'RM-4'], 'multi2-6': ['k-.*', 'RM-6']}
-
+#'b--s', 'k-.*', 'g:o', 'r-^'
 plot_format = {'graph': ['b--s', 'AC']}
-
 
 FONTSIZE = 16
 
@@ -144,18 +130,18 @@ def create_test_set(im_array, comm_model, test_set_size,
     J = np.size(im_array,1)
 
     items = 0
-    while(items < test_set_size):
+    while items < test_set_size :
 
-        while(True):
+        while True :
             x1 = dimX*random.random()
             y1 = dimY*random.random()
             i1 = I - int(y1/resize_factor)
             j1 = int(x1/resize_factor)
-            if(i1 >= I or j1 >= J): continue
-            if(all_free(i1,j1,I,J, environment.WALL_DIST)):
+            if i1 >= I or j1 >= J : continue
+            if all_free(i1,j1,I,J, environment.WALL_DIST):
                 break
         
-        while(True):
+        while True:
             x2 = dimX*random.random()
             y2 = dimY*random.random()
             if (utils.eucl_dist((x1,y1),(x2,y2)) < comm_model.MIN_DIST
@@ -164,8 +150,8 @@ def create_test_set(im_array, comm_model, test_set_size,
 
             i2 = I - int(y2/resize_factor)
             j2 = int(x2/resize_factor)
-            if(i2 >= I or j2 >= J): continue
-            if(all_free(i2,j2,I,J, environment.WALL_DIST)):
+            if i2 >= I or j2 >= J : continue
+            if all_free(i2,j2,I,J, environment.WALL_DIST):
                 break        
 
         num_obstacles = numObstaclesBetweenRobots(im_array, I, (x1,y1), (x2,y2), resize_factor)
@@ -179,7 +165,7 @@ def create_test_set(im_array, comm_model, test_set_size,
         signal_strength += noise
 
         #otherwise the robot has not measured it
-        if(signal_strength < comm_model.CUTOFF_SAFE): continue
+        if signal_strength < comm_model.CUTOFF_SAFE: continue
 
         XTest.append((x1,y1,x2,y2))
         YTest.append(signal_strength)
@@ -196,6 +182,7 @@ def parse_dataset(filename, filter):
     for line in lines:
         s = line.split()
         if (filter and s[-1] == 'C') or not filter:
+            #print s
             if len(dataset) > 0:
                 prev_time = dataset[-1].timestep
             if (float(s[0]) - prev_time) > 1.0: # TODO parameter.
@@ -365,11 +352,11 @@ def compute_p_values(values1, values2):
     p_value = a.pvalue
     print "The p-value is:", p_value
 
-def plot(environment, num_robots, comm_model_path,granularity, mission_duration):
+def plot(env, num_robots, comm_model_path,granularity, mission_duration):
     """Plot graphs about MSE and traveled distance.
 
     Args:
-        environment (str): name of environment used for saving data.
+        env (str): name of environment used for saving data.
         num_robots (int): number of robots.
         comm_model_path (str): path to the XML file containing communication 
             model parameters.
@@ -378,7 +365,7 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     """
     comm_model = CommModel(comm_model_path)
 
-    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
+    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
     errors, variances_all, times_all = pickle.load(f)
     f.close()
 
@@ -457,14 +444,14 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
         times_avg.append(cur_times_avg)
         times_yerr.append(np.std(cur_times_values))
 
-    plot_values(x, rmse_avg, rmse_yerr, "RMSE", gflags.FLAGS.log_folder + '../figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", gflags.FLAGS.log_folder + '../figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rmse_avg, rmse_yerr, "RMSE", gflags.FLAGS.log_folder + '../figs/RMSE_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", gflags.FLAGS.log_folder + '../figs/MSE_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", gflags.FLAGS.log_folder + '../figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, var_avg, var_yerr, "Pred. Variance", gflags.FLAGS.log_folder + '../figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", gflags.FLAGS.log_folder + '../figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", gflags.FLAGS.log_folder + '../figs/95CONF_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, var_avg, var_yerr, "Pred. Variance", gflags.FLAGS.log_folder + '../figs/VAR_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", gflags.FLAGS.log_folder + '../figs/STDEV_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, times_avg, times_yerr, "GP Training Time", gflags.FLAGS.log_folder + '../figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, times_avg, times_yerr, "GP Training Time", gflags.FLAGS.log_folder + '../figs/TIME' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
           
 def create_test_set_from_signal_data(all_signal_data):
     XTest = []
@@ -500,7 +487,7 @@ def read_environment(environment_yaml_path):
             print(exc)
             return None
 
-def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
+def evaluate(pr, d_list, tot_proc, env, num_robots, num_runs, is_simulation,
     comm_model_path, granularity, mission_duration,
     plot_comm_map, fixed_robot, filter, test_set_size, log_folder):
 
@@ -511,8 +498,9 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
     according to run, environment, robot.
 
     Args:
-        n (int): number of process
-        dict_list (dict): shared between processes
+        pr (int): number of processes
+        d_list (dict): shared between processes
+        tot_proc (int): total number of created processes
         env (str): name of environment used for saving data.
         num_robots (int): number of robots.
         num_runs (int): number of repeated experiments.
@@ -526,6 +514,7 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
         filter (bool): If True, consider ony information found by Carlo algorithm
         test_set_size (int): number of samples in the test set
         log_folder (str): folder where logs are saved.
+
     """
 
     # Reading of the communication parameters necessary to produce correct
@@ -545,26 +534,13 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
         np.random.seed(0)
         dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
 
-    if n == 0:
-        num_runs = num_runs / 2
-        runs = range(num_runs)
-    elif n == 1:
-        num_runs = num_runs / 2 + num_runs % 2
-        runs = range(num_runs, 1, -1)  # for three sets
-        runs = list(reversed(runs))
-        # runs = range(num_runs + 1, 1,-1)  #for two sets
-        # runs = range(num_runs, 1, -1) #for three sets
-        #runs = range(num_runs - 1, 1, -1) #for four sets
-    else:
-        num_runs = num_runs / 2 + num_runs % 2
-        runs = range(num_runs + 1, 3, -1)
-        runs = list(reversed(runs))
-        #runs = range(num_runs, 2, -1)
-    #else: #n = 3
-    #    num_runs = num_runs / 2 + num_runs % 2
-    #    runs = range(num_runs + 1, 3, -1)
 
-    time.sleep(2.5 * n)
+    runs = range(num_runs)
+    for proc in range(tot_proc):
+        if proc == pr:
+            runs = np.array_split(runs, tot_proc)[proc] #splitting the runs list in order to parallelize its analysis
+
+    time.sleep(pr)
 
     errors = {}
     variances_all = {}
@@ -619,22 +595,19 @@ def evaluate(n, dict_list, env, num_robots, num_runs, is_simulation,
 
             plt.close('all')
 
-
-    er = dict_list[0].copy()
+    er = d_list[0].copy()
     er.update(errors)
-    dict_list[0] = er.copy()
+    d_list[0] = er.copy()
 
-    v = dict_list[1].copy()
+    v = d_list[1].copy()
     v.update(variances_all)
-    dict_list[1] = v.copy()
+    d_list[1] = v.copy()
 
-    t = dict_list[2].copy()
+    t = d_list[2].copy()
     t.update(times_all)
-    dict_list[2] = t.copy()
+    d_list[2] = t.copy()
 
 if __name__ == '__main__':
-    start_time = time.time()
-
     # Parsing of gflags.
     try:
         sys.argv = gflags.FLAGS(sys.argv)  # parse flags
@@ -645,16 +618,24 @@ if __name__ == '__main__':
     if gflags.FLAGS.task == 'evaluate':
 
         mgr = Manager()
-        dict_list = mgr.list()
+        dict_list = mgr.list() #shared dictionary between processes that will contain errors, variances_all and times_all
 
         for i in range (3):
             dict_list.append({})
             dict_list[i] = mgr.dict()
 
+        if gflags.FLAGS.num_runs == 1: #according to the number of runs, I create (cpu_count - dec) processes
+            dec = 3
+        elif gflags.FLAGS.num_runs == 2:
+            dec = 2
+        else:
+            dec= 1
+
+        tot_processes = multiprocessing.cpu_count() - dec
         procs = []
 
-        for n in range(multiprocessing.cpu_count() - 1):
-            p = multiprocessing.Process(target=evaluate,args=(n, dict_list,
+        for n in range(tot_processes):
+            p = multiprocessing.Process(target=evaluate,args=(n, dict_list, tot_processes,
                 gflags.FLAGS.environment, gflags.FLAGS.num_robots,
                 gflags.FLAGS.num_runs, gflags.FLAGS.is_simulation,
                 gflags.FLAGS.communication_model_path,
@@ -670,7 +651,7 @@ if __name__ == '__main__':
         for p in procs:
             p.join()
 
-        f = open(gflags.FLAGS.log_folder + str(gflags.FLAGS.num_robots) + '_' +
+        fd = open(gflags.FLAGS.log_folder + str(gflags.FLAGS.num_robots) + '_' +
                  gflags.FLAGS.environment + '_' +
                  str(int(CommModel(gflags.FLAGS.communication_model_path).COMM_RANGE)) + '.dat',
                  "wb")
@@ -683,7 +664,7 @@ if __name__ == '__main__':
         print variances_tot
         print times_tot
 
-        pickle.dump((errors_tot, variances_tot, times_tot), f)
+        pickle.dump((errors_tot, variances_tot, times_tot), fd)
         f.close()
 
     elif gflags.FLAGS.task == 'plot':
