@@ -491,7 +491,7 @@ class GenericRobot(object):
             if self.teammate_got_signal:
                 success = True
             else:
-                rospy.sleep(rospy.Duration(0.5))
+                rospy.sleep(rospy.Duration(0.3))
                 success = True
 
         f = open(self.comm_dataset_filename, "a")

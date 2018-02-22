@@ -2,6 +2,7 @@
 
 import sys
 import random
+import numpy as np
 
 coord = []
 robot_moving = []
@@ -157,69 +158,33 @@ plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robo
 
 #print plan_id
 
+filename = '/home/andrea/Desktop/parser/0_offices_0_4_50.dat'
+carlo = True
+f = open(filename, "r")
+lines = f.readlines()
+prev_time = 0
+count = 0
+for line in lines:
+    s = line.split()
+    if (carlo and s[-1] == 'C') or (not carlo):
+        count += 1
+        print s
+
+print count
+
+num_runs = 5
+proc = 3
+runs = range(num_runs)
+
+for p in range(proc):
+    runs = np.array_split(runs, 3)[p]
+    #print run
 
 
 
-list = []
-
-list.append((41.5,17))
-list.append((63,10))
-
-#print list
-
-i = 1
-incr_i = 1.5
-mid_i = 2
-max_i = 5
-
-pos = (43.5, 19)
-
-#for pose in list:
-    #print pose
-    #if ((pose[0] == (pos[0] - (i or incr_i or mid_i or max_i)) or (pose[0] == (pos[0] + (i or incr_i or mid_i or max_i))))
-    #    and (pose[1] == (pos[1] - (i or incr_i or mid_i or max_i)) or (pose[1] == (pos[1] + (i or incr_i or mid_i or max_i))))):
-#    if ((((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] - incr_i)) or
-#          (pose[0] == (pos[0] - mid_i)) or (pose[0] == (pos[0] - max_i))) or
-#         ((pose[0] == (pos[0] + i)) or (pose[0] == (pos[0] + incr_i)) or
-#          (pose[0] == (pos[0] + mid_i)) or (pose[0] == (pos[0] + max_i)))) and
- #           (((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] - incr_i)) or
-  #            (pose[1] == (pos[1] - mid_i)) or (pose[1] == (pos[1] - max_i))) or
-   #          ((pose[1] == (pos[1] + i)) or (pose[1] == (pos[1] + incr_i))) or
-    #         (pose[1] == (pos[1] + mid_i)) or (pose[1] == (pos[1] + max_i)))):
-        #print pos
-        #print pose
-    #else:
-        #print 'none'
-
-#Signal Strenghts parser
-
-signals = []
-
-with open('/home/andrea/Desktop/parser/signal_strengths.txt', 'r') as f:
-    num_row = 5
-    data = f.readlines()
-    for line in data:  #5 =num_row da specificare nella funzione
-        words = line.split()
-        if len(words) > 0:
-            if words[0] != ';':
-                print words
-
-
-        break
 
 
 
-f.close()
 
-i = 1
 
-upd = 0.2
 
-random_upd = random.randint(0, 1)
-
-update = {0: upd, 1: -upd}
-
-print i
-print upd
-i = i + update[random_upd]
-print i
