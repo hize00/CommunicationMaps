@@ -460,7 +460,7 @@ class GenericRobot(object):
         else:
             rospy.loginfo(str(self.robot_id) + ' - no plans to follow')
 
-            self.myself['execute_plan_state'] = 2
+        self.myself['execute_plan_state'] = 2
 
     def check_signal_strength(self):
 
@@ -515,10 +515,11 @@ class GenericRobot(object):
         while not all_arrived:
             if not self.is_leader:
                 rospy.sleep(rospy.Duration(2))
+                continue
             else:
                 for id in teammates:
                     if id not in checked_id:
-                        if id == self.robots_list[id]['id'] and self.robots_lists[id]['execute_plan_state'] == 2:
+                        if self.robots_list[id]['execute_plan_state'] == 2:
                             checked_id.append(id)
                             n_arrived += 1
                         else:
@@ -527,12 +528,10 @@ class GenericRobot(object):
                         teammates.remove(id)
                         continue
 
-                    rospy.sleep(rospy.Duration(1))
-
                 if n_arrived == n_robots:
                     all_arrived = True
 
-        rospy.sleep(rospy.Duration(2))
+        rospy.sleep(rospy.Duration(0.5))
 
         if self.is_leader:
             rospy.loginfo(str(self.robot_id) + ' - All robots have arrived to final destinations. Sending shutdown.')
