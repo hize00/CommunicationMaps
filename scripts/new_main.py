@@ -138,7 +138,7 @@ class GenericRobot(object):
             self.robot_dict[i] = dict([('id', self.robot_id), ('arrived_nominal_dest', False), ('timestep', -1),('teammate', -1), ('execute_plan_state', -1)])
             self.robots_list.append(self.robot_dict[i])
 
-        self.myself = self.robots_list[self.robot_id] #to directly access to myself information in the list
+        self.myself = self.robot_dict[self.robot_id] #to directly access to my dictionary
 
         if self.is_leader:
             self.plan_folder = '/home/andrea/catkin_ws/src/strategy/data/'
@@ -166,35 +166,35 @@ class GenericRobot(object):
         #subscription to all useful topics
         for i in xrange(n_robots):
             if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robots_list[" + str(i) + "]['arrived_nominal_dest'] = msg.data"
+            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['arrived_nominal_dest'] = msg.data"
             exec s
             exec ("setattr(GenericRobot, 'arrived_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_arrived', Bool, self.arrived_teammate" + str(i) + ", queue_size = 100)")
 
         for i in xrange(n_robots):
             if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robots_list[" + str(i) + "]['timestep'] = msg.data"
+            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['timestep'] = msg.data"
             exec s
             exec ("setattr(GenericRobot, 'timestep_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_timestep', Int32, self.timestep_teammate" + str(i) + ", queue_size = 100)")
 
         for i in xrange(n_robots):
             if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robots_list[" + str(i) + "]['teammate'] = msg.data"
+            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['teammate'] = msg.data"
             exec s
             exec ("setattr(GenericRobot, 'teammate_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_teammate', Int8, self.teammate_teammate" + str(i) + ", queue_size = 100)")
 
         for i in xrange(n_robots):
             if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robots_list[" + str(i) + "]['id'] = msg.data"
+            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['id'] = msg.data"
             exec s
             exec ("setattr(GenericRobot, 'id_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_id', Int8, self.id_teammate" + str(i) + ", queue_size = 100)")
 
         for i in xrange(n_robots):
             if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robots_list[" + str(i) + "]['execute_plan_state'] = msg.data"
+            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['execute_plan_state'] = msg.data"
             exec s
             exec ("setattr(GenericRobot, 'plan_states_teammate" + str(i) + "', a_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_plan_state', Int8, self.plan_states_teammate" + str(i) + ", queue_size = 100)")
@@ -447,6 +447,9 @@ class GenericRobot(object):
                     if self.robot_id == self.myself['teammate']: #in the last plan, if I have to move to the last destination
                         self.alone = True
 
+                #if self.robot_id == 0 and self.alone:
+                #    rospy.sleep(rospy.Duration(10))
+
                 if self.is_leader:
                     self.go_to_pose(plan[0][0])
                 else:
@@ -466,7 +469,7 @@ class GenericRobot(object):
 
         success = False
         self.publish_stuff()
-        my_teammate = self.robots_list[self.myself['teammate']]
+        my_teammate = self.robot_dict[self.myself['teammate']]
 
         while not success:
             if my_teammate['arrived_nominal_dest'] and \
@@ -505,9 +508,6 @@ class GenericRobot(object):
         rospy.loginfo(str(self.robot_id) + ' - Arrived to final destination.')
 
         all_arrived = False
-        n_arrived = 1
-        checked_id = []
-        teammates = self.teammates_id
 
         if not self.is_leader:
             self.pub_plan_state.publish(Int8(self.myself['execute_plan_state']))
@@ -517,21 +517,8 @@ class GenericRobot(object):
                 rospy.sleep(rospy.Duration(2))
                 continue
             else:
-                for id in teammates:
-                    if id not in checked_id:
-                        if self.robots_list[id]['execute_plan_state'] == 2:
-                            checked_id.append(id)
-                            n_arrived += 1
-                        else:
-                            break
-                    else:
-                        teammates.remove(id)
-                        continue
-
-                if n_arrived == n_robots:
+                if all(self.robot_dict[id]['execute_plan_state'] == 2 for id in self.robot_dict):
                     all_arrived = True
-
-        rospy.sleep(rospy.Duration(0.5))
 
         if self.is_leader:
             rospy.loginfo(str(self.robot_id) + ' - All robots have arrived to final destinations. Sending shutdown.')
