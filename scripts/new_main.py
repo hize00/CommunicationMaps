@@ -131,12 +131,11 @@ class GenericRobot(object):
         self.got_signal = False
         self.teammate_got_signal = False
 
-        self.robots_list = []
         self.robot_dict = dict() #or OrderedDict() if you want the keys ordered as written below
 
-        for i in xrange(n_robots):
-            self.robot_dict[i] = dict([('id', self.robot_id), ('arrived_nominal_dest', False), ('timestep', -1),('teammate', -1), ('execute_plan_state', -1)])
-            self.robots_list.append(self.robot_dict[i])
+        for i in xrange(n_robots): #every robot has its own dict with all important information
+            self.robot_dict[i] = dict([('id', self.robot_id), ('arrived_nominal_dest', False),
+                                       ('timestep', -1),('teammate', -1), ('execute_plan_state', -1)])
 
         self.myself = self.robot_dict[self.robot_id] #to directly access to my dictionary
 
@@ -495,7 +494,7 @@ class GenericRobot(object):
                 success = True
 
         f = open(self.comm_dataset_filename, "a")
-        f.write(str(self.myself['timestep']) + ' ' + str(self.robots_pos[self.robot_id][0]) + ' ' +
+        f.write(str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.robots_pos[self.robot_id][0]) + ' ' +
                 str(self.robots_pos[self.robot_id][1]) + ' ' + str(self.robots_pos[self.myself['teammate']][0]) +
                 ' ' + str(self.robots_pos[self.myself['teammate']][1]) + ' ' + str(strength) +
                 ' C\n') #the last C is a flag for strengths found with Carlo algorithm

@@ -19,7 +19,6 @@ Run:
 python new_MSE_evaluator.py --plot_communication_map
 python new_MSE_evaluator.py --task=plot
 
-TODO Change in such a way that directory can be specified.
 """
 
 from copy import deepcopy
@@ -78,7 +77,7 @@ gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 1413,
+gflags.DEFINE_integer("mission_duration", 1500,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -99,8 +98,7 @@ gflags.DEFINE_string("task", "evaluate",
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
     "Root of log folder.")
 
-# PLOT Parameters. # TODO more flexible instead of changing it here.
-#'b--s', 'k-.*', 'g:o', 'r-^'
+# PLOT Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
 plot_format = {'graph': ['b--s', 'AC']}
 
 FONTSIZE = 16
@@ -371,9 +369,6 @@ def plot(env, num_robots, comm_model_path,granularity, mission_duration):
 
     x = range(granularity, mission_duration + 1, granularity)
     x = map(lambda x: x/60.0, x)
-
-    cur_rmse_values = None
-    cur_rvar_values = None
 
     mse_avg = []
     rmse_avg = []
