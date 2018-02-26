@@ -128,7 +128,6 @@ class GenericRobot(object):
         self.fixed_wall_poses = []
         self.problematic_poses = []
         self.alone = False
-        self.got_signal = False
 
         self.robot_dict = dict() #or OrderedDict() if you want the keys ordered as written below
 
@@ -230,7 +229,6 @@ class GenericRobot(object):
         self.myself['got_signal'] = False
         self.last_feedback_pose = None
         self.last_motion_time = None
-        self.got_signal = False
 
     def publish_stuff(self):
         self.pub_arrived.publish(Bool(self.myself['arrived_nominal_dest']))
@@ -486,8 +484,8 @@ class GenericRobot(object):
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.myself['teammate']))
         strength = self.comm_module.get_signal_strength(self.myself['teammate'], safe = False)
-        self.got_signal = True
-        self.pub_got_signal.publish(Bool(self.got_signal))
+        self.myself['got_signal'] = True
+        self.pub_got_signal.publish(Bool(self.myself['got_signal']))
 
         success = False
 
