@@ -418,6 +418,7 @@ class GenericRobot(object):
 
                     pos = tuple(pos)
                     rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
+                    #self.error_count += 1
                     count = 1
 
                 self.clear_costmap_service()

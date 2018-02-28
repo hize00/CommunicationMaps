@@ -14,7 +14,7 @@ NUM_RUNS = 3
 RANGE = 50
 
 GRANULARITY = 300 #secs
-MISSION_DURATION = 8200 #secs
+MISSION_DURATION = 8165 #secs
 
 plot_format = {'graph': ['b--s', 'AC']}
 
@@ -41,7 +41,7 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
 
     plt.legend(fontsize=20, loc=2)
     plt.xlim(x_vals[0]-0.5, x_vals[-1] + 0.5)
-    plt.ylim(0,1500)
+    plt.ylim(0,1300)
     plt.ylabel(ylabel, fontsize=22)
     plt.tick_params(labelsize=20)
     plt.xlabel("Time (minutes)", fontsize=22)
@@ -73,7 +73,7 @@ def plot(distances):
         distances_avg.append(cur_distances_avg)
         distances_yerr.append(np.std(cur_distances_values))
 
-    plot_values(x, distances_avg, distances_yerr, "Avg. Distance", '/home/andrea/catkin_ws/src/strategy/figs/DISTANCE_' +
+    plot_values(x, distances_avg, distances_yerr, "Avg. Distance", os.getcwd() + '/../figs/DISTANCE_' +
                 str(NROBOTS) + '_' + ENVIRONMENT + '_' + str(RANGE) + '.pdf')
 
 def retrieve_closest_dist(data, secs):
@@ -93,12 +93,10 @@ if __name__ == '__main__':
     average_dist = {}
 
     for run in runs:
-        #print 'Run: ' + str(run)
-
         robot_distances = {}
 
         for robot in range(NROBOTS):
-            log_filename = '/home/andrea/catkin_ws/src/strategy/log/' + str(run) + '_' \
+            log_filename = os.getcwd() + '/../log/' + str(run) + '_' \
                            + ENVIRONMENT + '_' + str(robot) + '_' + str(NROBOTS) + '_' + str(RANGE) + '.log'
             robot_distances[robot] =  parse_logfile(log_filename)
 
@@ -112,4 +110,3 @@ if __name__ == '__main__':
             average_dist[run].append(avg_dist_cur_time/NROBOTS)
 
     plot(average_dist)
-                

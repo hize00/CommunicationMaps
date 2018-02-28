@@ -77,7 +77,7 @@ gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 1500,
+gflags.DEFINE_integer("mission_duration", 8165,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -85,8 +85,6 @@ gflags.DEFINE_bool("plot_communication_map", True,
     "If True, plot and save communication map in figure.")
 gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")
 gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
-#gflags.DEFINE_float("fixed_robot_x", 48.0, "x-coordinate for source (meter).")
-#gflags.DEFINE_float("fixed_robot_y", 22.0, "y-coordinate for source (meter).")
 
 #Parameter for parsing
 gflags.DEFINE_bool("filter_dat", True,
@@ -177,10 +175,11 @@ def parse_dataset(filename, filter):
     f = open(filename, "r")
     lines = f.readlines()
     prev_time = 0
+    count = 0
     for line in lines:
         s = line.split()
         if (filter and s[-1] == 'C') or not filter:
-            #print s
+            count += 1
             if len(dataset) > 0:
                 prev_time = dataset[-1].timestep
             if (float(s[0]) - prev_time) > 1.0: # TODO parameter.
@@ -193,7 +192,7 @@ def parse_dataset(filename, filter):
                 new_data.signal_strength = float(s[5])
 
                 dataset.append(new_data)
-
+    #print count
     return dataset
 
 def specular(img):
@@ -345,11 +344,6 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     matplotlib.rcParams['text.usetex'] = True
     fig.savefig(filename, bbox_inches='tight')
 
-def compute_p_values(values1, values2):
-    a = scipy.stats.f_oneway(np.array(values1), np.array(values2))
-    p_value = a.pvalue
-    print "The p-value is:", p_value
-
 def plot(env, num_robots, comm_model_path,granularity, mission_duration):
     """Plot graphs about MSE and traveled distance.
 
@@ -439,25 +433,15 @@ def plot(env, num_robots, comm_model_path,granularity, mission_duration):
         times_avg.append(cur_times_avg)
         times_yerr.append(np.std(cur_times_values))
 
-    plot_values(x, rmse_avg, rmse_yerr, "RMSE", gflags.FLAGS.log_folder + '../figs/RMSE_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", gflags.FLAGS.log_folder + '../figs/MSE_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rmse_avg, rmse_yerr, "RMSE", os.getcwd() + '/../figs/RMSE_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", os.getcwd() + '/../figs/MSE_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", gflags.FLAGS.log_folder + '../figs/95CONF_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, var_avg, var_yerr, "Pred. Variance", gflags.FLAGS.log_folder + '../figs/VAR_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", gflags.FLAGS.log_folder + '../figs/STDEV_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", os.getcwd() + '/../figs/95CONF_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, var_avg, var_yerr, "Pred. Variance", os.getcwd() + '/../figs/VAR_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/../figs/STDEV_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, times_avg, times_yerr, "GP Training Time", gflags.FLAGS.log_folder + '../figs/TIME' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/../figs/TIME' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
           
-def create_test_set_from_signal_data(all_signal_data):
-    XTest = []
-    YTest = []
-    for d in all_signal_data:
-        XTest.append((d.my_pos.pose.position.x, d.my_pos.pose.position.y, d.teammate_pos.pose.position.x,
-                      d.teammate_pos.pose.position.x))
-        YTest.append(d.signal_strength)
-    return XTest, YTest
-    
-
 def read_environment(environment_yaml_path):
     """Read environment yaml file to get the figure and the resolution.
 
@@ -493,9 +477,9 @@ def evaluate(pr, d_list, tot_proc, env, num_robots, num_runs, is_simulation,
     according to run, environment, robot.
 
     Args:
-        pr (int): number of processes
-        d_list (dict): shared between processes
-        tot_proc (int): total number of created processes
+        pr (int): number of the process.
+        d_list (dict): shared dictionary between processes.
+        tot_proc (int): total number of created processes.
         env (str): name of environment used for saving data.
         num_robots (int): number of robots.
         num_runs (int): number of repeated experiments.
@@ -506,8 +490,8 @@ def evaluate(pr, d_list, tot_proc, env, num_robots, num_runs, is_simulation,
         mission_duration (int): seconds for total mission.
         plot_comm_map (bool): If True, plot communication map.
         fixed_robot (tuple of float): x,y of robot in meters.
-        filter (bool): If True, consider ony information found by Carlo algorithm
-        test_set_size (int): number of samples in the test set
+        filter (bool): If True, consider ony information found by Carlo algorithm.
+        test_set_size (int): number of samples in the test set.
         log_folder (str): folder where logs are saved.
 
     """
@@ -517,7 +501,7 @@ def evaluate(pr, d_list, tot_proc, env, num_robots, num_runs, is_simulation,
     comm_model = CommModel(comm_model_path)
 
     # Reading environment image.
-    environment_yaml_path = log_folder + '../envs/' + env + '.yaml'
+    environment_yaml_path = os.getcwd() + '/../envs/' + env + '.yaml'
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
@@ -528,7 +512,6 @@ def evaluate(pr, d_list, tot_proc, env, num_robots, num_runs, is_simulation,
         random.seed(0)
         np.random.seed(0)
         dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
-
 
     runs = range(num_runs)
     for proc in range(tot_proc):
@@ -580,10 +563,10 @@ def evaluate(pr, d_list, tot_proc, env, num_robots, num_runs, is_simulation,
             if plot_comm_map:
                 print "number of data", len(cur_signal_data)
                 communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
-                communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
+                communication_map_figure_filename = os.getcwd() + '/../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
                 communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
                 if len(communication_figures) > 1:
-                    communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
+                    communication_map_figure_filename = os.getcwd() + '/../figs/COMM_MAP' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
                     communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
 
             plt.close('all')
@@ -613,7 +596,7 @@ if __name__ == '__main__':
         mgr = Manager()
         dict_list = mgr.list() #shared dictionary between processes that will contain errors, variances_all and times_all
 
-        for i in range (3):
+        for i in range(3):
             dict_list.append({})
             dict_list[i] = mgr.dict()
 
@@ -644,18 +627,18 @@ if __name__ == '__main__':
         for p in procs:
             p.join()
 
-        fd = open(gflags.FLAGS.log_folder + str(gflags.FLAGS.num_robots) + '_' +
-                 gflags.FLAGS.environment + '_' +
-                 str(int(CommModel(gflags.FLAGS.communication_model_path).COMM_RANGE)) + '.dat',
-                 "wb")
-
         errors_tot = dict_list[0]
         variances_tot = dict_list[1]
         times_tot = dict_list[2]
 
-        print errors_tot
-        print variances_tot
-        print times_tot
+        # print errors_tot
+        # print variances_tot
+        # print times_tot
+
+        fd = open(gflags.FLAGS.log_folder + str(gflags.FLAGS.num_robots) + '_' +
+                  gflags.FLAGS.environment + '_' +
+                  str(int(CommModel(gflags.FLAGS.communication_model_path).COMM_RANGE)) + '.dat',
+                  "wb")
 
         pickle.dump((errors_tot, variances_tot, times_tot), fd)
         fd.close()
