@@ -3,6 +3,7 @@
 import sys
 import random
 import numpy as np
+import os
 
 coord = []
 robot_moving = []
@@ -158,26 +159,34 @@ plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robo
 
 #print plan_id
 
-filename = '/home/andrea/Desktop/parser/0_offices_0_4_50.dat'
+filename = '/home/andrea/Desktop/parser/0_offices_0_2_50.dat'
 carlo = True
 f = open(filename, "r")
 lines = f.readlines()
-prev_time = 0
 count = 0
+
 for line in lines:
     s = line.split()
     if (carlo and s[-1] == 'C') or (not carlo):
-        count += 1
-        print s
+        #print s
+        count +=1
 
-print count
+print os.getcwd()
 
-num_runs = 5
-proc = 3
-runs = range(num_runs)
+os.chdir('/home/andrea/catkin_ws/src/strategy/')
 
-for p in range(proc):
-    runs = np.array_split(runs, 3)[p]
+print os.getcwd()
+
+log_dir = os.getcwd() + '/log/'
+
+print log_dir
+
+#num_runs = 5
+#proc = 3
+#runs = range(num_runs)
+
+#for p in range(proc):
+#    runs = np.array_split(runs, 3)[p]
     #print run
 
 

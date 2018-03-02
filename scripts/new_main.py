@@ -7,7 +7,6 @@ import pickle
 import random
 import sys
 import threading
-from collections import OrderedDict
 
 import rospy
 import tf
@@ -18,7 +17,7 @@ from geometry_msgs.msg import Point, Twist, Vector3, PoseWithCovarianceStamped, 
 from sensor_msgs.msg import LaserScan
 from nav_msgs.msg import Path, Odometry
 from std_srvs.srv import Empty
-from std_msgs.msg import Float32, Bool, Int8, Int32
+from std_msgs.msg import Float32, Bool, Int8, Float32
 
 import communication
 from environment import Environment
@@ -42,7 +41,8 @@ MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 #first random, max_var offices had 2
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 500
+MAX_NUM_ERRORS = 200
+MAX_FIXING_TIME = 150
 PATH_DISC = 1 #m
 
 
@@ -90,7 +90,7 @@ class GenericRobot(object):
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
-        rospy.Timer(rospy.Duration(10), self.strength_callback)
+        rospy.Timer(rospy.Duration(10), self.strength_logger_callback)
 
         # recovery
         self.last_feedback_pose = None
@@ -123,13 +123,12 @@ class GenericRobot(object):
 
         #stuff for navigation
         self.plans = []
-        self.arrived_final_dest = False
         self.starting_poses = True
         self.fixed_wall_poses = []
         self.problematic_poses = []
         self.alone = False
 
-        self.robot_dict = dict() #or OrderedDict() if you want the keys ordered as written below
+        self.robot_dict = dict()
 
         for i in xrange(n_robots): #every robot has its own dict with all important information
             self.robot_dict[i] = dict([('id', self.robot_id), ('arrived_nominal_dest', False),
@@ -147,7 +146,7 @@ class GenericRobot(object):
         self.pub_arrived = rospy.Publisher('expl_arrived', Bool, queue_size=10)
 
         # timestep publisher for synchronizing the exploration
-        self.pub_timestep = rospy.Publisher('expl_timestep', Int32, queue_size=10)
+        self.pub_timestep = rospy.Publisher('expl_timestep', Float32, queue_size=10)
 
         # teammate's teammate for synchronizing the exploration team
         self.pub_teammate = rospy.Publisher('expl_teammate', Int8, queue_size=10)
@@ -164,44 +163,34 @@ class GenericRobot(object):
         #subscription to all useful topics
         for i in xrange(n_robots):
             if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['arrived_nominal_dest'] = msg.data"
-            exec s
-            exec ("setattr(GenericRobot, 'arrived_teammate" + str(i) + "', a_" + str(i) + ")")
+            r = "def g_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['arrived_nominal_dest'] = msg.data"
+            exec r
+            exec ("setattr(GenericRobot, 'arrived_teammate" + str(i) + "', g_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_arrived', Bool, self.arrived_teammate" + str(i) + ", queue_size = 100)")
 
-        for i in xrange(n_robots):
-            if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['timestep'] = msg.data"
-            exec s
-            exec ("setattr(GenericRobot, 'timestep_teammate" + str(i) + "', a_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_timestep', Int32, self.timestep_teammate" + str(i) + ", queue_size = 100)")
+            w = "def b_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['timestep'] = msg.data"
+            exec w
+            exec ("setattr(GenericRobot, 'timestep_teammate" + str(i) + "', b_" + str(i) + ")")
+            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_timestep', Float32, self.timestep_teammate" + str(i) + ", queue_size = 100)")
 
-        for i in xrange(n_robots):
-            if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['teammate'] = msg.data"
-            exec s
-            exec ("setattr(GenericRobot, 'teammate_teammate" + str(i) + "', a_" + str(i) + ")")
+            t = "def c_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['teammate'] = msg.data"
+            exec t
+            exec ("setattr(GenericRobot, 'teammate_teammate" + str(i) + "', c_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_teammate', Int8, self.teammate_teammate" + str(i) + ", queue_size = 100)")
 
-        for i in xrange(n_robots):
-            if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['id'] = msg.data"
-            exec s
-            exec ("setattr(GenericRobot, 'id_teammate" + str(i) + "', a_" + str(i) + ")")
+            u = "def d_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['id'] = msg.data"
+            exec u
+            exec ("setattr(GenericRobot, 'id_teammate" + str(i) + "', d_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_id', Int8, self.id_teammate" + str(i) + ", queue_size = 100)")
 
-        for i in xrange(n_robots):
-            if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['execute_plan_state'] = msg.data"
-            exec s
-            exec ("setattr(GenericRobot, 'plan_states_teammate" + str(i) + "', a_" + str(i) + ")")
+            v = "def e_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['execute_plan_state'] = msg.data"
+            exec v
+            exec ("setattr(GenericRobot, 'plan_states_teammate" + str(i) + "', e_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_plan_state', Int8, self.plan_states_teammate" + str(i) + ", queue_size = 100)")
 
-        for i in xrange(n_robots):
-            if i == robot_id: continue
-            s = "def a_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['got_signal'] = msg.data"
-            exec s
-            exec ("setattr(GenericRobot, 'got_signal_teammate" + str(i) + "', a_" + str(i) + ")")
+            z = "def f_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['got_signal'] = msg.data"
+            exec z
+            exec ("setattr(GenericRobot, 'got_signal_teammate" + str(i) + "', f_" + str(i) + ")")
             exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_got_signal', Bool, self.got_signal_teammate" + str(i) + ", queue_size = 100)")
 
     def tf_callback(self, event):
@@ -233,7 +222,7 @@ class GenericRobot(object):
     def publish_stuff(self):
         self.pub_arrived.publish(Bool(self.myself['arrived_nominal_dest']))
         self.pub_teammate.publish(Int8(self.myself['teammate']))
-        self.pub_timestep.publish(Int32(self.myself['timestep']))
+        self.pub_timestep.publish(Float32(self.myself['timestep']))
         self.pub_id.publish(Int8(self.myself['id']))
 
     def scan_callback(self, scan):
@@ -251,10 +240,10 @@ class GenericRobot(object):
                     mode = 'a' if os.path.exists(self.errors_filename) else 'w'
                     f = open(self.errors_filename, mode)
                     f.write(str(self.seed) + "--->" + self.map_filename + "--->" +
-                            str(self.n_robots) + "--->" + self.strategy_error_log + "\n")
+                            str(self.n_robots) + "\n")
                     f.close()
                     if self.sim:
-                        rospy.loginfo(str(self.robot_id) + ' - Mission aborted, errors: ' + str(self.error_count))
+                        rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too many errors.')
                         os.system("pkill -f ros")
                     else:
                         self.client_motion.cancel_goal()
@@ -314,26 +303,27 @@ class GenericRobot(object):
             rospy.loginfo("Sending shutdown...")
             os.system("pkill -f ros")
 
-    def strength_callback(self, event):
+    def strength_logger_callback(self, event):
         for robot in range(n_robots):
-            try:
-                if robot!= self.robot_id and self.comm_module.can_communicate(robot):
+            if robot!= self.robot_id and self.comm_module.can_communicate(robot):
+                new_data = SignalData()
+                new_data.signal_strength = self.comm_module.get_signal_strength(robot, safe = False)
+                new_data.my_pos.pose.position.x = self.robots_pos[self.robot_id][0]
+                new_data.my_pos.pose.position.y = self.robots_pos[self.robot_id][1]
+                new_data.teammate_pos.pose.position.x = self.robots_pos[robot][0]
+                new_data.teammate_pos.pose.position.y = self.robots_pos[robot][1]
+                new_data.timestep = int((rospy.Time.now() - self.mission_start_time).secs)
 
-                    strength = self.comm_module.get_signal_strength(robot, safe=False)
+                f = open(self.comm_dataset_filename, "a")
+                f.write(str(new_data.timestep) +
+                        ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
+                        ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
+                        ' ' + str(new_data.signal_strength) + '\n')
+                f.close()
 
-                    f = open(self.comm_dataset_filename, "a")
-                    f.write(str((rospy.Time.now() - self.mission_start_time).secs) +
-                            ' ' + str(self.robots_pos[self.robot_id][0]) + ' ' + str(self.robots_pos[self.robot_id][1]) +
-                            ' ' + str(self.robots_pos[robot][0]) + ' ' + str(self.robots_pos[robot][1]) +
-                            ' ' + str(strength) + '\n')
-                    f.close()
-
-            except Exception as e:
-                pass
-
-            if (rospy.Time.now() - self.mission_start_time) >= self.duration:
-                rospy.loginfo("Sending shutdown...")
-                os.system("pkill -f ros")
+        if (rospy.Time.now() - self.mission_start_time) >= self.duration:
+            rospy.loginfo("Sending shutdown...")
+            os.system("pkill -f ros")
 
     def go_to_pose(self, pos):
         if self.starting_poses:
@@ -344,11 +334,12 @@ class GenericRobot(object):
             rospy.loginfo(str(self.robot_id) + ' - moving to ' + str(pos))
 
         success = False
-        fixing_pose = False
         old_pos = pos
-        round = 0
-        count = 0
         i = 1
+        round = 0
+        fixing_count = 0
+        fixing_pose = False
+        pose_start_time = rospy.Time.now()
 
         while not success:
             goal = MoveBaseGoal()
@@ -381,45 +372,41 @@ class GenericRobot(object):
                     rospy.loginfo(str(self.robot_id) + ' - preempted, using recovery')
 
                 if round < 4:
-                    if pos not in self.problematic_poses:
-                        self.problematic_poses.append(pos)
-                        #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
-                    else:
-                        if self.fixed_wall_poses:
-                            for pose in self.fixed_wall_poses:
-                                pos = list(pos)
-                                if (((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] + i))) and
-                                     ((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] + i)))):
-
-                                    rospy.loginfo(str(self.robot_id) + ' - moving to the fixed position found before: ' + str(pose))
-                                    pos[0] = pose[0]
-                                    pos[1] = pose[1]
-                                pos = tuple(pos)
+                    if not fixing_pose:
+                        if pos not in self.problematic_poses:
+                            self.problematic_poses.append(pos)
+                            #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
+                        else:
+                            if self.fixed_wall_poses:
+                                for pose in self.fixed_wall_poses:
+                                    pos = list(pos)
+                                    if (((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] + i))) and
+                                         ((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] + i)))):
+                                        rospy.loginfo(str(self.robot_id) +
+                                                      ' - moving to the fixed position found before: ' + str(pose))
+                                        pos[0] = pose[0]
+                                        pos[1] = pose[1]
+                                    pos = tuple(pos)
 
                 else:
                     fixing_pose = True
 
-                    #choosing the increment and the upgrade
-                    if count == 0:
+                    if fixing_count == 0:
                         rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
-
                         if pos in self.fixed_wall_poses:
                             self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
                             #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
-
                     # fixing the position
                     pos = old_pos
                     pos = list(pos)
                     update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i]}
                     random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
-
                     pos[0] = pos[0] + update[random_update][0]
                     pos[1] = pos[1] + update[random_update][1]
-
                     pos = tuple(pos)
                     rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
-                    #self.error_count += 1
-                    count = 1
+                    fixing_count = 1
+                    round = 0
 
                 self.clear_costmap_service()
                 self.motion_recovery()
@@ -427,8 +414,17 @@ class GenericRobot(object):
 
                 round += 1
                 success = False
+
+                if (rospy.Time.now() - pose_start_time) > rospy.Duration(MAX_FIXING_TIME):
+                    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
+                    f = open(self.errors_filename, mode)
+                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" +
+                            str(self.n_robots) + "\n")
+                    f.close()
+                    rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too much time to go to pose.')
+                    os.system("pkill -f ros")
             elif state == GoalStatus.ABORTED:
-                rospy.logerr(str(self.robot_id) + " motion aborted by the server!!! Trying recovering")
+                rospy.logerr(str(self.robot_id) + " - motion aborted by the server!!! Trying to recover")
                 self.clear_costmap_service()
                 self.motion_recovery()
                 self.clear_costmap_service()
@@ -445,7 +441,7 @@ class GenericRobot(object):
                 if not self.starting_poses: #I set my communication teammate and timestep
                     if self.is_leader:
                         self.myself['teammate'] = plan[1]
-                        self.myself['timestep'] = int(plan[2])
+                        self.myself['timestep'] = float(plan[2])
                     else:
                         self.myself['teammate'] = plan.comm_robot_id
                         self.myself['timestep'] = plan.timestep
@@ -484,34 +480,39 @@ class GenericRobot(object):
                 rospy.sleep(rospy.Duration(0.1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.myself['teammate']))
-        strength = self.comm_module.get_signal_strength(self.myself['teammate'], safe = False)
+        new_data = SignalData()
+        new_data.signal_strength = self.comm_module.get_signal_strength(self.myself['teammate'], safe = False)
+        new_data.my_pos.pose.position.x = self.robots_pos[self.robot_id][0]
+        new_data.my_pos.pose.position.y = self.robots_pos[self.robot_id][1]
+        new_data.teammate_pos.pose.position.x = self.robots_pos[self.myself['teammate']][0]
+        new_data.teammate_pos.pose.position.y = self.robots_pos[self.myself['teammate']][1]
+        new_data.timestep = int((rospy.Time.now() - self.mission_start_time).secs)
+
         self.myself['got_signal'] = True
         self.pub_got_signal.publish(Bool(self.myself['got_signal']))
 
         success = False
-
         while not success:
             if my_teammate['got_signal']:
                 success = True
 
         f = open(self.comm_dataset_filename, "a")
-        f.write(str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.robots_pos[self.robot_id][0]) +
-                ' ' + str(self.robots_pos[self.robot_id][1]) + ' ' + str(self.robots_pos[self.myself['teammate']][0]) +
-                ' ' + str(self.robots_pos[self.myself['teammate']][1]) + ' ' + str(strength) +
+        f.write(str(new_data.timestep) + ' ' + str(new_data.my_pos.pose.position.x) +
+                ' ' + str(new_data.my_pos.pose.position.y) + ' ' + str(new_data.teammate_pos.pose.position.x) +
+                ' ' + str(new_data.teammate_pos.pose.position.y) + ' ' + str(new_data.signal_strength) +
                 ' C\n') #the last C is a flag for strengths found with Carlo algorithm
         f.close()
 
-        rospy.sleep(rospy.Duration(0.15))
+        rospy.sleep(rospy.Duration(0.2))
 
     def end_exploration(self):
         rospy.loginfo(str(self.robot_id) + ' - Arrived at final destination.')
-        #rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count))
-
-        all_arrived = False
+        rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count))
 
         if not self.is_leader:
             self.pub_plan_state.publish(Int8(self.myself['execute_plan_state']))
 
+        all_arrived = False
         while not all_arrived:
             if not self.is_leader:
                 rospy.sleep(rospy.Duration(2))
@@ -521,7 +522,7 @@ class GenericRobot(object):
 
         if self.is_leader:
             rospy.loginfo(str(self.robot_id) + ' - All robots have arrived at final destinations. Sending shutdown.')
-            print("--- MISSION DURATION: %s seconds ---" % (rospy.Time.now() - self.mission_start_time))
+            #print("--- MISSION DURATION: %s seconds ---" % (rospy.Time.now() - self.mission_start_time))
             os.system("pkill -f ros")
             rospy.sleep(rospy.Duration(2))
 
@@ -775,7 +776,7 @@ class Leader(GenericRobot):
                         plan_follower.comm_robot_id = plan[1]
 
                         #timestep
-                        plan_follower.timestep = Int32
+                        plan_follower.timestep = Float32
                         plan_follower.timestep = plan[2]
 
                         plans_follower.append(plan_follower)

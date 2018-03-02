@@ -58,7 +58,7 @@ gflags.DEFINE_string("environment", "offices",
     "(it opens the yaml file to read resolution and image)."))
 gflags.DEFINE_integer("num_robots", 2,
     "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 5,
+gflags.DEFINE_integer("num_runs", 1,
     "Number of repetitions for an experiment.")
 
 gflags.DEFINE_bool("is_simulation", True,
@@ -70,23 +70,23 @@ gflags.DEFINE_integer("test_set_size", 10000,
 
 #MUST BE COHERENT!!!
 # Parameters for communication model.
-gflags.DEFINE_string("communication_model_path", "../data/comm_model_50.xml",
+gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
 gflags.DEFINE_integer("granularity", 300,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 1801,
+gflags.DEFINE_integer("mission_duration", 6010,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
-gflags.DEFINE_bool("plot_communication_map", True,
+gflags.DEFINE_bool("plot_communication_map", False,
     "If True, plot and save communication map in figure.")
 gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")
 gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 
 #Parameter for parsing
-gflags.DEFINE_bool("filter_dat", False,
+gflags.DEFINE_bool("filter_dat", True,
     "If True, in dat files consider only information found by Carlo algorithm")
 
 gflags.DEFINE_string("task", "evaluate",
@@ -190,7 +190,9 @@ def parse_dataset(filename, filter):
     prev_time = 0
     for line in lines:
         s = line.split()
-        if (filter and s[-1] == 'C') or not filter:
+        #if (filter and s[-1] == 'C') or not filter:
+        if (filter and s[-1] == 'C') or (not filter):# and s[-1] != 'C'):
+            #print s
             if len(dataset) > 0:
                 prev_time = dataset[-1].timestep
             if (float(s[0]) - prev_time) > 1.0: # TODO parameter.
@@ -452,14 +454,14 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
         times_avg.append(cur_times_avg)
         times_yerr.append(np.std(cur_times_values))
 
-    plot_values(x, rmse_avg, rmse_yerr, "RMSE", gflags.FLAGS.log_folder + '../figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", gflags.FLAGS.log_folder + '../figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rmse_avg, rmse_yerr, "RMSE", os.getcwd() + '/figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", os.getcwd() + '/figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", gflags.FLAGS.log_folder + '../figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, var_avg, var_yerr, "Pred. Variance", gflags.FLAGS.log_folder + '../figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", gflags.FLAGS.log_folder + '../figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", os.getcwd() + '/figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, var_avg, var_yerr, "Pred. Variance", os.getcwd() + '/figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, times_avg, times_yerr, "GP Training Time", gflags.FLAGS.log_folder + '../figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
           
 def create_test_set_from_signal_data(all_signal_data):
     XTest = []
@@ -497,7 +499,7 @@ def read_environment(environment_yaml_path):
 
 def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model_path, granularity, mission_duration,
-    plot_comm_map, fixed_robot, filter_dat, test_set_size, log_folder):
+    plot_comm_map, fixed_robot, filter, test_set_size, log_folder):
     """Create pickle files containing data to be plotted.
 
     It processes the dat files containing the collected data from the robots.
@@ -515,7 +517,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         mission_duration (int): seconds for total mission.
         plot_comm_map (bool): If True, plot communication map.
         fixed_robot (tuple of float): x,y of robot in meters.
-        filter_dat (bool): If True, consider ony information found by Carlo algorithm
+        filter (bool): If True, consider ony information found by Carlo algorithm
         test_set_size (int): number of samples in the test set
         log_folder (str): folder where logs are saved.
     """
@@ -526,13 +528,13 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model = CommModel(comm_model_path)
 
     # Reading environment image.
-    environment_yaml_path = log_folder + '../envs/' + environment + '.yaml'
+    environment_yaml_path = os.getcwd() + '/envs/' + environment + '.yaml'
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
 
     #parsing filter
-    filter = gflags.FLAGS.filter_dat
+    #filter = gflags.FLAGS.filter_dat
     
     # Generation of test set.
     if is_simulation:
@@ -587,11 +589,12 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             if plot_comm_map:
                 print "number of data", len(cur_signal_data)
                 communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
-                communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
+                communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
                 communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
                 if len(communication_figures) > 1:
-                    communication_map_figure_filename = log_folder + '../figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
+                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + '.png'
                     communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
+
             print errors
             print variances_all
             print times_all
@@ -603,12 +606,14 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     f.close()
 
 if __name__ == '__main__':
+
+    os.chdir("/home/andrea/catkin_ws/src/strategy/")
+
     # Parsing of gflags.
     try:
         sys.argv = gflags.FLAGS(sys.argv)  # parse flags
     except gflags.FlagsError, e:
-        print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0],
-            gflags.FLAGS)
+        print '%s\\nUsage: %s ARGS\\n%s' % (e, sys.argv[0],gflags.FLAGS)
         sys.exit(1)
     if gflags.FLAGS.task == 'evaluate':
         evaluate(gflags.FLAGS.environment, gflags.FLAGS.num_robots,
