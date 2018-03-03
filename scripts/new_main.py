@@ -41,8 +41,9 @@ MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 #first random, max_var offices had 2
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 200
-MAX_FIXING_TIME = 150
+MAX_NUM_ERRORS = 500
+MAX_FIXING_TIME = 110
+BEGIN_TIME = 300
 PATH_DISC = 1 #m
 
 
@@ -371,7 +372,7 @@ class GenericRobot(object):
                 if round == 0:
                     rospy.loginfo(str(self.robot_id) + ' - preempted, using recovery')
 
-                if round < 4:
+                if round < 5:
                     if not fixing_pose:
                         if pos not in self.problematic_poses:
                             self.problematic_poses.append(pos)
@@ -415,7 +416,8 @@ class GenericRobot(object):
                 round += 1
                 success = False
 
-                if (rospy.Time.now() - pose_start_time) > rospy.Duration(MAX_FIXING_TIME):
+                if (rospy.Time.now() - self.mission_start_time) < rospy.Duration(BEGIN_TIME) and \
+                        (rospy.Time.now() - pose_start_time) > rospy.Duration(MAX_FIXING_TIME):
                     mode = 'a' if os.path.exists(self.errors_filename) else 'w'
                     f = open(self.errors_filename, mode)
                     f.write(str(self.seed) + "--->" + self.map_filename + "--->" +

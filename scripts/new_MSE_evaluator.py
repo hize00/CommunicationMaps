@@ -75,9 +75,9 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 500,
+gflags.DEFINE_integer("granularity", 400,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 3270,
+gflags.DEFINE_integer("mission_duration", 3272,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -214,8 +214,7 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
         comm_map (GPy.model): Gaussian Process model trained.
         dimX (float): X dimension in meters.
         dimY (float): Y dimension in meters.
-        comm_model: data structure containing parameters for
-            communication model.
+        comm_model: data structure containing parameters for communication model.
         resize_factor (float): cell size in meter.
         plot_variance (bool): seconds for total mission.
         all_signal_data (list): List of signal readings.
@@ -307,6 +306,7 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
             Y.append(d.my_pos.pose.position.y/resize_factor)
             Z.append(d.signal_strength)
 
+    print Z
     return X, Y, Z
 
 def plot_values(x_vals, y, yerr, ylabel, filename):
@@ -315,13 +315,10 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     for key in plot_format.keys():
         plt.errorbar(x_vals, y, yerr, fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
 
-    #print x_vals
-    #print y
-    #print yerr
-
     loc_legend = 2 if "TIME" in filename else 1
     plt.legend(fontsize=20,loc=loc_legend)
     plt.xlim(x_vals[0]-0.5, x_vals[-1] + 0.5)
+
     plt.ylabel(ylabel, fontsize=22)
     #if(not('Var' in ylabel) and ):
     #plt.ylim(0,50)
