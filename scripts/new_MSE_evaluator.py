@@ -59,7 +59,7 @@ gflags.DEFINE_string("environment", "offices",
     "(it opens the yaml file to read resolution and image)."))
 gflags.DEFINE_integer("num_robots", 2,
     "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 1,
+gflags.DEFINE_integer("num_runs", 5,
     "Number of repetitions for an experiment.")
 
 gflags.DEFINE_bool("is_simulation", True,
@@ -75,9 +75,9 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 400,
+gflags.DEFINE_integer("granularity", 1000,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 3272,
+gflags.DEFINE_integer("mission_duration", 7130,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -101,8 +101,7 @@ plot_format = {'graph': ['b--s', 'AC']}
 
 FONTSIZE = 16
 
-def create_test_set(im_array, comm_model, test_set_size, 
-    resize_factor=0.1):
+def create_test_set(im_array, comm_model, test_set_size, resize_factor=0.1):
     def all_free(ii, jj, I, J, border=None):
         if(im_array[ii][jj] == 0): return False
 
@@ -148,7 +147,7 @@ def create_test_set(im_array, comm_model, test_set_size,
             j2 = int(x2/resize_factor)
             if i2 >= I or j2 >= J : continue
             if all_free(i2,j2,I,J, environment.WALL_DIST):
-                break        
+                break
 
         num_obstacles = numObstaclesBetweenRobots(im_array, I, (x1,y1), (x2,y2), resize_factor)
         signal_strength = (comm_model.REF_SIGNAL
@@ -306,7 +305,6 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
             Y.append(d.my_pos.pose.position.y/resize_factor)
             Z.append(d.signal_strength)
 
-    print Z
     return X, Y, Z
 
 def plot_values(x_vals, y, yerr, ylabel, filename):
@@ -523,7 +521,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
     times_all = {}
 
     for run in runs:
-        print 'Run: ' + str(run)
+        #print 'Run: ' + str(run)
 
         all_signal_data = []
 
@@ -559,7 +557,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
             times_all[run].append(end-start)
 
             if plot_comm_map:
-                print "number of data", len(cur_signal_data)
+                print "Run: " + str(run) + " - number of data", len(cur_signal_data)
                 communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY, comm_model, resolution, True, cur_signal_data)
                 communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + str(run) + '_' + str(secs) + '.png'
                 communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')

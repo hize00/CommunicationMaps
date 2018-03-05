@@ -41,8 +41,8 @@ MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 #first random, max_var offices had 2
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 500
-MAX_FIXING_TIME = 110
+MAX_NUM_ERRORS = 250
+MAX_FIXING_TIME = 220
 BEGIN_TIME = 300
 PATH_DISC = 1 #m
 
@@ -100,6 +100,7 @@ class GenericRobot(object):
         self.pub_motion_rec = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
+        self.pose_start_time = None
 
         #estimated position
         self.listener = tf.TransformListener()
@@ -219,6 +220,7 @@ class GenericRobot(object):
         self.myself['got_signal'] = False
         self.last_feedback_pose = None
         self.last_motion_time = None
+        self.pose_start_time = None
 
     def publish_stuff(self):
         self.pub_arrived.publish(Bool(self.myself['arrived_nominal_dest']))
@@ -262,6 +264,18 @@ class GenericRobot(object):
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
 
+        if ((rospy.Time.now() - self.mission_start_time) <= rospy.Duration(BEGIN_TIME) and
+            (rospy.Time.now() - self.pose_start_time) > rospy.Duration(MAX_FIXING_TIME / 2)) or \
+                (rospy.Time.now() - self.pose_start_time) > rospy.Duration(MAX_FIXING_TIME):
+            mode = 'a' if os.path.exists(self.errors_filename) else 'w'
+            f = open(self.errors_filename, mode)
+            f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " +
+                    str(self.n_robots) + " MST ---> " + str(int((rospy.Time.now() - self.mission_start_time).secs)) +
+                    "\n")
+            f.close()
+            rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too much time to go to pose.')
+            os.system("pkill -f ros")
+
     def bump_fwd(self):
         for i in range(10):
             msg = Twist(Vector3(0.7, 0, 0), Vector3(0, 0, 0))
@@ -295,6 +309,23 @@ class GenericRobot(object):
             rospy.sleep(rospy.Duration(0.2))
             self.clear_costmap_service()
 
+    def new_data_writer(self, timestep, x, y, other_x, other_y, strength, c_alg):
+        new_data = SignalData()
+        new_data.signal_strength = strength
+        new_data.my_pos.pose.position.x = x
+        new_data.my_pos.pose.position.y = y
+        new_data.teammate_pos.pose.position.x = other_x
+        new_data.teammate_pos.pose.position.y = other_y
+        new_data.timestep = timestep
+
+        f = open(self.comm_dataset_filename, "a")
+        f.write(str(new_data.timestep) +
+                ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
+                ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
+                ' ' + str(new_data.signal_strength) + (' C\n' if c_alg else '\n'))
+        f.close()
+        
+
     def distance_logger_callback(self, event):
         f = open(self.log_filename, "a")
         f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
@@ -307,20 +338,10 @@ class GenericRobot(object):
     def strength_logger_callback(self, event):
         for robot in range(n_robots):
             if robot!= self.robot_id and self.comm_module.can_communicate(robot):
-                new_data = SignalData()
-                new_data.signal_strength = self.comm_module.get_signal_strength(robot, safe = False)
-                new_data.my_pos.pose.position.x = self.robots_pos[self.robot_id][0]
-                new_data.my_pos.pose.position.y = self.robots_pos[self.robot_id][1]
-                new_data.teammate_pos.pose.position.x = self.robots_pos[robot][0]
-                new_data.teammate_pos.pose.position.y = self.robots_pos[robot][1]
-                new_data.timestep = int((rospy.Time.now() - self.mission_start_time).secs)
-
-                f = open(self.comm_dataset_filename, "a")
-                f.write(str(new_data.timestep) +
-                        ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
-                        ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
-                        ' ' + str(new_data.signal_strength) + '\n')
-                f.close()
+                self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
+                                     self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
+                                     self.robots_pos[robot][0], self.robots_pos[robot][1],
+                                     self.comm_module.get_signal_strength(robot, safe = False), False)
 
         if (rospy.Time.now() - self.mission_start_time) >= self.duration:
             rospy.loginfo("Sending shutdown...")
@@ -336,11 +357,12 @@ class GenericRobot(object):
 
         success = False
         old_pos = pos
+        already_found = False
         i = 1
         round = 0
-        fixing_count = 0
+        already_tried = False
         fixing_pose = False
-        pose_start_time = rospy.Time.now()
+        self.pose_start_time = rospy.Time.now()
 
         while not success:
             goal = MoveBaseGoal()
@@ -372,42 +394,49 @@ class GenericRobot(object):
                 if round == 0:
                     rospy.loginfo(str(self.robot_id) + ' - preempted, using recovery')
 
-                if round < 5:
-                    if not fixing_pose:
-                        if pos not in self.problematic_poses:
-                            self.problematic_poses.append(pos)
-                            #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
+                    if pos not in self.problematic_poses:
+                        self.problematic_poses.append(pos)
+                        #rospy.loginfo(str(self.robot_id) + ' - added position to problematic points')
+                    else:
+                        for pose in self.fixed_wall_poses:
+                            pos = list(pos)
+                            if (((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] + i))) and
+                                 ((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] + i)))):
+                                rospy.loginfo(str(self.robot_id) +
+                                              ' - moving to the fixed position found before: ' + str(pose))
+                                pos[0] = pose[0]
+                                pos[1] = pose[1]
+                            pos = tuple(pos)
+                            already_found = True
+                            round = 0
+
+                if round >= 4:
+                    if not already_found:
+                        fixing_pose = True
+
+                        if not already_tried:
+                            rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
+                            if pos in self.fixed_wall_poses:
+                                self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
+                                #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
+
+                        # fixing the position
+                        pos = old_pos
+                        pos = list(pos)
+                        update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i]}
+                        random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
+                        pos[0] = pos[0] + update[random_update][0]
+                        pos[1] = pos[1] + update[random_update][1]
+                        pos = tuple(pos)
+                        rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
+                        already_tried = True
+                        round = 1
+                    else:
+                        if round == 10:
+                            already_found = False
+                            round = 4
                         else:
-                            if self.fixed_wall_poses:
-                                for pose in self.fixed_wall_poses:
-                                    pos = list(pos)
-                                    if (((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] + i))) and
-                                         ((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] + i)))):
-                                        rospy.loginfo(str(self.robot_id) +
-                                                      ' - moving to the fixed position found before: ' + str(pose))
-                                        pos[0] = pose[0]
-                                        pos[1] = pose[1]
-                                    pos = tuple(pos)
-
-                else:
-                    fixing_pose = True
-
-                    if fixing_count == 0:
-                        rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
-                        if pos in self.fixed_wall_poses:
-                            self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
-                            #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
-                    # fixing the position
-                    pos = old_pos
-                    pos = list(pos)
-                    update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i]}
-                    random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
-                    pos[0] = pos[0] + update[random_update][0]
-                    pos[1] = pos[1] + update[random_update][1]
-                    pos = tuple(pos)
-                    rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
-                    fixing_count = 1
-                    round = 0
+                            pass
 
                 self.clear_costmap_service()
                 self.motion_recovery()
@@ -415,16 +444,6 @@ class GenericRobot(object):
 
                 round += 1
                 success = False
-
-                if (rospy.Time.now() - self.mission_start_time) < rospy.Duration(BEGIN_TIME) and \
-                        (rospy.Time.now() - pose_start_time) > rospy.Duration(MAX_FIXING_TIME):
-                    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
-                    f = open(self.errors_filename, mode)
-                    f.write(str(self.seed) + "--->" + self.map_filename + "--->" +
-                            str(self.n_robots) + "\n")
-                    f.close()
-                    rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too much time to go to pose.')
-                    os.system("pkill -f ros")
             elif state == GoalStatus.ABORTED:
                 rospy.logerr(str(self.robot_id) + " - motion aborted by the server!!! Trying to recover")
                 self.clear_costmap_service()
@@ -482,13 +501,11 @@ class GenericRobot(object):
                 rospy.sleep(rospy.Duration(0.1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.myself['teammate']))
-        new_data = SignalData()
-        new_data.signal_strength = self.comm_module.get_signal_strength(self.myself['teammate'], safe = False)
-        new_data.my_pos.pose.position.x = self.robots_pos[self.robot_id][0]
-        new_data.my_pos.pose.position.y = self.robots_pos[self.robot_id][1]
-        new_data.teammate_pos.pose.position.x = self.robots_pos[self.myself['teammate']][0]
-        new_data.teammate_pos.pose.position.y = self.robots_pos[self.myself['teammate']][1]
-        new_data.timestep = int((rospy.Time.now() - self.mission_start_time).secs)
+
+        self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
+                             self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
+                             self.robots_pos[self.myself['teammate']][0], self.robots_pos[self.myself['teammate']][1],
+                             self.comm_module.get_signal_strength(self.myself['teammate'], safe = False), True)
 
         self.myself['got_signal'] = True
         self.pub_got_signal.publish(Bool(self.myself['got_signal']))
@@ -497,13 +514,6 @@ class GenericRobot(object):
         while not success:
             if my_teammate['got_signal']:
                 success = True
-
-        f = open(self.comm_dataset_filename, "a")
-        f.write(str(new_data.timestep) + ' ' + str(new_data.my_pos.pose.position.x) +
-                ' ' + str(new_data.my_pos.pose.position.y) + ' ' + str(new_data.teammate_pos.pose.position.x) +
-                ' ' + str(new_data.teammate_pos.pose.position.y) + ' ' + str(new_data.signal_strength) +
-                ' C\n') #the last C is a flag for strengths found with Carlo algorithm
-        f.close()
 
         rospy.sleep(rospy.Duration(0.2))
 
