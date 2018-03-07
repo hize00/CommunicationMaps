@@ -39,11 +39,10 @@ REPLAN_RATE = 10 # Frequency rate at which the leader is checking again the plan
 MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
-#first random, max_var offices had 2
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 250
-MAX_FIXING_TIME = 220
-BEGIN_TIME = 300
+MAX_NUM_ERRORS = 150
+MAX_FIXING_TIME = 180.0
+BEGIN_TIME = 300.0
 PATH_DISC = 1 #m
 
 
@@ -357,9 +356,9 @@ class GenericRobot(object):
 
         success = False
         old_pos = pos
-        already_found = False
         i = 1
         round = 0
+        already_found = False
         already_tried = False
         fixing_pose = False
         self.pose_start_time = rospy.Time.now()

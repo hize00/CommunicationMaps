@@ -57,17 +57,20 @@ from multiprocessing import Process, Manager
 gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
-gflags.DEFINE_integer("num_robots", 2,
+gflags.DEFINE_integer("num_robots", 4,
     "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 5,
+gflags.DEFINE_integer("num_runs", 3,
     "Number of repetitions for an experiment.")
 
 gflags.DEFINE_bool("is_simulation", True,
     "True if simulation data; False if robot")
 
-# Parameter for simulation.
+# Parameters for simulation.
 gflags.DEFINE_integer("test_set_size", 10000,
     "Size of test set to check error in simulation.")
+
+gflags.DEFINE_integer("comm_range_exp", 30,
+    "Communication range for creating the test set.")
 
 #MUST BE COHERENT!!!
 # Parameters for communication model.
@@ -75,9 +78,9 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 1000,
+gflags.DEFINE_integer("granularity", 1160,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 7130,
+gflags.DEFINE_integer("mission_duration", 5830,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -140,7 +143,7 @@ def create_test_set(im_array, comm_model, test_set_size, resize_factor=0.1):
             x2 = dimX*random.random()
             y2 = dimY*random.random()
             if (utils.eucl_dist((x1,y1),(x2,y2)) < comm_model.MIN_DIST
-                or utils.eucl_dist((x1,y1),(x2,y2)) > comm_model.COMM_RANGE):
+                or utils.eucl_dist((x1,y1),(x2,y2)) > gflags.FLAGS.comm_range_exp):
                 continue
 
             i2 = I - int(y2/resize_factor)
