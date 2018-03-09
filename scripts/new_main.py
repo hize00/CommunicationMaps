@@ -139,7 +139,7 @@ class GenericRobot(object):
         self.myself = self.robot_dict[self.robot_id] #to directly access to my dictionary
 
         if self.is_leader:
-            self.plan_folder = '/home/andrea/catkin_ws/src/strategy/data/'
+            self.plan_folder = '/home/andrea/catkin_ws/src/strategy/plans/'
 
         self.replan_rate = REPLAN_RATE
 
