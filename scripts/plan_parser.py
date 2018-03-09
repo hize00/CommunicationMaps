@@ -159,7 +159,10 @@ plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robo
 
 #print plan_id
 
-filename = '/home/andrea/Desktop/parser/0_offices_0_2_50.dat'
+###################################################################################################
+
+
+filename = '/home/andrea/Desktop/parser/0_offices_0_4_50.dat'
 carlo = True
 f = open(filename, "r")
 lines = f.readlines()
@@ -170,6 +173,23 @@ for line in lines:
     if (carlo and s[-1] == 'C') or (not carlo):
         #print s
         count +=1
+print "Count: " + str(count)
+
+###################################################################################################
+
+num_runs = 5
+procs = 3
+runs = range(num_runs)
+print "Runs: " + str(runs)
+print "range(proc): " + str(range(procs))
+proc = 1
+
+for p in range(procs):
+    if p == proc:
+        runs = np.array_split(runs, procs)[p]
+        print runs
+
+###################################################################################################
 
 print os.getcwd()
 
@@ -181,19 +201,7 @@ log_dir = os.getcwd() + '/log/'
 
 print log_dir
 
-#num_runs = 5
-#proc = 3
-#runs = range(num_runs)
+print "Run: " + str(5) + ", log_dir: " + str(log_dir)
 
-#for p in range(proc):
-#    runs = np.array_split(runs, 3)[p]
-    #print run
-
-
-
-
-
-
-
-
+###################################################################################################
 

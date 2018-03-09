@@ -478,7 +478,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
     according to run, environment, robot.
 
     Args:
-        pr (int): number of the process.
+        pr (int): identification number of the process.
         d_list (dict): shared dictionary between processes.
         tot_proc (int): total number of created processes.
         environment (str): name of environment used for saving data.
@@ -494,6 +494,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
         log_folder (str): folder where logs are saved.
 
     """
+
     log_folder = os.path.expanduser(log_folder)
 
     # Reading of the communication parameters necessary to produce correct test set.
@@ -506,7 +507,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
     im_array = specular(im_array)
     
     # Generation of test set.
-    if is_simulation: # In simulation.
+    if is_simulation:
         random.seed(0)
         np.random.seed(0)
         dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
@@ -524,8 +525,6 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
     times_all = {}
 
     for run in runs:
-        #print 'Run: ' + str(run)
-
         all_signal_data = []
 
         for robot in range(num_robots):
@@ -611,8 +610,6 @@ if __name__ == '__main__':
 
         tot_processes = multiprocessing.cpu_count() - dec
         procs = []
-
-        comm_mod_path = gflags.FLAGS.communication_model_path
 
         for n in range(tot_processes):
             p = multiprocessing.Process(target=evaluate,args=(n, dict_list, tot_processes,
