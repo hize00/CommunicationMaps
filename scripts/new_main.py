@@ -25,8 +25,7 @@ import exploration_strategies
 from GPmodel import GPmodel
 import utils
 from utils import conv_to_hash, eucl_dist
-from strategy.msg import SignalData, RobotInfo, AllInfo, SignalMappingAction, SignalMappingGoal, \
-                         SignalMappingFeedback, SignalMappingResult, Plan
+from strategy.msg import SignalData, SignalMappingAction, SignalMappingGoal, SignalMappingFeedback, SignalMappingResult, Plan, RobotData
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
 TIME_STUCK = 3.0
@@ -133,8 +132,7 @@ class GenericRobot(object):
 
         for i in xrange(n_robots): #every robot has its own dict with all important information
             self.robot_dict[i] = dict([('id', self.robot_id), ('arrived_nominal_dest', False),
-                                       ('timestep', -1),('teammate', -1), ('got_signal',False),
-                                       ('execute_plan_state', -1)])
+                                       ('timestep', -1),('teammate', -1), ('execute_plan_state', -1)])
 
         self.myself = self.robot_dict[self.robot_id] #to directly access to my dictionary
 
@@ -143,56 +141,12 @@ class GenericRobot(object):
 
         self.replan_rate = REPLAN_RATE
 
-        # (reduced) arrived state publisher: 0 = not arrived to nominal dest, 1 = arrived to nominal dest
-        self.pub_arrived = rospy.Publisher('expl_arrived', Bool, queue_size=10)
+        # robot data topic
+        self.pub_robot_data = rospy.Publisher('robot_data', RobotData, queue_size= 10)
 
-        # timestep publisher for synchronizing the exploration
-        self.pub_timestep = rospy.Publisher('expl_timestep', Float32, queue_size=10)
-
-        # teammate's teammate for synchronizing the exploration team
-        self.pub_teammate = rospy.Publisher('expl_teammate', Int8, queue_size=10)
-
-        # signal strength acquisition publisher: 0 = not yet got signal strength, 1 = got signal strength
-        self.pub_got_signal = rospy.Publisher('expl_got_signal', Bool, queue_size=10)
-
-        # robot id publisher for synchronizing the exploration
-        self.pub_id = rospy.Publisher('expl_id', Int8, queue_size = 10)
-
-        # robot plan state publisher for ending the mission
-        self.pub_plan_state = rospy.Publisher('expl_plan_state', Int8, queue_size=10)
-
-        #subscription to all useful topics
         for i in xrange(n_robots):
             if i == robot_id: continue
-            r = "def g_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['arrived_nominal_dest'] = msg.data"
-            exec r
-            exec ("setattr(GenericRobot, 'arrived_teammate" + str(i) + "', g_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_arrived', Bool, self.arrived_teammate" + str(i) + ", queue_size = 100)")
-
-            w = "def b_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['timestep'] = msg.data"
-            exec w
-            exec ("setattr(GenericRobot, 'timestep_teammate" + str(i) + "', b_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_timestep', Float32, self.timestep_teammate" + str(i) + ", queue_size = 100)")
-
-            t = "def c_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['teammate'] = msg.data"
-            exec t
-            exec ("setattr(GenericRobot, 'teammate_teammate" + str(i) + "', c_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_teammate', Int8, self.teammate_teammate" + str(i) + ", queue_size = 100)")
-
-            u = "def d_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['id'] = msg.data"
-            exec u
-            exec ("setattr(GenericRobot, 'id_teammate" + str(i) + "', d_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_id', Int8, self.id_teammate" + str(i) + ", queue_size = 100)")
-
-            v = "def e_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['execute_plan_state'] = msg.data"
-            exec v
-            exec ("setattr(GenericRobot, 'plan_states_teammate" + str(i) + "', e_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_plan_state', Int8, self.plan_states_teammate" + str(i) + ", queue_size = 100)")
-
-            z = "def f_" + str(i) + "(self, msg): self.robot_dict[" + str(i) + "]['got_signal'] = msg.data"
-            exec z
-            exec ("setattr(GenericRobot, 'got_signal_teammate" + str(i) + "', f_" + str(i) + ")")
-            exec ("rospy.Subscriber('/robot_" + str(i) + "/expl_got_signal', Bool, self.got_signal_teammate" + str(i) + ", queue_size = 100)")
+            rospy.Subscriber('/robot_' + str(i) + '/robot_data', RobotData, self.robot_data_callback)
 
     def tf_callback(self, event):
         try:
@@ -201,6 +155,17 @@ class GenericRobot(object):
             self.pub_my_pose.publish(Point(trans[0],trans[1],0.0))
         except Exception as e:
             pass
+
+    def robot_data_callback(self, msg):
+        for i in xrange(self.n_robots):
+            if i == msg.id:
+                if msg.execute_plan_state != 2:
+                    self.robot_dict[i]['arrived_nominal_dest'] = msg.arrived_nominal_dest
+                    self.robot_dict[i]['timestep'] =  msg.timestep
+                    self.robot_dict[i]['teammate'] =  msg.teammate
+                    self.robot_dict[i]['id'] =  msg.id
+                else:
+                    self.robot_dict[i]['execute_plan_state'] = msg.execute_plan_state
 
     def pose_callback(self, msg):
         self.x = self.robots_pos[self.robot_id][0]
@@ -216,16 +181,21 @@ class GenericRobot(object):
         self.myself['arrived_nominal_dest'] = False
         self.myself['timestep'] = -1
         self.myself['teammate'] = -1
-        self.myself['got_signal'] = False
         self.last_feedback_pose = None
         self.last_motion_time = None
         self.pose_start_time = None
 
     def publish_stuff(self):
-        self.pub_arrived.publish(Bool(self.myself['arrived_nominal_dest']))
-        self.pub_teammate.publish(Int8(self.myself['teammate']))
-        self.pub_timestep.publish(Float32(self.myself['timestep']))
-        self.pub_id.publish(Int8(self.myself['id']))
+        robot_data = RobotData()
+        robot_data.id = self.myself['id']
+        if self.myself['execute_plan_state'] != 2:
+            robot_data.arrived_nominal_dest = self.myself['arrived_nominal_dest']
+            robot_data.timestep = self.myself['timestep']
+            robot_data.teammate = self.myself['teammate']
+        else:
+            robot_data.execute_plan_state = self.myself['execute_plan_state']
+
+        self.pub_robot_data.publish(robot_data)
 
     def scan_callback(self, scan):
         min_index = int(math.ceil((MIN_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
@@ -262,18 +232,6 @@ class GenericRobot(object):
             self.client_motion.cancel_goal()
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
-
-        if ((rospy.Time.now() - self.mission_start_time) <= rospy.Duration(BEGIN_TIME) and
-            (rospy.Time.now() - self.pose_start_time) > rospy.Duration(MAX_FIXING_TIME / 2)) or \
-                (rospy.Time.now() - self.pose_start_time) > rospy.Duration(MAX_FIXING_TIME):
-            mode = 'a' if os.path.exists(self.errors_filename) else 'w'
-            f = open(self.errors_filename, mode)
-            f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " +
-                    str(self.n_robots) + " MST ---> " + str(int((rospy.Time.now() - self.mission_start_time).secs)) +
-                    "\n")
-            f.close()
-            rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too much time to go to pose.')
-            os.system("pkill -f ros")
 
     def bump_fwd(self):
         for i in range(10):
@@ -414,6 +372,7 @@ class GenericRobot(object):
                         fixing_pose = True
 
                         if not already_tried:
+                            already_tried = True
                             rospy.loginfo(str(self.robot_id) + ' - preempted, trying to fix the goal after too many recoveries')
                             if pos in self.fixed_wall_poses:
                                 self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
@@ -428,7 +387,6 @@ class GenericRobot(object):
                         pos[1] = pos[1] + update[random_update][1]
                         pos = tuple(pos)
                         rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
-                        already_tried = True
                         round = 1
                     else:
                         if round == 10:
@@ -444,7 +402,7 @@ class GenericRobot(object):
                 round += 1
                 success = False
             elif state == GoalStatus.ABORTED:
-                rospy.logerr(str(self.robot_id) + " - motion aborted by the server!!! Trying to recover")
+                rospy.logerr(str(self.robot_id) + " - motion aborted by the server! Trying to recover")
                 self.clear_costmap_service()
                 self.motion_recovery()
                 self.clear_costmap_service()
@@ -505,14 +463,6 @@ class GenericRobot(object):
                              self.robots_pos[self.myself['teammate']][0], self.robots_pos[self.myself['teammate']][1],
                              self.comm_module.get_signal_strength(self.myself['teammate'], safe = False), True)
 
-        self.myself['got_signal'] = True
-        self.pub_got_signal.publish(Bool(self.myself['got_signal']))
-
-        success = False
-        while not success:
-            if my_teammate['got_signal']:
-                success = True
-
         rospy.sleep(rospy.Duration(0.2))
 
     def end_exploration(self):
@@ -520,7 +470,7 @@ class GenericRobot(object):
         rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count))
 
         if not self.is_leader:
-            self.pub_plan_state.publish(Int8(self.myself['execute_plan_state']))
+            self.publish_stuff()
 
         all_arrived = False
         while not all_arrived:
