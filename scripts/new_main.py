@@ -25,7 +25,8 @@ import exploration_strategies
 from GPmodel import GPmodel
 import utils
 from utils import conv_to_hash, eucl_dist
-from strategy.msg import SignalData, SignalMappingAction, SignalMappingGoal, SignalMappingFeedback, SignalMappingResult, Plan, RobotData
+from strategy.msg import SignalData, SignalMappingAction, SignalMappingGoal, SignalMappingFeedback, \
+                        SignalMappingResult, Plan, RobotData
 from strategy.srv import GetSignalData, GetSignalDataResponse
 
 TIME_STUCK = 3.0
@@ -98,7 +99,6 @@ class GenericRobot(object):
         self.pub_motion_rec = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('base_scan', LaserScan, self.scan_callback)
         self.front_range = 0.0
-        self.pose_start_time = None
 
         #estimated position
         self.listener = tf.TransformListener()
@@ -132,7 +132,7 @@ class GenericRobot(object):
 
         for i in xrange(n_robots): #every robot has its own dict with all important information
             self.robot_dict[i] = dict([('id', self.robot_id), ('arrived_nominal_dest', False),
-                                       ('timestep', -1),('teammate', -1), ('execute_plan_state', -1)])
+                                       ('timestep', -1), ('teammate', -1), ('execute_plan_state', -1)])
 
         self.myself = self.robot_dict[self.robot_id] #to directly access to my dictionary
 
@@ -183,7 +183,6 @@ class GenericRobot(object):
         self.myself['teammate'] = -1
         self.last_feedback_pose = None
         self.last_motion_time = None
-        self.pose_start_time = None
 
     def publish_stuff(self):
         robot_data = RobotData()
@@ -314,12 +313,13 @@ class GenericRobot(object):
 
         success = False
         old_pos = pos
-        i = 1
         round = 0
         already_found = False
         already_tried = False
         fixing_pose = False
-        self.pose_start_time = rospy.Time.now()
+        max_tries = 20
+
+        radius = 1.5
 
         while not success:
             goal = MoveBaseGoal()
@@ -357,10 +357,9 @@ class GenericRobot(object):
                     else:
                         for pose in self.fixed_wall_poses:
                             pos = list(pos)
-                            if (((pose[0] == (pos[0] - i)) or (pose[0] == (pos[0] + i))) and
-                                 ((pose[1] == (pos[1] - i)) or (pose[1] == (pos[1] + i)))):
+                            if (pose[0] - pos[0])**2 + (pose[1] - pos[1])**2 <= radius**2: #if a pose is in a circle centered in pos
                                 rospy.loginfo(str(self.robot_id) +
-                                              ' - moving to the fixed position found before: ' + str(pose))
+                                              ' - moving to the fixed position already found: ' + str(pose))
                                 pos[0] = pose[0]
                                 pos[1] = pose[1]
                             pos = tuple(pos)
@@ -378,14 +377,34 @@ class GenericRobot(object):
                                 self.fixed_wall_poses.remove(pos) #I remove a fixed position that is not working anymore
                                 #rospy.loginfo(str(self.robot_id) + ' - REMOVING ' + str(pos) + ' from fixed_wall_poses')
 
-                        # fixing the position
-                        pos = old_pos
-                        pos = list(pos)
-                        update = {0: [i, i], 1: [-i, i], 2: [i, -i], 3: [-i, -i]}
-                        random_update = random.randint(0, 3)  # randomly select a fixing in pose coords
-                        pos[0] = pos[0] + update[random_update][0]
-                        pos[1] = pos[1] + update[random_update][1]
-                        pos = tuple(pos)
+                        tries = 0
+                        inc = 1.0
+                        found = False
+                        while not found: # fixing the position
+                            i = random.uniform(0.0, inc)
+                            j = random.uniform(0.0, inc)
+                            pos = old_pos
+                            pos = list(pos)
+                            update = {0: [i, j], 1: [-i, j], 2: [i, -j], 3: [-i, -j],
+                                      4: [j, i], 5: [-j, i], 6: [j, -i], 7: [-j, -i],
+                                      8: [i, 0], 9: [-i, 0], 10: [0, j], 11: [0, -j],
+                                      12: [j, 0], 13: [-j, 0], 14: [0, i], 15: [0, -i],}
+                            random_update = random.randint(0, 15)  # randomly select a fixing in pose coords
+                            pos[0] = pos[0] + update[random_update][0]
+                            pos[1] = pos[1] + update[random_update][1]
+                            pos = tuple(pos)
+
+                            if communication.numObstaclesBetweenRobots(self.comm_module.im_array,
+                                                                       self.comm_module.I,
+                                                                       old_pos, pos, resize_factor) == 0:
+                                found = True
+                            else:
+                                rospy.loginfo(str(self.robot_id) + ' - not working pose ' + str(pos))
+                                tries += 1
+                                if tries == max_tries:
+                                    inc = inc + 0.5
+                                    tries = 0
+
                         rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
                         round = 1
                     else:
@@ -453,8 +472,6 @@ class GenericRobot(object):
                     my_teammate['id'] == self.myself['teammate'] and \
                     self.robot_id == my_teammate['teammate']:
                 success = True
-            else:
-                rospy.sleep(rospy.Duration(0.1))
 
         rospy.loginfo(str(self.robot_id) + ' - calculating signal strength with teammate ' + str(self.myself['teammate']))
 

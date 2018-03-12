@@ -505,7 +505,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
-    
+
     # Generation of test set.
     if is_simulation:
         random.seed(0)
