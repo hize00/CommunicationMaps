@@ -10,11 +10,11 @@ from matplotlib import cm
 
 ENVIRONMENT = 'offices'
 NROBOTS = 4
-NUM_RUNS = 3
+NUM_RUNS = 1
 RANGE = 50
 
 GRANULARITY = 300 #secs
-MISSION_DURATION = 5830 #secs
+MISSION_DURATION = 5480 #secs
 
 plot_format = {'graph': ['b--s', 'AC']}
 

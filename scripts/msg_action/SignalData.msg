@@ -1,0 +1,4 @@
+int32 timestep
+geometry_msgs/PoseStamped my_pos
+geometry_msgs/PoseStamped teammate_pos
+float32 signal_strength

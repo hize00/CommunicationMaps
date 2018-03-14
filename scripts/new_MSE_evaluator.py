@@ -59,7 +59,7 @@ gflags.DEFINE_string("environment", "offices",
     "(it opens the yaml file to read resolution and image)."))
 gflags.DEFINE_integer("num_robots", 4,
     "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 3,
+gflags.DEFINE_integer("num_runs", 1,
     "Number of repetitions for an experiment.")
 
 gflags.DEFINE_bool("is_simulation", True,
@@ -78,9 +78,9 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 1160,
+gflags.DEFINE_integer("granularity", 685,
     "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 5830,
+gflags.DEFINE_integer("mission_duration", 5480,
     "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
