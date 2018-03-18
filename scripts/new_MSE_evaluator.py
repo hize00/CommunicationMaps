@@ -57,20 +57,14 @@ from multiprocessing import Process, Manager
 gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
-gflags.DEFINE_integer("num_robots", 4,
-    "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 1,
-    "Number of repetitions for an experiment.")
 
-gflags.DEFINE_bool("is_simulation", True,
-    "True if simulation data; False if robot")
+gflags.DEFINE_integer("num_robots", 2, "Number of robots used in the experiment.")
+gflags.DEFINE_integer("num_runs", 5,  "Number of repetitions for an experiment.")
+gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if robot")
 
 # Parameters for simulation.
-gflags.DEFINE_integer("test_set_size", 10000,
-    "Size of test set to check error in simulation.")
-
-gflags.DEFINE_integer("comm_range_exp", 30,
-    "Communication range for creating the test set.")
+gflags.DEFINE_integer("test_set_size", 10000, "Size of test set to check error in simulation.")
+gflags.DEFINE_integer("comm_range_exp", 15, "Communication range for creating the test set.")
 
 #MUST BE COHERENT!!!
 # Parameters for communication model.
@@ -78,26 +72,19 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 685,
-    "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 5480,
-    "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 1000, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 7130, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
-gflags.DEFINE_bool("plot_communication_map", False,
-    "If True, plot and save communication map in figure.")
+gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
 gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")
 gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 
 #Parameter for parsing
-gflags.DEFINE_bool("filter_dat", True,
-    "If True, in dat files consider only information found by Carlo algorithm")
+gflags.DEFINE_bool("filter_dat", True, "If True, in dat files consider only information found by Carlo algorithm")
 
-gflags.DEFINE_string("task", "evaluate",
-    "Script task {evaluate, plot}.")
-
-gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/",
-    "Root of log folder.")
+gflags.DEFINE_string("task", "evaluate", "Script task {evaluate, plot}.")
+gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "Root of log folder.")
 
 # PLOT Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
 plot_format = {'graph': ['b--s', 'AC']}
@@ -517,6 +504,7 @@ def evaluate(pr, d_list, tot_proc, environment, num_robots, num_runs, is_simulat
     for proc in range(tot_proc):
         if proc == pr:
             runs = np.array_split(runs, tot_proc)[proc] #splitting the runs list in order to parallelize its analysis
+            print "proc: " + str(pr) + ", runs: " + str(runs)
 
     time.sleep(pr)
 
@@ -595,20 +583,20 @@ if __name__ == '__main__':
     if gflags.FLAGS.task == 'evaluate':
 
         mgr = Manager()
-        dict_list = mgr.list() #shared dictionary between processes that will contain errors, variances_all and times_all
+        dict_list = mgr.list() #shared list between processes that will contain errors, variances_all and times_all
 
         for i in range(3):
             dict_list.append(dict())
-            dict_list[i] = mgr.dict()
+            dict_list[i] = mgr.dict() #d[0] = errors, d[1] = variances_all, d[2] = times_all
 
-        if gflags.FLAGS.num_runs == 1: #according to the number of runs, I create (cpu_count - dec) processes
-            dec = 3
-        elif gflags.FLAGS.num_runs == 2:
-            dec = 2
+        cpu = multiprocessing.cpu_count() - 1 # keeping a free cpu
+        tot_runs = gflags.FLAGS.num_runs
+
+        if cpu >= num_runs: #according to the number of runs and the number of CPUs, I create a fixed number of processes
+            tot_processes = tot_runs
         else:
-            dec= 1
+            tot_processes = cpu
 
-        tot_processes = multiprocessing.cpu_count() - dec
         procs = []
 
         for n in range(tot_processes):
