@@ -64,7 +64,7 @@ gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if rob
 
 # Parameters for simulation.
 gflags.DEFINE_integer("test_set_size", 10000, "Size of test set to check error in simulation.")
-gflags.DEFINE_integer("comm_range_exp", 15, "Communication range for creating the test set.")
+#gflags.DEFINE_integer("comm_range_exp", 15, "Communication range for creating the test set.")
 
 #MUST BE COHERENT!!!
 # Parameters for communication model.
@@ -130,7 +130,7 @@ def create_test_set(im_array, comm_model, test_set_size, resize_factor=0.1):
             x2 = dimX*random.random()
             y2 = dimY*random.random()
             if (utils.eucl_dist((x1,y1),(x2,y2)) < comm_model.MIN_DIST
-                or utils.eucl_dist((x1,y1),(x2,y2)) > gflags.FLAGS.comm_range_exp):
+                or utils.eucl_dist((x1,y1),(x2,y2)) > comm_model.COMM_RANGE): #gflags.FLAGS.comm_range_exp):
                 continue
 
             i2 = I - int(y2/resize_factor)

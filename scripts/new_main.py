@@ -7,6 +7,7 @@ import pickle
 import random
 import sys
 import threading
+import time
 
 import rospy
 import tf
@@ -88,7 +89,9 @@ class GenericRobot(object):
         self.comm_dataset_filename = comm_dataset_filename
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
-        rospy.Timer(rospy.Duration(10), self.strength_logger_callback)
+
+        strength_logger_rate = 10
+        rospy.Timer(rospy.Duration(strength_logger_rate), self.strength_logger_callback)
 
         # recovery
         self.last_feedback_pose = None
@@ -127,6 +130,7 @@ class GenericRobot(object):
         self.problematic_poses = []
         self.distance = -1
         self.timer = None
+        self.lock_data = threading.Lock()
 
         self.robot_dict = dict()
 
@@ -242,7 +246,6 @@ class GenericRobot(object):
             self.stuck = False
 
         if self.stuck:
-            # rospy.loginfo('Stuck, sending cancel goal.')
             self.client_motion.cancel_goal()
 
         self.last_feedback_pose = (feedback.base_position.pose.position.x, feedback.base_position.pose.position.y)
@@ -283,7 +286,7 @@ class GenericRobot(object):
     def check_time_expired(self):
         distance_coverage_time = self.distance / SPEED
 
-        if (rospy.Time.now() - self.timer).secs > rospy.Duration(60 + int(1.5 * distance_coverage_time)).secs:
+        if (rospy.Time.now() - self.timer).secs > rospy.Duration(60 + int(2 * distance_coverage_time)).secs:
             rospy.loginfo(str(self.robot_id) + ' - robot cannot reach its destination in time')
             self.myself['time_expired'] = True
 
@@ -317,8 +320,7 @@ class GenericRobot(object):
 
     def fix_pose(self, old_pos, fix):
         found = False
-        count = 0
-        count_max = 5000
+        timeout = time.time() + 5  #almost 400k iterations per second
         fix_count = 0
         max_fix_count = 5
         pos = []
@@ -338,13 +340,13 @@ class GenericRobot(object):
                                                                 old_pos, pos, resize_factor) == 0:
                 found = True
             else:
-                count += 1
-                if count == count_max:
-                    count = 0
+                if time.time() >= timeout:
                     fix += 0.5
                     fix_count += 1
                     if fix_count == max_fix_count:
+                        pos = []
                         self.myself['time_expired'] = True
+                        found = True
 
         return pos
 
@@ -362,7 +364,7 @@ class GenericRobot(object):
         already_tried = False
         fixing_pose = False
         fix = 1
-        loop_count = 0 # loop rounds
+        loop_count = 0
         fixing_attempts = 0
         max_attempts = 3
         radius = 3
@@ -418,13 +420,15 @@ class GenericRobot(object):
                                 self.fixed_wall_poses.remove(pos) # removing a fixed position that is not working anymore
 
                         pos = self.fix_pose(old_pos, fix)
-                        rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
 
-                        loop_count = 1
-                        fixing_attempts += 1
-                        if fixing_attempts == max_attempts: #increasing the radius of fixing area
-                            fix = fix + 0.5
-                            fixing_attempts = 0
+                        if pos:
+                            rospy.loginfo(str(self.robot_id) + ' - moving to new fixed goal ' + str(pos))
+                            loop_count = 1
+                            fixing_attempts += 1
+                            if fixing_attempts == max_attempts: #increasing the radius of fixing area
+                                fix = fix + 0.5
+                                fixing_attempts = 0
+
                     else:
                         if loop_count == 7:
                             already_found = False
@@ -435,7 +439,11 @@ class GenericRobot(object):
                 self.clear_costmap_service()
 
                 loop_count += 1
-                success = self.check_time_expired()
+
+                if self.myself['time_expired']:
+                    success = True
+                else:
+                    success = self.check_time_expired()
             elif state == GoalStatus.ABORTED:
                 rospy.logerr(str(self.robot_id) + " - motion aborted by the server! Trying to recover")
                 self.clear_costmap_service()
@@ -469,7 +477,9 @@ class GenericRobot(object):
                 self.go_to_pose((plan.my_dest.position.x, plan.my_dest.position.y))
 
                 if not self.starting_pose and not self.alone:
+                    self.lock_data.acquire()
                     self.check_signal_strength()
+                    self.lock_data.release()
 
                 if self.starting_pose:
                     self.starting_pose = False
@@ -482,7 +492,7 @@ class GenericRobot(object):
     def check_signal_strength(self):
         my_teammate = self.robot_dict[self.myself['teammate']]
 
-        rate = rospy.Rate(100000)
+        rate = rospy.Rate(10 * self.replan_rate)
         success = False
         while not success:
             if (self.myself['timestep'] == my_teammate['timestep'] and
