@@ -41,7 +41,7 @@ MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 500
+MAX_NUM_ERRORS = 150 #150 for 4 robots, 300 for 2 robots
 
 WALL_DIST = 3 #in pixels
 PATH_DISC = 1 #m

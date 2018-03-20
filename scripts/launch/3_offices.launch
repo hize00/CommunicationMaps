@@ -33,10 +33,10 @@
   <param name="disc" value="7"/>
   <param name="map_filename" value="$(find strategy)/envs/offices.png"/>
   <param name="disc_method" value="grid"/>
-  <param name="duration" value="1800"/>
+  <param name="duration" value="54000"/>
   <param name="env_filename" value="$(find strategy)/envs/offices.dat"/>
   <param name="log_folder" value="$(find strategy)/log/"/>
-  <param name="n_robots" value="4"/>
+  <param name="n_robots" value="3"/>
   <param name="range" value="50" />
   <param name="resize_factor" value="0.1"/>
   <param name="tiling" value="0"/>

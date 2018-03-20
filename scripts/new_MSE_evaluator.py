@@ -17,6 +17,7 @@ It creates in figs directory the following:
 Run:
 - from strategy/scripts
 python new_MSE_evaluator.py --plot_communication_map
+python new_MSE_evaluator.py --task=evaluate
 python new_MSE_evaluator.py --task=plot
 
 """
@@ -58,7 +59,7 @@ gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
-gflags.DEFINE_integer("num_robots", 2, "Number of robots used in the experiment.")
+gflags.DEFINE_integer("num_robots", 4, "Number of robots used in the experiment.")
 gflags.DEFINE_integer("num_runs", 5,  "Number of repetitions for an experiment.")
 gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if robot")
 
@@ -72,8 +73,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 1000, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 7130, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 635, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 6350, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -332,7 +333,7 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     matplotlib.rcParams['text.usetex'] = True
     fig.savefig(filename, bbox_inches='tight')
 
-def plot(env, num_robots, comm_model_path,granularity, mission_duration):
+def plot(env, num_robots, comm_model_path, granularity, mission_duration):
     """Plot graphs about MSE and traveled distance.
 
     Args:
@@ -592,7 +593,7 @@ if __name__ == '__main__':
         cpu = multiprocessing.cpu_count() - 1 # keeping a free cpu
         tot_runs = gflags.FLAGS.num_runs
 
-        if cpu >= num_runs: #according to the number of runs and the number of CPUs, I create a fixed number of processes
+        if cpu >= tot_runs: #according to the number of runs and the number of CPUs, I create a fixed number of processes
             tot_processes = tot_runs
         else:
             tot_processes = cpu
