@@ -42,6 +42,7 @@ MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
 MAX_NUM_ERRORS = 150 #150 for 4 robots, 300 for 2 robots
+MAX_TIMEOUT_EXPIRED = 3
 
 WALL_DIST = 3 #in pixels
 PATH_DISC = 1 #m
@@ -130,6 +131,7 @@ class GenericRobot(object):
         self.problematic_poses = []
         self.distance = -1
         self.timer = None
+        self.timeout_expired_count = 0
         self.lock_data = threading.Lock()
 
         self.robot_dict = dict()
@@ -367,7 +369,7 @@ class GenericRobot(object):
         loop_count = 0
         fixing_attempts = 0
         max_attempts = 3
-        radius = 3
+        radius = 1.5 # 3 sometimes is too much
 
         self.timer = rospy.Time.now()
 
@@ -510,13 +512,19 @@ class GenericRobot(object):
                                  self.robots_pos[self.myself['teammate']][0], self.robots_pos[self.myself['teammate']][1],
                                  self.comm_module.get_signal_strength(self.myself['teammate'], safe = False), True)
         else:
-            rospy.loginfo(str(self.robot_id) + ' - time is expired, changing destination')
+            self.timeout_expired_count += 1
+            if self.timeout_expired_count == MAX_TIMEOUT_EXPIRED:
+                rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too many timeout expired.')
+                os.system("pkill -f ros")
+            else:
+                rospy.loginfo(str(self.robot_id) + ' - time is expired, changing destination')
 
         rospy.sleep(rospy.Duration(0.2))
 
     def end_exploration(self):
         rospy.loginfo(str(self.robot_id) + ' - Arrived at final destination.')
-        rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count))
+        rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count) +
+                      ', self.timeout_expired = ' + str(self.timeout_expired_count))
 
         all_arrived = False
         while not all_arrived:
@@ -611,7 +619,10 @@ class Leader(GenericRobot):
         reading_RM = 0
         reading_TT = 0
 
-        with open(self.plan_folder + 'solution_plan_' + str(self.n_robots) + '_robots.txt', 'r') as file:
+        env_name = (os.path.splitext(map_filename)[0]).split("/")[-1]
+
+        with open(self.plan_folder + 'solution_plan_' + str(self.n_robots) +
+                  '_robots_' + str(env_name) + '.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -815,7 +826,7 @@ class Follower(GenericRobot):
                 f.close()
                 environment_not_loaded = False
             except:  # TODO specific exception.
-                rospy.logerr(str(self.robot_id) + " - Follower - Environment not loaded yet.")
+                rospy.logerr(str(robot_id) + " - Follower - Environment not loaded yet.")
                 rospy.sleep(1)
 
         super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename, duration,
