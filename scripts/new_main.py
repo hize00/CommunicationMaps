@@ -134,6 +134,10 @@ class GenericRobot(object):
         self.timeout_expired_count = 0
         self.lock_data = threading.Lock()
 
+        env_name = (os.path.splitext(self.map_filename)[0]).split("/")[-1]
+        self.info_txt = '/home/andrea/catkin_ws/src/strategy/log/' + str(self.n_robots) + '_' + str(env_name)  +'_info.txt'
+
+
         self.robot_dict = dict()
 
         for i in xrange(self.n_robots): #every robot has its own dict with all important information to share
@@ -200,6 +204,16 @@ class GenericRobot(object):
         max_index = int(math.floor((MAX_SCAN_ANGLE_RAD_FRONT - scan.angle_min) / scan.angle_increment))
         self.front_range = min(scan.ranges[min_index: max_index])
 
+    def file_writer(self, file):
+        mode = 'a' if os.path.exists(file) else 'w'
+        f = open(file, mode)
+        f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " +
+                (str(self.n_robots) if file == self.errors_filename else str(self.robot_id)) +
+                 ((" ---> errors: " + str(self.error_count) +
+                " --- timeout_expired: " + str(self.timeout_expired_count) +
+                                      '\n') if file == self.info_txt else "\n"))
+        f.close()
+
     def check_duration(self):
         if (rospy.Time.now() - self.mission_start_time) >= self.duration:
             rospy.loginfo("Sending shutdown...")
@@ -229,11 +243,7 @@ class GenericRobot(object):
             if (rospy.Time.now() - self.last_motion_time) > rospy.Duration(TIME_STUCK):
                 self.error_count += 1
                 if self.error_count == MAX_NUM_ERRORS:
-                    mode = 'a' if os.path.exists(self.errors_filename) else 'w'
-                    f = open(self.errors_filename, mode)
-                    f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " +
-                            str(self.n_robots) + "\n")
-                    f.close()
+                    self.file_writer(self.errors_filename)
                     if self.sim:
                         rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too many errors.')
                         os.system("pkill -f ros")
@@ -341,7 +351,7 @@ class GenericRobot(object):
                                                                 self.comm_module.I,
                                                                 old_pos, pos, resize_factor) == 0:
                 found = True
-            else:
+            else: #just for extreme cases
                 if time.time() >= timeout:
                     fix += 0.5
                     fix_count += 1
@@ -428,7 +438,7 @@ class GenericRobot(object):
                             loop_count = 1
                             fixing_attempts += 1
                             if fixing_attempts == max_attempts: #increasing the radius of fixing area
-                                fix = fix + 0.5
+                                fix += 0.5
                                 fixing_attempts = 0
 
                     else:
@@ -514,7 +524,8 @@ class GenericRobot(object):
         else:
             self.timeout_expired_count += 1
             if self.timeout_expired_count == MAX_TIMEOUT_EXPIRED:
-                rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too many timeout expired.')
+                rospy.loginfo(str(self.robot_id) + ' - Mission aborted, too many timeouts expired.')
+                self.file_writer(self.errors_filename)
                 os.system("pkill -f ros")
             else:
                 rospy.loginfo(str(self.robot_id) + ' - time is expired, changing destination')
@@ -525,6 +536,8 @@ class GenericRobot(object):
         rospy.loginfo(str(self.robot_id) + ' - Arrived at final destination.')
         rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count) +
                       ', self.timeout_expired = ' + str(self.timeout_expired_count))
+
+        self.file_writer(self.info_txt)
 
         all_arrived = False
         while not all_arrived:
@@ -857,13 +870,10 @@ class Follower(GenericRobot):
         self._as.set_succeeded(self._result)
 
     def check_leader_state(self):
-        leader_ready = False
-        while not leader_ready:
-            for i in xrange(self.n_robots):
-                if i == self.robot_id: continue
-                if self.robot_dict[i]['execute_plan_state'] == 1:
-                    leader_ready = True
-                    break
+        leader_id = self.teammates_id[0]
+        if self.robot_dict[leader_id]['execute_plan_state'] != 1:
+            while not self.robot_dict[leader_id]['execute_plan_state'] == 1:
+                pass
 
         self.myself['execute_plan_state'] = 1
 
