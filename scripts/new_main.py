@@ -41,8 +41,8 @@ MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 150 #150 for 4 robots, 300 for 2 robots
-MAX_TIMEOUT_EXPIRED = 3
+MAX_NUM_ERRORS = 350 #150 for 4 robots, 350 for 2 robots
+MAX_TIMEOUT_EXPIRED = 3 #3 for 2 and 4 robots
 
 WALL_DIST = 3 #in pixels
 PATH_DISC = 1 #m
@@ -210,8 +210,9 @@ class GenericRobot(object):
         f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " +
                 (str(self.n_robots) if file == self.errors_filename else str(self.robot_id)) +
                  ((" ---> errors: " + str(self.error_count) +
-                " --- timeout_expired: " + str(self.timeout_expired_count) +
-                                      '\n') if file == self.info_txt else "\n"))
+                   " --- timeout_expired: " + str(self.timeout_expired_count) +  '\n') if file == self.info_txt
+                  else (" --> too many errors\n" if self.error_count == MAX_NUM_ERRORS
+                        else " --> too many timeouts expired\n")))
         f.close()
 
     def check_duration(self):
@@ -475,7 +476,11 @@ class GenericRobot(object):
 
     def move_robot(self):
         if self.plans:
+            plan_count = 1
             for plan in self.plans:
+                rospy.loginfo(str(self.robot_id) + ' - plan: ' + str(plan_count) + '/' + str(len(self.plans)))
+                plan_count += 1
+
                 self.reset_stuff()
 
                 self.myself['teammate'] = plan.comm_robot_id
