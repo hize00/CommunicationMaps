@@ -73,8 +73,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 407, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 4070, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 391, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 3910, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -242,7 +242,7 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
     if all_signal_data is not None:
         X_points, Y_points, Z_points = get_scatter_plot(all_signal_data, dimX, dimY, center, resize_factor)
         ax_comm.autoscale(enable=False)
-        ax_comm.scatter(X_points, Y_points, Z_points)
+        #ax_comm.scatter(X_points, Y_points, Z_points)
 
 
     if plot_variance:
@@ -253,8 +253,8 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
         ax_var.set_zlabel('STD Signal strength (dBm)', fontsize=FONTSIZE)
         ax_var.plot_surface(y,x, 0, rstride=1, cstride=1, facecolors=img)
 
-        surf = ax_var.plot_surface(X, Y, np.sqrt(V), rstride=1, cstride=1,
-                                   cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.4)
+        surf = ax_var.plot_surface(X, Y, np.sqrt(V), rstride=1, cstride=1, cmap=cm.coolwarm,
+                                   linewidth=0, antialiased=False, alpha=0.4)
         fig_var.colorbar(surf, shrink=0.5, aspect=5)
 
         ax_var.view_init(elev=46)
@@ -290,8 +290,7 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
     Y = []
     Z = []
     for d in data:
-        if np.linalg.norm(np.array(center) - np.array([d.teammate_pos.pose.position.x,
-                d.teammate_pos.pose.position.y])) < 1.0:
+        if np.linalg.norm(np.array(center) - np.array([d.teammate_pos.pose.position.x, d.teammate_pos.pose.position.y])) < 1.0:
             X.append(d.my_pos.pose.position.x/resize_factor)
             Y.append(d.my_pos.pose.position.y/resize_factor)
             Z.append(d.signal_strength)
@@ -429,7 +428,7 @@ def plot(env, num_robots, comm_model_path, granularity, mission_duration):
     plot_values(x, var_avg, var_yerr, "Pred. Variance", os.getcwd() + '/figs/VAR_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
     plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
 
-    plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME_' + str(num_robots) + '_' + env + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
           
 def read_environment(environment_yaml_path):
     """Read environment yaml file to get the figure and the resolution.
