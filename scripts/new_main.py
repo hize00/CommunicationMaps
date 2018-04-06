@@ -41,7 +41,7 @@ MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 350 #150 for 4 robots, 350 for 2 robots
+MAX_NUM_ERRORS = 1350#150 for 4 robots, 350 for 2 robots
 MAX_TIMEOUT_EXPIRED = 3 #3 for 2 and 4 robots
 
 WALL_DIST = 3 #in pixels
@@ -135,8 +135,7 @@ class GenericRobot(object):
         self.lock_data = threading.Lock()
 
         env_name = (os.path.splitext(self.map_filename)[0]).split("/")[-1]
-        self.info_txt = '/home/andrea/catkin_ws/src/strategy/log/' + str(self.n_robots) + '_' + str(env_name)  +'_info.txt'
-
+        self.info_filename = '/home/andrea/catkin_ws/src/strategy/log/' + "info_" + str(self.n_robots) + '_' + str(env_name) + '.txt'
 
         self.robot_dict = dict()
 
@@ -148,7 +147,7 @@ class GenericRobot(object):
         self.myself = self.robot_dict[self.robot_id] #to directly access to my dictionary
 
         if self.is_leader:
-            self.plan_folder = '/home/andrea/catkin_ws/src/strategy/plans/'
+            self.plans_folder = '/home/andrea/catkin_ws/src/strategy/plans/'
 
         self.replan_rate = REPLAN_RATE
 
@@ -209,10 +208,9 @@ class GenericRobot(object):
         f = open(file, mode)
         f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " +
                 (str(self.n_robots) if file == self.errors_filename else str(self.robot_id)) +
-                 ((" ---> errors: " + str(self.error_count) +
-                   " --- timeout_expired: " + str(self.timeout_expired_count) +  '\n') if file == self.info_txt
-                  else (" --> too many errors\n" if self.error_count == MAX_NUM_ERRORS
-                        else " --> too many timeouts expired\n")))
+                 ((" ---> errors: " + str(self.error_count) + " --- timeout_expired: " + str(self.timeout_expired_count) + '\n')
+                  if file == self.info_filename else
+                  (" --> too many errors\n" if self.error_count == MAX_NUM_ERRORS else " --> too many timeouts expired\n")))
         f.close()
 
     def check_duration(self):
@@ -226,6 +224,23 @@ class GenericRobot(object):
         f.close()
 
         self.check_duration()
+
+    def new_data_writer(self, timestep, x, y, teammate_x, teammate_y, strength, c_alg):
+        new_data = SignalData()
+        new_data.signal_strength = strength
+        new_data.my_pos.pose.position.x = x
+        new_data.my_pos.pose.position.y = y
+        new_data.teammate_pos.pose.position.x = teammate_x
+        new_data.teammate_pos.pose.position.y = teammate_y
+        new_data.timestep = timestep
+
+        f = open(self.comm_dataset_filename, "a")
+        f.write(str(new_data.timestep) +
+                ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
+                ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
+                ' ' + str(new_data.signal_strength) +
+                (' C\n' if c_alg else '\n')) # writing 'C' if data is found by using Carlo algorithm
+        f.close()
 
     def strength_logger_callback(self, event):
         for robot in range(n_robots):
@@ -305,32 +320,6 @@ class GenericRobot(object):
 
         return self.myself['time_expired']
 
-    def new_data_writer(self, timestep, x, y, teammate_x, teammate_y, strength, c_alg):
-        new_data = SignalData()
-        new_data.signal_strength = strength
-        new_data.my_pos.pose.position.x = x
-        new_data.my_pos.pose.position.y = y
-        new_data.teammate_pos.pose.position.x = teammate_x
-        new_data.teammate_pos.pose.position.y = teammate_y
-        new_data.timestep = timestep
-
-        f = open(self.comm_dataset_filename, "a")
-        f.write(str(new_data.timestep) +
-                ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
-                ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
-                ' ' + str(new_data.signal_strength) +
-                (' C\n' if c_alg else '\n')) # writing 'C' if data is found by using Carlo algorithm
-        f.close()
-
-    def reset_stuff(self):
-        self.myself['arrived_nominal_dest'] = False
-        self.myself['timestep'] = -1
-        self.myself['teammate'] = -1
-        self.myself['time_expired'] = False
-        self.distance = -1
-        self.last_feedback_pose = None
-        self.last_motion_time = None
-
     def fix_pose(self, old_pos, fix):
         found = False
         timeout = time.time() + 5  #almost 400k iterations per second
@@ -352,7 +341,7 @@ class GenericRobot(object):
                                                                 self.comm_module.I,
                                                                 old_pos, pos, resize_factor) == 0:
                 found = True
-            else: #just for extreme cases
+            else: #just for extreme cases (never happened during experiments)
                 if time.time() >= timeout:
                     fix += 0.5
                     fix_count += 1
@@ -467,6 +456,15 @@ class GenericRobot(object):
                 rospy.loginfo(str(self.robot_id) + ' - state: ' + str(state))
                 break
 
+    def reset_stuff(self):
+        self.myself['arrived_nominal_dest'] = False
+        self.myself['timestep'] = -1
+        self.myself['teammate'] = -1
+        self.myself['time_expired'] = False
+        self.distance = -1
+        self.last_feedback_pose = None
+        self.last_motion_time = None
+
     def distance_to_cover(self, plan):
         start = (self.robots_pos[self.robot_id][0],self.robots_pos[self.robot_id][1])
         destination = (plan.my_dest.position.x, plan.my_dest.position.y)
@@ -474,7 +472,7 @@ class GenericRobot(object):
         destination_index = utils.get_index_from_coord(self.env, self.env.get_closest_cell(destination, True))
         self.distance = self.env.sps_lengths[start_index][destination_index]
 
-    def move_robot(self):
+    def set_plans_info(self):
         if self.plans:
             plan_count = 1
             for plan in self.plans:
@@ -542,7 +540,7 @@ class GenericRobot(object):
         rospy.loginfo(str(self.robot_id) + ' - self.errors = ' + str(self.error_count) +
                       ', self.timeout_expired = ' + str(self.timeout_expired_count))
 
-        self.file_writer(self.info_txt)
+        self.file_writer(self.info_filename)
 
         all_arrived = False
         while not all_arrived:
@@ -556,8 +554,8 @@ class GenericRobot(object):
         os.system("pkill -f ros")
         rospy.sleep(rospy.Duration(2))
 
-    # -1: plan, 0: plan_set
-    # 1: leader/follower arrived and they have to wait for their teammate
+    # -1: plan, 0: leader sets plans
+    # 1: leader/followers follow plans waiting for their teammate
     # 2: completed
     def execute_plan(self):
         r = rospy.Rate(self.replan_rate)
@@ -565,7 +563,7 @@ class GenericRobot(object):
         while not rospy.is_shutdown():
             if self.myself['execute_plan_state'] == -1:
                 if self.is_leader:
-                    self.calculate_plan()
+                    self.parse_plans_file()
                 else:
                     self.myself['execute_plan_state'] = 0
 
@@ -576,7 +574,7 @@ class GenericRobot(object):
                     self.check_leader_state()
 
             elif self.myself['execute_plan_state'] == 1:
-                self.move_robot()
+                self.set_plans_info()
 
             elif self.myself['execute_plan_state'] == 2: #plan completed
                 self.end_exploration()
@@ -621,26 +619,19 @@ class Leader(GenericRobot):
             self.clients_signal[teammate_id].wait_for_server()
             rospy.loginfo(str(self.robot_id) + ' - Done.')
 
-    def calculate_plan(self):
-        rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
-        self.parse_plans_file()
-
-        self.myself['execute_plan_state'] = 0
-
     def parse_plans_file(self):
+        rospy.loginfo(str(self.robot_id) + ' - Leader - planning')
+
         coord = []
         robot_moving = []
         robot_plan = []
         timetable = []
-
         reading_coords = 0
         reading_RM = 0
         reading_TT = 0
-
         env_name = (os.path.splitext(map_filename)[0]).split("/")[-1]
 
-        with open(self.plan_folder + 'solution_plan_' + str(self.n_robots) +
-                  '_robots_' + str(env_name) + '.txt', 'r') as file:
+        with open(self.plans_folder + 'solution_plan_' + str(self.n_robots) + '_robots_' + str(env_name) + '.txt', 'r') as file:
             data = file.readlines()
             for line in data:
                 words = line.split()
@@ -760,6 +751,8 @@ class Leader(GenericRobot):
         plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
         self.plans = plan_id
+
+        self.myself['execute_plan_state'] = 0
 
     def assign_plans_to_robots(self):
         rospy.loginfo(str(self.robot_id) + ' - assigning plans to each robot')

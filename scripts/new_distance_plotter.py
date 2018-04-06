@@ -55,7 +55,6 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
 
 def plot(distances):
 
-    #x = range(int(GRANULARITY/60.0), int(MISSION_DURATION/60.0 + 1), 5)
     x = range(GRANULARITY, MISSION_DURATION + 1, GRANULARITY)
     x = map(lambda x: x / 60.0, x)
 
