@@ -41,7 +41,7 @@ MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 1350#150 for 4 robots, 350 for 2 robots
+MAX_NUM_ERRORS = 1350 #150 for 4 robots, 350 for 2 robots
 MAX_TIMEOUT_EXPIRED = 3 #3 for 2 and 4 robots
 
 WALL_DIST = 3 #in pixels
@@ -322,7 +322,7 @@ class GenericRobot(object):
 
     def fix_pose(self, old_pos, fix):
         found = False
-        timeout = time.time() + 5  #almost 400k iterations per second
+        timeout = time.time() + 5  #5 seconds
         fix_count = 0
         max_fix_count = 5
         pos = []
@@ -369,7 +369,7 @@ class GenericRobot(object):
         loop_count = 0
         fixing_attempts = 0
         max_attempts = 3
-        radius = 1.5 # 3 sometimes is too much
+        radius = 1.5
 
         self.timer = rospy.Time.now()
 
@@ -470,7 +470,7 @@ class GenericRobot(object):
         destination = (plan.my_dest.position.x, plan.my_dest.position.y)
         start_index = utils.get_index_from_coord(self.env, self.env.get_closest_cell(start, True))
         destination_index = utils.get_index_from_coord(self.env, self.env.get_closest_cell(destination, True))
-        self.distance = self.env.sps_lengths[start_index][destination_index]
+        self.distance = self.env.sps_lengths[start_index][destination_index] #shortest paths lengths from start to dest
 
     def set_plans_info(self):
         if self.plans:
@@ -780,7 +780,7 @@ class Leader(GenericRobot):
                         plan_robot.teammate_dest.position.x = points[1][0]
                         plan_robot.teammate_dest.position.y = points[1][1]
 
-                        # first_robot_id
+                        # teammate_id
                         plan_robot.comm_robot_id = Int8
                         plan_robot.comm_robot_id = plan[1]
 

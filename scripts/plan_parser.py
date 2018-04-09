@@ -4,6 +4,7 @@ import sys
 import random
 import numpy as np
 import os
+import time
 
 coord = []
 robot_moving = []
@@ -14,7 +15,7 @@ reading_coords = 0
 reading_RM = 0
 reading_TT = 0
 
-with open('/home/andrea/catkin_ws/src/strategy/data/solution_plan_2_robots.txt', 'r') as file:
+with open('/home/andrea/Desktop/parser/solution_plan_4_robots.txt', 'r') as file:
     data = file.readlines()
     for line in data:
         words = line.split()
@@ -63,8 +64,8 @@ coord = [coord[i:i + 2] for i in range(0, len(coord), 2)]  # group x and y of a 
 # converting from pixels to meters
 for c in coord:
     pos = c
-    #c[0] = float(self.env.dimX - resize_factor * pos[0])
-    #c[1] = float(resize_factor * pos[1])
+    c[0] = float(79.7 - 0.1 * pos[0])
+    c[1] = float(0.1 * pos[1])
 
 coord = [tuple(l) for l in coord]
 
@@ -107,23 +108,9 @@ for config in robot_moving:
         count += 1
     count_config += 1
 
-
 # grouping plan elements: [my_id, (my_coords),(teammate_coords),communication_teammate,timestamp]
-robot_plan = [robot_plan[i:i + 5] for i in range(0, len(robot_plan), 5)]
-
-# deleting last (incomplete) plan if last robot_moving row has only one robot to move
-final_dest = ()
-for plan in robot_plan:
-    #print plan
-    if len(plan) < 5: #if only one robot or all robots have to go to final destination
-        robot_plan.pop(-1)
-        final_dest = plan
-
-if final_dest:
-    final_dest.append(final_dest[1])
-    final_dest.append(final_dest[0])
-
-    robot_plan.append(final_dest) #adding to the complete plan the plan of the robot that has to go to final destination
+plan_elements = 5
+robot_plan = [robot_plan[i:i + plan_elements] for i in range(0, len(robot_plan), plan_elements)]
 
 # grouping plan elements: [(my_id, (((my_coords), (teammate_coords)), communication_teammate, timestamp)]
 plans = []
@@ -153,12 +140,6 @@ plan_id = [[y[1] for y in plans if y[0] == x] for x in robot_ids]
 
 plan_id = tuple([tuple(l) for l in plan_id])  # plans = (plan_robot_0, plan_robot_1,...,plan_robot_n)
 
-#for i in xrange(10):
-#    random_update = random.randint(0, 4)
-#    print random_update
-
-#print plan_id
-
 ###################################################################################################
 
 
@@ -173,35 +154,68 @@ for line in lines:
     if (carlo and s[-1] == 'C') or (not carlo):
         #print s
         count +=1
-print "Count: " + str(count)
+#print "Count: " + str(count)
 
 ###################################################################################################
 
 num_runs = 5
 procs = 3
 runs = range(num_runs)
-print "Runs: " + str(runs)
-print "range(proc): " + str(range(procs))
+#print "Runs: " + str(runs)
+#print "range(proc): " + str(range(procs))
 proc = 1
 
 for p in range(procs):
     if p == proc:
         runs = np.array_split(runs, procs)[p]
-        print runs
+        #print runs
 
 ###################################################################################################
 
-print os.getcwd()
+#print os.getcwd()
 
 os.chdir('/home/andrea/catkin_ws/src/strategy/')
 
-print os.getcwd()
+#print os.getcwd()
 
 log_dir = os.getcwd() + '/log/'
 
-print log_dir
+#print log_dir
 
-print "Run: " + str(5) + ", log_dir: " + str(log_dir)
+#print "Run: " + str(5) + ", log_dir: " + str(log_dir)
 
 ###################################################################################################
 
+old_pos = (42.0, 18.0)
+
+pos = old_pos
+pos = list(pos)
+
+#print pos
+
+new_pos = list(old_pos)
+#print new_pos
+
+###################################################################################################
+
+count = 0
+fix = 0
+max_fix = 3
+
+timeout = time.time() + 2
+found = False
+print time.time()
+while not found:
+    num = round(random.uniform(-10 - 0.5, 10+ 0.5), 2)
+    numb = round(random.uniform(-20- 0.5, 20+ 0.5), 2)
+    count += 1
+    if time.time() >= timeout:
+        fix += 1
+        print "fix: " + str(fix) + ", time.time(): "+ str(time.time())
+        if fix == max_fix:
+            found = True
+            print found
+
+
+
+print count

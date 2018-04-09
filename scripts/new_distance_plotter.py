@@ -9,12 +9,12 @@ from matplotlib import cm
 
 
 ENVIRONMENT = 'open'
-NROBOTS = 2
+NROBOTS = 4
 NUM_RUNS = 5
 RANGE = 50
 
-GRANULARITY = 832 #secs
-MISSION_DURATION = 8320 #secs
+GRANULARITY = 232 #secs
+MISSION_DURATION = 2320 #secs
 
 plot_format = {'graph': ['b--s', 'AC']}
 
@@ -41,7 +41,7 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
 
     plt.legend(fontsize=20, loc=2)
     plt.xlim(x_vals[0]-0.5, x_vals[-1] + 0.5)
-    plt.ylim(0,1800)
+    plt.ylim(0,400)
     plt.ylabel(ylabel, fontsize=22)
     plt.tick_params(labelsize=20)
     plt.xlabel("Time (minutes)", fontsize=22)
