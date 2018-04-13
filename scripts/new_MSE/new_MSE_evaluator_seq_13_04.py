@@ -437,6 +437,7 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + extension)
     plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + extension)
 
+
 def read_environment(environment_yaml_path):
     """Read environment yaml file to get the figure and the resolution.
 

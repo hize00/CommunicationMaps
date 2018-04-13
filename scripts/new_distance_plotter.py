@@ -16,7 +16,7 @@ RANGE = 50
 GRANULARITY = 232 #secs
 MISSION_DURATION = 2320 #secs
 
-plot_format = {'graph': ['b--s', 'AC']}
+plot_format = {'graph': ['b--s', 'Offline']}
 
 
 def parse_logfile(filename):
@@ -35,6 +35,10 @@ def parse_logfile(filename):
 
 def plot_values(x_vals, y, yerr, ylabel, filename):
     fig, ax = plt.subplots()
+    #ax.set_xticks(np.arange(start=0, stop=MISSION_DURATION,
+    #                        step=MISSION_DURATION / 360))
+    #ax.tick_params(axis='y', which='major', pad= 8)
+
 
     for key in plot_format.keys():
         plt.errorbar(x_vals, y, yerr, fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
@@ -45,7 +49,7 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     plt.ylabel(ylabel, fontsize=22)
     plt.tick_params(labelsize=20)
     plt.xlabel("Time (minutes)", fontsize=22)
-    
+
     os.environ['PATH'] = os.environ['PATH'] + 'YOURLATEXPATH'
     matplotlib.rcParams['ps.useafm'] = True
     matplotlib.rcParams['pdf.use14corefonts'] = True
