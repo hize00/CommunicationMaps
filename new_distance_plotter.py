@@ -7,7 +7,6 @@ from matplotlib.cbook import get_sample_data
 from matplotlib._png import read_png
 from matplotlib import cm
 
-
 ENVIRONMENT = 'open'
 NROBOTS = 4
 NUM_RUNS = 5
@@ -17,7 +16,6 @@ GRANULARITY = 232 #secs
 MISSION_DURATION = 2320 #secs
 
 plot_format = {'graph': ['b--s', 'Offline']}
-
 
 def parse_logfile(filename):
     distances = []
@@ -39,7 +37,6 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     #                        step=MISSION_DURATION / 360))
     #ax.tick_params(axis='y', which='major', pad= 8)
 
-
     for key in plot_format.keys():
         plt.errorbar(x_vals, y, yerr, fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
 
@@ -55,7 +52,6 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     matplotlib.rcParams['pdf.use14corefonts'] = True
     matplotlib.rcParams['text.usetex'] = True
     fig.savefig(filename, bbox_inches='tight')
-    
 
 def plot(distances):
 

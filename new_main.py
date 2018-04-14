@@ -50,7 +50,7 @@ PATH_DISC = 1 #m
 class GenericRobot(object):
     def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, duration,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, resize_factor,
-                 errors_filename, client_topic='move_base'):
+                 errors_filename, polling_freq, client_topic='move_base'):
 
         self.robot_id = robot_id
         self.sim = sim
@@ -91,8 +91,8 @@ class GenericRobot(object):
         log_dataset_file = open(comm_dataset_filename, "w")
         log_dataset_file.close()
 
-        strength_logger_rate = 10
-        rospy.Timer(rospy.Duration(strength_logger_rate), self.strength_logger_callback)
+        self.polling_freq = polling_freq
+        rospy.Timer(rospy.Duration(self.polling_freq), self.strength_logger_callback)
 
         # recovery
         self.last_feedback_pose = None
@@ -586,7 +586,7 @@ class Leader(GenericRobot):
     def __init__(self, seed, robot_id, sim, comm_range, map_filename,
                  duration, disc_method, disc, log_filename, teammates_id, n_robots, ref_dist,
                  env_filename, comm_dataset_filename, resize_factor, tiling, errors_filename,
-                 communication_model):
+                 communication_model, polling_freq):
 
         rospy.loginfo(str(robot_id) + ' - Leader - starting!')
         if not (os.path.exists(env_filename)):
@@ -602,7 +602,7 @@ class Leader(GenericRobot):
 
         super(Leader, self).__init__(seed, robot_id, True, sim, comm_range, map_filename,
                                      duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
-                                     ref_dist, resize_factor, errors_filename)
+                                     ref_dist, resize_factor, errors_filename, polling_freq)
 
         rospy.loginfo(str(self.robot_id) + ' - Created environment variable')
 
@@ -825,7 +825,7 @@ class Follower(GenericRobot):
 
     def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
-                 resize_factor, errors_filename):
+                 resize_factor, errors_filename, polling_freq):
 
         rospy.loginfo(str(robot_id) + ' - Follower - starting!')
 
@@ -842,7 +842,7 @@ class Follower(GenericRobot):
 
         super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename, duration,
                                        log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist,
-                                       resize_factor, errors_filename)
+                                       resize_factor, errors_filename, polling_freq)
 
         self._action_name = rospy.get_name()
         self._as = actionlib.SimpleActionServer(self._action_name, SignalMappingAction,
@@ -903,6 +903,7 @@ if __name__ == '__main__':
     resize_factor = float(rospy.get_param('/resize_factor'))
     tiling = int(rospy.get_param('/tiling'))
     log_folder = rospy.get_param('/log_folder')
+    polling_freq = rospy.get_param('/polling_freq')
 
     temmates_id_temp = teammates_id_temp.split('-')
     teammates_id = map(lambda x: int(x), temmates_id_temp)
@@ -928,11 +929,11 @@ if __name__ == '__main__':
     if is_leader:
         lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
-                      comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model)
+                      comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model, polling_freq)
         lead.execute_plan()
 
     else:
         foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
-                        resize_factor, errors_filename)
+                        resize_factor, errors_filename, polling_freq)
         foll.execute_plan()

@@ -73,7 +73,7 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 2320, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("granularity", 232, "Granularity of the mission (seconds) to plot every granularity.")
 gflags.DEFINE_integer("mission_duration", 2320, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
@@ -93,8 +93,7 @@ plot_format = {'graph': ['b--s', 'Offline']}
 
 FONTSIZE = 16
 
-def create_test_set(im_array, comm_model, test_set_size, 
-    resize_factor=0.1):
+def create_test_set(im_array, comm_model, test_set_size, resize_factor=0.1):
     def all_free(ii, jj, I, J, border=None):
         if(im_array[ii][jj] == 0): return False
 
@@ -118,28 +117,27 @@ def create_test_set(im_array, comm_model, test_set_size,
     J = np.size(im_array,1)
 
     items = 0
-    while(items < test_set_size):
-
-        while(True):
+    while items < test_set_size:
+        while True:
             x1 = dimX*random.random()
             y1 = dimY*random.random()
             i1 = I - int(y1/resize_factor)
             j1 = int(x1/resize_factor)
-            if(i1 >= I or j1 >= J): continue
-            if(all_free(i1,j1,I,J, environment.WALL_DIST)):
+            if i1 >= I or j1 >= J: continue
+            if all_free(i1,j1,I,J, environment.WALL_DIST):
                 break
         
-        while(True):
+        while True:
             x2 = dimX*random.random()
             y2 = dimY*random.random()
             if (utils.eucl_dist((x1,y1),(x2,y2)) < comm_model.MIN_DIST
-                or utils.eucl_dist((x1,y1),(x2,y2)) > comm_model.COMM_RANGE):
+                or utils.eucl_dist((x1,y1),(x2,y2)) > comm_model.COMM_RANGE): #gflags.FLAGS.comm_range_exp):
                 continue
 
             i2 = I - int(y2/resize_factor)
             j2 = int(x2/resize_factor)
-            if(i2 >= I or j2 >= J): continue
-            if(all_free(i2,j2,I,J, environment.WALL_DIST)):
+            if i2 >= I or j2 >= J: continue
+            if all_free(i2,j2,I,J, environment.WALL_DIST):
                 break        
 
         num_obstacles = numObstaclesBetweenRobots(im_array, I, (x1,y1), (x2,y2), resize_factor)
@@ -153,7 +151,7 @@ def create_test_set(im_array, comm_model, test_set_size,
         signal_strength += noise
 
         #otherwise the robot has not measured it
-        if(signal_strength < comm_model.CUTOFF_SAFE): continue
+        if signal_strength < comm_model.CUTOFF_SAFE: continue
 
         XTest.append((x1,y1,x2,y2))
         YTest.append(signal_strength)
@@ -209,8 +207,7 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
     """
 
     # Get predicted values.    
-    X, Y, Z, V = get_prediction_plot(comm_map, center, dimX, dimY, 
-        comm_model, resize_factor)
+    X, Y, Z, V = get_prediction_plot(comm_map, center, dimX, dimY, comm_model, resize_factor)
 
     # Preparing the figure with axes.
     img = deepcopy(environment_image)
@@ -351,9 +348,6 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     x = range(granularity, mission_duration + 1, granularity)
     x = map(lambda x: x/60.0, x)
 
-    cur_rmse_values = None
-    cur_rvar_values = None
-
     mse_avg = []
     rmse_avg = []
     mse_yerr = []
@@ -437,7 +431,6 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + extension)
     plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + extension)
 
-
 def read_environment(environment_yaml_path):
     """Read environment yaml file to get the figure and the resolution.
 
@@ -464,7 +457,7 @@ def read_environment(environment_yaml_path):
 
 def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model_path, granularity, mission_duration,
-    plot_comm_map, fixed_robot, filter, test_set_size, log_folder):
+    plot_comm_map, fixed_robot, test_set_size, log_folder):
     """Create pickle files containing data to be plotted.
 
     It processes the dat files containing the collected data from the robots.
@@ -506,6 +499,11 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         random.seed(0)
         np.random.seed(0)
         dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
+    else: #only to not have warnings, setting is useful only for real robots
+        dimX = []
+        dimY = []
+        XTest = []
+        YTest = []
 
     runs = range(num_runs)
 
@@ -515,7 +513,6 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
     for run in runs:
         all_signal_data = []
-
 
         for robot in range(num_robots):
             dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
@@ -545,7 +542,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             std_devs = map(lambda x: math.sqrt(x), variances)
             conf_95 = map(lambda x: 1.96 * x, std_devs)
 
-            errors[run].append( (mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
+            errors[run].append((mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
             variances_all[run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs),np.mean(conf_95), np.std(conf_95)))
             times_all[run].append(end - start)
 
@@ -562,7 +559,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                                                     '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
                                                     '_' + str(run) + '_' + str(secs) + extension
                 communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
-                plt.close(communication_figures[0])
+                #plt.close(communication_figures[0])
                 print "Done."
                 if len(communication_figures) > 1:
                     print "Drawing the Variance map..."
@@ -570,12 +567,12 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                                                         '_'  + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
                                                         '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + extension
                     communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
-                    plt.close(communication_figures[1])
+                    #plt.close(communication_figures[1])
                     print "Done."
 
-            # cleaning stuff
-            plt.close('all')
-            gc.collect()
+                # cleaning stuff
+                plt.close('all')
+                gc.collect()
 
     print '----------------------------------------------------------------------------'
     print errors
@@ -606,7 +603,6 @@ if __name__ == '__main__':
             gflags.FLAGS.granularity, gflags.FLAGS.mission_duration,
             gflags.FLAGS.plot_communication_map,
             (gflags.FLAGS.fixed_robot_x, gflags.FLAGS.fixed_robot_y),
-            gflags.FLAGS.filter_dat,
             gflags.FLAGS.test_set_size,
             gflags.FLAGS.log_folder)
     elif gflags.FLAGS.task == 'plot':

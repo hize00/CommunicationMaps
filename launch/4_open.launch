@@ -16,7 +16,7 @@
   <arg name="robotName2" default="robot_1" />
   <arg name="robotName3" default="robot_2" />
   <arg name="robotName4" default="robot_3" />
-  
+ 
   <node pkg="map_server" type="map_server" name="map_server" args="$(arg map_file)" respawn="false" >
     <param name="frame_id" value="/map" />
   </node>
@@ -41,6 +41,7 @@
   <param name="range" value="50" />
   <param name="resize_factor" value="0.1"/>
   <param name="tiling" value="0"/>
+  <param name="polling_freq" value="10"/>
 
   <!-- BEGIN ROBOT 0 -->
   <group ns="robot_0">
@@ -90,7 +91,7 @@
     <include file="$(find strategy)/includes/single_robot.launch">
     	<arg name="namespace" value="$(arg robotName3)"/>
     	<arg name="initial_pose_x" value="33.0"/>
-    	<arg name="initial_pose_y" value="13.0"/>
+    	<arg name="initial_pose_y" value="9.0"/>
     	<arg name="initial_pose_a" value="0.0"/>
     </include>
   </group>
@@ -109,7 +110,7 @@
     <include file="$(find strategy)/includes/single_robot.launch">
     	<arg name="namespace" value="$(arg robotName4)"/>
     	<arg name="initial_pose_x" value="33.0"/>
-    	<arg name="initial_pose_y" value="11.0"/>
+    	<arg name="initial_pose_y" value="7.0"/>
     	<arg name="initial_pose_a" value="0.0"/>
     </include>
   </group>
