@@ -92,7 +92,7 @@ class GenericRobot(object):
         log_dataset_file.close()
 
         self.polling_freq = polling_freq
-        rospy.Timer(rospy.Duration(self.polling_freq), self.strength_logger_callback)
+        rospy.Timer(rospy.Duration(self.polling_freq), self.polling_callback)
 
         # recovery
         self.last_feedback_pose = None
@@ -242,7 +242,7 @@ class GenericRobot(object):
                 (' C\n' if c_alg else '\n')) # writing 'C' if data is found by using Carlo algorithm
         f.close()
 
-    def strength_logger_callback(self, event):
+    def polling_callback(self, event):
         for robot in range(n_robots):
             if robot!= self.robot_id and self.comm_module.can_communicate(robot):
                 self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
