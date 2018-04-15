@@ -243,12 +243,16 @@ class GenericRobot(object):
         f.close()
 
     def polling_callback(self, event):
-        for robot in range(n_robots):
-            if robot!= self.robot_id and self.comm_module.can_communicate(robot):
-                self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
-                                     self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
-                                     self.robots_pos[robot][0], self.robots_pos[robot][1],
-                                     self.comm_module.get_signal_strength(robot, safe = False), False)
+        for robot in range(self.n_robots):
+            if robot == self.robot_id: continue
+            if not self.comm_module.can_communicate(robot): continue
+            if(utils.eucl_dist((self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1]),
+                               (self.robots_pos[robot][0],self.robots_pos[robot][1])) > self.comm_range): continue
+
+            self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
+                                 self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
+                                 self.robots_pos[robot][0], self.robots_pos[robot][1],
+                                 self.comm_module.get_signal_strength(robot, safe = False), False)
 
         self.check_duration()
 
