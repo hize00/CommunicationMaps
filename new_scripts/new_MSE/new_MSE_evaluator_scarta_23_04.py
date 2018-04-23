@@ -55,12 +55,12 @@ import utils
 import gc
 
 # Parameters in common, defining environment, number of robots used and number of repetitions.
-gflags.DEFINE_string("environment", "open",
+gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
-gflags.DEFINE_integer("num_robots", 4, "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 5,  "Number of repetitions for an experiment.")
+gflags.DEFINE_integer("num_robots", 2, "Number of robots used in the experiment.")
+gflags.DEFINE_integer("num_runs", 5, "Number of repetitions for an experiment.")
 gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if robot")
 
 # Parameters for simulation.
@@ -73,8 +73,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 232, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 2320, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 1549, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 15490, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -89,7 +89,6 @@ gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "
 
 # PLOT Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
 plot_format = {'graph': ['b--s', 'Offline']}
-
 
 FONTSIZE = 16
 
@@ -165,19 +164,38 @@ def parse_dataset(filename):
     filter = gflags.FLAGS.filter_dat
     f = open(filename, "r")
     lines = f.readlines()
+    scarto = False
+    count = 0
     for line in lines:
         s = line.split()
         if (filter and s[-1] == 'C') or not filter:
-            new_data = SignalData()
-            new_data.timestep = float(s[0])
-            new_data.my_pos.pose.position.x = float(s[1])
-            new_data.my_pos.pose.position.y = float(s[2])
-            new_data.teammate_pos.pose.position.x = float(s[3])
-            new_data.teammate_pos.pose.position.y = float(s[4])
-            new_data.signal_strength = float(s[5])
+            if s[-1] != 'C':
+                if not scarto:
+                    scarto = True
+                    count += 1
+                    new_data = SignalData()
+                    new_data.timestep = float(s[0])
+                    new_data.my_pos.pose.position.x = float(s[1])
+                    new_data.my_pos.pose.position.y = float(s[2])
+                    new_data.teammate_pos.pose.position.x = float(s[3])
+                    new_data.teammate_pos.pose.position.y = float(s[4])
+                    new_data.signal_strength = float(s[5])
 
-            dataset.append(new_data)
+                    dataset.append(new_data)
+                else:
+                    scarto = False
+            else:
+                new_data = SignalData()
+                new_data.timestep = float(s[0])
+                new_data.my_pos.pose.position.x = float(s[1])
+                new_data.my_pos.pose.position.y = float(s[2])
+                new_data.teammate_pos.pose.position.x = float(s[3])
+                new_data.teammate_pos.pose.position.y = float(s[4])
+                new_data.signal_strength = float(s[5])
 
+                dataset.append(new_data)
+
+    #print count
     return dataset
 
 def specular(img):
@@ -517,6 +535,8 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         for robot in range(num_robots):
             dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
             all_signal_data += parse_dataset(dataset_filename)
+
+        #print "LENGTH: " + str(len(all_signal_data))
 
         errors[run] = []
         variances_all[run] = []

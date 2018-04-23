@@ -42,7 +42,7 @@ MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
 MAX_NUM_ERRORS = 1350 #150 for 4 robots, 350 for 2 robots
-MAX_TIMEOUT_EXPIRED = 3 #3 for 2 and 4 robots
+MAX_TIMEOUT_EXPIRED = 10 #3 for 2 and 4 robots
 
 WALL_DIST = 3 #in pixels
 PATH_DISC = 1 #m
@@ -252,7 +252,7 @@ class GenericRobot(object):
             self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
                                  self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
                                  self.robots_pos[robot][0], self.robots_pos[robot][1],
-                                 self.comm_module.get_signal_strength(robot, safe = False), False)
+                                 self.comm_module.get_signal_strength(robot), False) #,safe = False
 
         self.check_duration()
 
@@ -527,7 +527,7 @@ class GenericRobot(object):
             self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
                                  self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
                                  self.robots_pos[self.myself['teammate']][0], self.robots_pos[self.myself['teammate']][1],
-                                 self.comm_module.get_signal_strength(self.myself['teammate'], safe = False), True)
+                                 self.comm_module.get_signal_strength(self.myself['teammate']), True) #,safe = False
         else:
             self.timeout_expired_count += 1
             if self.timeout_expired_count == MAX_TIMEOUT_EXPIRED:

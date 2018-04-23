@@ -52,10 +52,12 @@ from strategy.msg import SignalData
 from GPmodel import GPmodel
 import utils
 
+import sklearn
+
 import gc
 
 # Parameters in common, defining environment, number of robots used and number of repetitions.
-gflags.DEFINE_string("environment", "open",
+gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
@@ -73,8 +75,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 832, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 8320, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 1549, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 15490, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -146,8 +148,8 @@ def create_test_set(im_array, comm_model, test_set_size, resize_factor=0.1):
             - min(comm_model.MAX_WALL,
                 num_obstacles)*comm_model.WALL_ATT)
 
-        noise = np.random.normal(0, comm_model.VAR_NOISE)
-        signal_strength += noise
+        #noise = np.random.normal(0, comm_model.VAR_NOISE)
+        #signal_strength += noise
 
         #otherwise the robot has not measured it
         if signal_strength < comm_model.CUTOFF_SAFE: continue
@@ -167,15 +169,39 @@ def parse_dataset(filename):
     for line in lines:
         s = line.split()
         if (filter and s[-1] == 'C') or not filter:
-            new_data = SignalData()
-            new_data.timestep = float(s[0])
-            new_data.my_pos.pose.position.x = float(s[1])
-            new_data.my_pos.pose.position.y = float(s[2])
-            new_data.teammate_pos.pose.position.x = float(s[3])
-            new_data.teammate_pos.pose.position.y = float(s[4])
-            new_data.signal_strength = float(s[5])
+            dataset.append(s)
 
-            dataset.append(new_data)
+    return dataset
+
+def create_dataset(list):
+    filter = gflags.FLAGS.filter_dat
+    if not filter:
+        to_remove = []
+        for s1 in list:
+            for s2 in list:
+                if s1 != s2 and s1[-1] != 'C' and \
+                        utils.eucl_dist((float(s1[1]), float(s1[2])), (float(s2[1]), float(s2[2]))) <= 1.75 and \
+                        utils.eucl_dist((float(s1[3]), float(s1[4])), (float(s2[3]), float(s2[4]))) <= 1.75:
+                    if s1 not in to_remove:
+                        to_remove.append(s1)
+
+        print len(list)
+        print len(to_remove)
+
+        data = [x for x in list if x not in to_remove]
+    else:
+        data = list
+
+    dataset = []
+    for s in data:
+        new_data = SignalData()
+        new_data.timestep = float(s[0])
+        new_data.my_pos.pose.position.x = float(s[1])
+        new_data.my_pos.pose.position.y = float(s[2])
+        new_data.teammate_pos.pose.position.x = float(s[3])
+        new_data.teammate_pos.pose.position.y = float(s[4])
+        new_data.signal_strength = float(s[5])
+        dataset.append(new_data)
 
     return dataset
 
@@ -229,21 +255,16 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
     surf = ax_comm.plot_surface(X, Y, Z, rstride=1, cstride=1, cmap=cm.coolwarm, linewidth=0, antialiased=False, alpha=0.4)
     fig_comm.colorbar(surf, shrink=0.5, aspect=5)
 
-    # colorbar = fig_comm.colorbar(surf, shrink=0.5, aspect=5)
-    # tick_locator = ticker.MaxNLocator(nbins=9)
-    # colorbar.locator = tick_locator
-    # colorbar.update_ticks()
-
     ax_comm.view_init(elev=46)
     ax_comm.set_xlabel('X (pixels)', fontsize=FONTSIZE)
     ax_comm.set_ylabel('Y (pixels)', fontsize=FONTSIZE)
 
-    # plt.tight_layout()
 
     if all_signal_data is not None:
         X_points, Y_points, Z_points = get_scatter_plot(all_signal_data, dimX, dimY, center, resize_factor)
         ax_comm.autoscale(enable=False)
         #ax_comm.scatter(X_points, Y_points, Z_points)
+
 
     if plot_variance:
         fig_var = plt.figure()
@@ -260,8 +281,6 @@ def plot_prediction_from_xy_center_3d(environment_image, center,
         ax_var.view_init(elev=46)
         ax_var.set_xlabel('X (pixels)', fontsize=FONTSIZE)
         ax_var.set_ylabel('Y (pixels)', fontsize=FONTSIZE)
-
-        #plt.tight_layout()
         return [fig_comm, fig_var]
     else:
         return [fig_comm]
@@ -302,13 +321,6 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 
 def plot_values(x_vals, y, yerr, ylabel, filename):
     fig, ax = plt.subplots()
-
-    # ticks on x axis
-    # ax.set_xticks(np.arange(start = 0, stop= gflags.FLAGS.mission_duration,
-    #                        step = gflags.FLAGS.mission_duration/360))
-    # ticks on y axis
-    # plt.locator_params(nbins = 8, axis = 'y')
-    # ax.tick_params(axis='y', which='major', pad= 8)
 
     for key in plot_format.keys():
         plt.errorbar(x_vals, y, yerr, fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
@@ -525,13 +537,15 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     times_all = {}
 
     for run in runs:
-        all_signal_data = []
+        strings = []
 
         for robot in range(num_robots):
             dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
-            all_signal_data += parse_dataset(dataset_filename)
+            strings += parse_dataset(dataset_filename)
 
-        #print "Length: " + str(len(all_signal_data))
+        all_signal_data = create_dataset(strings)
+
+        print "Length: " + str(len(all_signal_data))
 
         errors[run] = []
         variances_all[run] = []
