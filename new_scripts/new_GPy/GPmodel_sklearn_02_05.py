@@ -101,7 +101,9 @@ class GPmodel(object):
             print "Training a new GP..."
             kernel = GPy.kern.RBF(input_dim = 4, variance=1., lengthscale=1.) #SE
             m = GPy.models.GPRegression(curX, curY, kernel)
-            m.Gaussian_noise.variance.constrain_fixed(1)
+            # m.Gaussian_noise.variance.unconstrain()
+            # m.Gaussian_noise.variance.fix(1)
+            # m.Gaussian_noise.variance.constrain_fixed(1)
             m.optimize()
             #print m
 

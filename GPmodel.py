@@ -3,10 +3,6 @@ import numpy as np
 import time
 import random
 
-import sklearn
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
-
 import communication
 from utils import conv_to_hash, eucl_dist
 
@@ -101,15 +97,7 @@ class GPmodel(object):
             print "Training a new GP..."
             kernel = GPy.kern.RBF(input_dim = 4, variance=1., lengthscale=1.) #SE
             m = GPy.models.GPRegression(curX, curY, kernel)
-            m.Gaussian_noise.variance.constrain_fixed(1)
             m.optimize()
-            #print m
-
-            #train new GP - sklearn
-            #kernel = RBF(length_scale = [1.,1.,1.,1.]) #SE
-            #print str(kernel.n_dims)
-            #m = GaussianProcessRegressor(kernel = kernel, alpha = 1e-9, n_restarts_optimizer = 2)# normalize_y = True)
-            #m.fit(curX, curY)
             print "Done."
 
             self.GP_dict[key] = m
@@ -171,21 +159,6 @@ class GPmodel(object):
             return self.predict_tiling(data)
         else:
             return self.predict_plain(data)
-
-    def predict_sklearn(self, data):
-        if (len(self.GP_dict.keys()) == 0):
-            return [(float(random.randint(self.CUTOFF, self.MAX_SIGNAL)), float('inf')) for _ in xrange(len(data))]
-
-        np_data = map(lambda x: np.array(x), data)
-        key = self.GP_dict.keys()[0]
-        YPred, YVar = self.GP_dict[key].predict(np.atleast_2d(np_data), return_std = True)
-        #print YPred
-        #print YVar
-        YPred = np.transpose(YPred)[0] + self.means_dict[key]
-        #print YPred
-        #YVar = np.transpose(YVar)[0]
-        #print YVar
-        return zip(YPred, YVar)
 
     def predict_plain(self, data):
         if(len(self.GP_dict.keys()) == 0):
