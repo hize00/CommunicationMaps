@@ -1,0 +1,22 @@
+
+A .dat file is composed by different sections, each one terminating with ';'
+The syntax of the .dat file is really important for the parsing function called inside the algorithms.
+A .dat file is automatically written by the parsingData.py script. The parameters can be modified or a new .dat file can be written from scratch.
+The main parts are:
+START = starting positions of the robot. Position one is for the first robot, position two is for the second, etc.
+VERTEXES = number of vertexes of the completely connected graph
+VELOCITY = velocity of the robots. Needed to derive the time_matrix
+POINTS_TO_EXPLORE = pairs of points that need to be explored
+DISTANCE_MATRIX = full matrix with the distance. Indexes go from 0 to VERTEXES-1. The time_matrix is derived from this one (DISTANCE/VELOCITY).
+
+See file "6nodes2robots.dat" for a simple example.
+File "provaC_parsed.dat" is a more complex one derived after launching scripts in the Graph/scripts folder
+
+
+HOW TO RUN:
+1. Put the .dat file and the python algorithm in the same directory 
+2. Open the terminal and go to the directory where the file is
+3. TYPE: python algorithmToLaunch.py filedat.dat obj_fun sorting_type*
+
+obj_fun: distance OR time
+*sorting_type: cardinality or heuristic or objective. Needed ONLY for the kumar algorithm with 3 robots

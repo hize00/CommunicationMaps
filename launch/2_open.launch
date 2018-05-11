@@ -40,6 +40,7 @@
   <param name="tiling" value="0"/>
   <param name="log_folder" value="$(find strategy)/log/"/>
   <param name="polling_freq" value="10"/>
+	<param name="selection_pol" value="grid"/>
 
   <!-- BEGIN ROBOT 0 -->
   <group ns="robot_0">

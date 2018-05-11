@@ -1,0 +1,9 @@
+The map used for these experiments is 'envs/offices'
+
+scripts/create_graph_from_png.py = given a png divides the image into a grid and assigns each square to a vertex with coordinates and edges. 
+It saves the computation in the corresponding .graphml file inside /data
+
+scripts/create_ptexplore.py = allows to draw as many points as you want until you press 'q'. 
+This points will be saved into 'data/provaC.exp' and will be the points of our graph
+
+scripts/parsingData.py = parse the previous file and create a new file .dat with corresponding data ready to be read from the algorithm
