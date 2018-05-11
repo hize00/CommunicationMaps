@@ -20,14 +20,8 @@ from utils import get_graphs_and_image_from_files, eucl_dist
 
 gflags.DEFINE_string('exp_name', 'provaC', 'name of the experiment to be written as .exp file')
 gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
-
 gflags.DEFINE_string('file_path', '../envs/offices.png', 'png file path')
-gflags.DEFINE_integer('sel_grid_size', 12, 'pixels making 1 grid cell'
-                      'for points selection')#offices = 12
-                                             #open = 10
-
-gflags.DEFINE_string('point_selection_policy', 'grid',
-                     'policy for selecting points in an environment') #click,grid,voronoi
+gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
 
 goal_config = []
 start = True
@@ -68,10 +62,20 @@ def onclick(event):
     y = event.ydata
 
     vertex_id = get_closest_vertex(x, y)
-    
-    goal_config.append(vertex_id)
-    plot_plan(goal_config)
-    write_exp_file()
+
+    if env_name == 'offices':
+        wall_dist = 6
+    elif env_name == 'open':
+        wall_dist = 12
+    else:
+        wall_dist = 0  # keeping all the points
+
+    if all_free(int(G_E.vs[vertex_id]['y_coord']), int(G_E.vs[vertex_id]['x_coord']), I, J, wall_dist):
+        goal_config.append(vertex_id)
+        plot_plan(goal_config)
+        write_exp_file()
+    else:
+        print "Point too close to an obstacle."
 
 def press(event):
     print('press', event.key)
@@ -80,10 +84,10 @@ def press(event):
         plt.close()
 
 def is_grid_cell(im_array, i, j, rows, cols):
-    for k in range(i, i + gflags.FLAGS.sel_grid_size):
+    for k in range(i, i + sel_grid_size):
         if k >= rows: return False
 
-        for w in range(j, j + gflags.FLAGS.sel_grid_size):
+        for w in range(j, j + sel_grid_size):
             if w >= cols: return False
 
             if im_array[k][w] == 0: return False
@@ -106,18 +110,15 @@ def all_free(ii, jj, I, J, border=None):
 def environment_discretization():
     print 'Creating grid physical graph with a different cell size for points selection ...'
 
-    #im = cv2.imread(gflags.FLAGS.file_path)
-    #im_array = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-
     rows = np.size(im_array, 0)
     cols = np.size(im_array, 1)
 
     graph = Graph(directed=False)
     curr_id = 0
-    bu = gflags.FLAGS.sel_grid_size / 2
+    bu = sel_grid_size / 2
 
-    for i in range(0, rows, gflags.FLAGS.sel_grid_size):
-        for j in range(0, cols, gflags.FLAGS.sel_grid_size):
+    for i in range(0, rows, sel_grid_size):
+        for j in range(0, cols, sel_grid_size):
             if gflags.FLAGS.point_selection_policy != 'voronoi':
                 if is_grid_cell(im_array, i, j, rows, cols):
                     graph.add_vertex()
@@ -135,18 +136,17 @@ def environment_discretization():
 
     return graph.vs
 
-def grid_points_selection(I,J):
+def grid_points_selection():
     global start
     global goal_config
 
     graph = environment_discretization()
 
-    env_name = (os.path.splitext(gflags.FLAGS.file_path)[0]).split("/")[-1]
     if env_name == 'offices':
         wall_dist = 6
         coeff = 4
     elif env_name == 'open':
-        wall_dist = 13  # open = 9,10,11,12
+        wall_dist = 13
         coeff = 5
     else:
         wall_dist = 0  # keeping all the points
@@ -160,16 +160,16 @@ def grid_points_selection(I,J):
     too_close = []
     for p1 in points:
         if p1 in too_close: continue
-        if not all_free(int(p1['y_coord']), int(p1['x_coord']), I, J, wall_dist):
+        x1 = p1['x_coord']
+        y1 = p1['y_coord']
+        if not all_free(y1, x1, I, J, wall_dist):
             too_close.append(p1)
         else:
             for p2 in points:
                 if p1 == p2 or p2 in too_close: continue
-                x1 = p1['x_coord']
-                y1 = p1['y_coord']
                 x2 = p2['x_coord']
                 y2 = p2['y_coord']
-                if eucl_dist((x1, y1), (x2, y2)) < coeff * gflags.FLAGS.sel_grid_size:
+                if eucl_dist((x1, y1), (x2, y2)) < coeff * sel_grid_size:
                     too_close.append(p2)
 
     points = [x for x in points if x not in too_close]
@@ -186,7 +186,7 @@ def grid_points_selection(I,J):
 
     print 'Done. Number of points: ' + str(len(goal_config))
 
-def voronoi_points_selection(I,J):
+def voronoi_points_selection():
     global start
     global goal_config
 
@@ -198,7 +198,6 @@ def voronoi_points_selection(I,J):
         y = vertex['y_coord']
         graph_points.append((x, y))
 
-    env_name = (os.path.splitext(gflags.FLAGS.file_path)[0]).split("/")[-1]
     if env_name == 'offices':
         wall_dist = 7
         coeff = 3
@@ -251,7 +250,7 @@ def voronoi_points_selection(I,J):
         if p1 in cluster: continue
         for p2 in points:
             if p1 == p2: continue
-            if eucl_dist((p1[0], p1[1]),(p2[0], p2[1])) < coeff * gflags.FLAGS.sel_grid_size:
+            if eucl_dist((p1[0], p1[1]),(p2[0], p2[1])) < coeff * sel_grid_size:
                 if p2 not in too_close:
                     cluster.append(p2)
 
@@ -271,6 +270,14 @@ def voronoi_points_selection(I,J):
 if __name__ == "__main__":
     argv = gflags.FLAGS(sys.argv)
     G_E, im_array = get_graphs_and_image_from_files(gflags.FLAGS.phys_graph)
+    env_name = (os.path.splitext(gflags.FLAGS.file_path)[0]).split("/")[-1]
+
+    if env_name == 'offices': #sel_grid_size = pixels making 1 grid cell for points selection
+        sel_grid_size = 12
+    elif env_name == 'open':
+        sel_grid_size = 10
+    else:
+        print "Unknown environment"
 
     I = np.size(im_array, 0)
     J = np.size(im_array, 1)
@@ -282,9 +289,9 @@ if __name__ == "__main__":
     if gflags.FLAGS.point_selection_policy == 'click':
         cid = fig.canvas.mpl_connect('button_press_event', onclick)
     elif gflags.FLAGS.point_selection_policy == 'grid':
-        grid_points_selection(I,J)
+        grid_points_selection()
     elif gflags.FLAGS.point_selection_policy == 'voronoi':
-        voronoi_points_selection(I,J)
+        voronoi_points_selection()
     else:
         print 'Point selection policy not valid.'
 

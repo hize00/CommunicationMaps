@@ -78,7 +78,7 @@ if __name__ == '__main__':
 	I = np.size(im_array, 0)
 	J = np.size(im_array, 1)
 
-	os.chdir("/home/andrea/Desktop/pyAndrea/scriptGraph/scripts")
+	os.chdir("/home/andrea/Desktop/pyAndrea_mio/scriptGraph/scripts")
 
 	#PARSE file with points of the graph
 	POINTS = []
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 	def euclidean_distance(x1, y1, x2, y2):
 		return math.sqrt((x1-x2)**2 + (y1-y2)**2)/GRID_DISCRETIZATION
 
-	#coordinates convertion
+	#coordinates conversion
 	for i in range(0, len(POINTS)):
 		coord = i
 		G_E.vs[POINTS[i]]['x_coord'] = float(resize_factor * G_E.vs[POINTS[coord]]['x_coord'])
