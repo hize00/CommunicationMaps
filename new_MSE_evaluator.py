@@ -82,11 +82,11 @@ gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 gflags.DEFINE_string("task", "evaluate", "Script task {evaluate, plot}.")
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "Root of log folder.")
 
-#Data sets to be plotted
+# Data sets to be plotted
 sets = ["complete", "pre_processing", "filtered"]
 
-# PLOT Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
-plot_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-Processing filter'],
+# Plot Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
+plot_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-processing'],
                'filtered': ['r-^', 'Pairing TSP']}
 
 FONTSIZE = 16
@@ -177,7 +177,6 @@ def create_dataset(data_list, set):
                 if d1 != d2 and d1[-1] != 'C' and \
                         utils.eucl_dist((float(d1[1]), float(d1[2])), (float(d2[1]), float(d2[2]))) <= 2.0 and \
                         utils.eucl_dist((float(d1[3]), float(d1[4])), (float(d2[3]), float(d2[4]))) <= 2.0:
-                    #if d1 not in to_remove:
                     to_remove.append(d1)
                     break
 
@@ -521,7 +520,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         mission_duration (int): seconds for total mission.
         plot_comm_map (bool): If True, plot communication map.
         fixed_robot (tuple of float): x,y of robot in meters.
-        filter (bool): If True, consider ony information found by Carlo algorithm
+        filter (bool): If True, consider ony information found by Pairing TSP algorithm
         test_set_size (int): number of samples in the test set
         log_folder (str): folder where logs are saved.
     """
@@ -542,7 +541,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         random.seed(0)
         np.random.seed(0)
         dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
-    else: #only to not have warnings, setting is useful only for real robots
+    else:
         dimX = []
         dimY = []
         XTest = []
@@ -567,13 +566,13 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         times_all[set] = {}
 
         for run in runs:
-            data_parsed = []
+            parsed = []
 
             for robot in range(num_robots):
                 dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
-                data_parsed += parse_dataset(dataset_filename, filter)
+                parsed += parse_dataset(dataset_filename, filter)
 
-            all_signal_data = create_dataset(data_parsed, set)
+            all_signal_data = create_dataset(parsed, set)
 
             print "Set length: " + str(len(all_signal_data))
 
@@ -605,7 +604,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                 variances_all[set][run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs),np.mean(conf_95), np.std(conf_95)))
                 times_all[set][run].append(end - start)
 
-                if plot_comm_map:
+                if plot_comm_map and run == 0:
                     print "Drawing the CM..."
 
                     if set == "complete":
@@ -624,7 +623,7 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                     print "Done."
                     if len(communication_figures) > 1:
                         print "Drawing the Variance map..."
-                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) +\
+                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
                                                             '_'  + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
                                                             '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + extension
                         communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')

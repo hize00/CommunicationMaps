@@ -20,7 +20,7 @@ import time
 #CONSTANTS
 gflags.DEFINE_string('exp_name', 'provaC', 'name of the file to be opened')
 gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
-gflags.DEFINE_integer('n_robots', 2, 'number of robots of the experiment')
+gflags.DEFINE_integer('n_robots', 4, 'number of robots of the experiment')
 
 gflags.DEFINE_string("communication_model_path", "/home/andrea/catkin_ws/src/strategy/data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")

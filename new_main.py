@@ -240,7 +240,7 @@ class GenericRobot(object):
                 ' ' + str(new_data.my_pos.pose.position.x) + ' ' + str(new_data.my_pos.pose.position.y) +
                 ' ' + str(new_data.teammate_pos.pose.position.x) + ' ' + str(new_data.teammate_pos.pose.position.y) +
                 ' ' + str(new_data.signal_strength) +
-                (' C\n' if c_alg else '\n')) # writing 'C' if data is found by using Carlo algorithm
+                (' C\n' if c_alg else '\n')) # writing 'C' if data is found by using Pairing TSP algorithm
         f.close()
 
     def polling_callback(self, event):
