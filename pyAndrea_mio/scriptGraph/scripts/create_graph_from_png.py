@@ -7,13 +7,13 @@ import sys
 
 import gflags
 
-gflags.DEFINE_string('file_path', '../envs/offices.png', 'png file path')
+gflags.DEFINE_string('file_path', '../envs/open.png', 'png file path')
 
 gflags.DEFINE_string('phys_discr_type', 'uniform_grid', 'environment discretization - physical')
-gflags.DEFINE_integer('cell_size', 11, 'pixels making 1 grid cell '
+gflags.DEFINE_integer('cell_size', 7, 'pixels making 1 grid cell '
                                       '(only for uniform grid discretization)') #11 offices, 7 open
 
-gflags.DEFINE_string('output_phys', '../data/offices_phys', 'physical graph output')
+gflags.DEFINE_string('output_phys', '../data/open_phys', 'physical graph output')
 
 gflags.DEFINE_bool('debug', True, 'debug mode active')
 

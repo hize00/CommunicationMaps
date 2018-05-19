@@ -53,12 +53,12 @@ from GPmodel import GPmodel
 import utils
 
 # Parameters in common, defining environment, number of robots used and number of repetitions.
-gflags.DEFINE_string("environment", "open",
+gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
-gflags.DEFINE_integer("num_robots", 4, "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 5, "Number of repetitions for an experiment.")
+gflags.DEFINE_integer("num_robots", 2, "Number of robots used in the experiment.")
+gflags.DEFINE_integer("num_runs", 1, "Number of repetitions for an experiment.")
 gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if robot")
 
 # Parameters for simulation.
@@ -71,8 +71,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 391, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 3910, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 2824, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 28240, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -81,6 +81,9 @@ gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 
 gflags.DEFINE_string("task", "evaluate", "Script task {evaluate, plot}.")
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "Root of log folder.")
+
+# Point selection policy
+gflags.DEFINE_string('point_selection_policy', 'grid', 'policy for selecting points in an environment') #click,grid,voronoi
 
 # Data sets to be plotted
 sets = ["complete", "pre_processing", "filtered"]
@@ -179,9 +182,6 @@ def create_dataset(data_list, set):
                         utils.eucl_dist((float(d1[3]), float(d1[4])), (float(d2[3]), float(d2[4]))) <= 2.0:
                     to_remove.append(d1)
                     break
-
-        print "Complete set length: " + str(len(data_list))
-        print "Data to remove: " + str(len(to_remove))
 
         data = [x for x in data_list if x not in to_remove]
     else:
@@ -376,7 +376,8 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     """
     comm_model = CommModel(comm_model_path)
 
-    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "rb")
+    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + \
+             '_' + str(int(comm_model.COMM_RANGE)) + '_' + gflags.FLAGS.point_selection_policy + '.dat', "rb")
     errors, variances_all, times_all = pickle.load(f)
     f.close()
 
@@ -399,7 +400,7 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     times_yerr = {}
 
     for set in sets:
-        print "Set: ", set
+        #print "Set: ", set
         mse_avg[set] = []
         rmse_avg[set] = []
         mse_yerr[set] = []
@@ -566,10 +567,15 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
         times_all[set] = {}
 
         for run in runs:
+            if run != 0 and plot_comm_map: break
+
             parsed = []
 
             for robot in range(num_robots):
-                dataset_filename = log_folder + str(run) + '_' + environment + '_' + str(robot) + '_' + str(num_robots) + '_' + str(int(comm_model.COMM_RANGE)) + '.dat'
+                dataset_filename = log_folder + str(run) + '_' + environment + \
+                                   '_' + str(robot) + '_' + str(num_robots) + \
+                                   '_' + str(int(comm_model.COMM_RANGE)) + \
+                                   '_' + gflags.FLAGS.point_selection_policy + '.dat'
                 parsed += parse_dataset(dataset_filename, filter)
 
             all_signal_data = create_dataset(parsed, set)
@@ -604,8 +610,8 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                 variances_all[set][run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs),np.mean(conf_95), np.std(conf_95)))
                 times_all[set][run].append(end - start)
 
-                if plot_comm_map and run == 0:
-                    print "Drawing the CM..."
+                if plot_comm_map:
+                    print "Drawing the Communication map..."
 
                     if set == "complete":
                         extension = '.png'
@@ -637,7 +643,8 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     print times_all
     print '----------------------------------------------------------------------------'
 
-    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.dat', "wb")
+    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) +
+             '_' + gflags.FLAGS.point_selection_policy +'.dat', "wb")
     pickle.dump((errors, variances_all, times_all), f)
     f.close()
 

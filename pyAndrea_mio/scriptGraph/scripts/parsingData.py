@@ -27,7 +27,7 @@ gflags.DEFINE_string("communication_model_path", "/home/andrea/catkin_ws/src/str
 
 VELOCITY = 1
 RANGE_DISTANCE = 40
-GRID_DISCRETIZATION = 11
+GRID_DISCRETIZATION = 11 #offices = 11, open = 7
 
 #maximum recursion depth
 sys.setrecursionlimit(100000)

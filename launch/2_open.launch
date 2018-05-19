@@ -33,7 +33,6 @@
   <param name="disc" value="7"/>
   <param name="map_filename" value="$(find strategy)/envs/open.png"/>
   <param name="disc_method" value="grid"/>
-  <param name="duration" value="54000"/>
   <param name="env_filename" value="$(find strategy)/envs/open.dat"/>
   <param name="n_robots" value="2"/>
   <param name="resize_factor" value="0.1"/>

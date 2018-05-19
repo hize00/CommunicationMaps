@@ -33,14 +33,13 @@
   <param name="disc" value="7"/>
   <param name="map_filename" value="$(find strategy)/envs/offices.png"/>
   <param name="disc_method" value="grid"/>
-  <param name="duration" value="54000"/>
   <param name="env_filename" value="$(find strategy)/envs/offices.dat"/>
   <param name="n_robots" value="2"/>
   <param name="resize_factor" value="0.1"/>
   <param name="tiling" value="0"/>
   <param name="log_folder" value="$(find strategy)/log/"/>
   <param name="polling_freq" value="10"/>
-	<param name="selection_pol" value="grid"/>
+	<param name="selection_pol" value="voronoi"/>
 
   <!-- BEGIN ROBOT 0 -->
   <group ns="robot_0">

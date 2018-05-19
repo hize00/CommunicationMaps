@@ -41,14 +41,14 @@ MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 135000 #150 for 4 robots, 350 for 2 robots
-MAX_TIMEOUT_EXPIRED = 10000 #3 for 2 and 4 robots
+MAX_NUM_ERRORS = 600
+MAX_TIMEOUT_EXPIRED = 10
 
-WALL_DIST = 3 #in pixels
+WALL_DIST = 6 #in pixels
 PATH_DISC = 1 #m
 
 class GenericRobot(object):
-    def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename, duration,
+    def __init__(self, seed, robot_id, is_leader, sim, comm_range, map_filename,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, resize_factor,
                  errors_filename, polling_freq, selection_policy, client_topic='move_base'):
 
@@ -66,7 +66,6 @@ class GenericRobot(object):
         self.error_count = 0
 
         # for ending the mission
-        self.duration = rospy.Duration(duration)
         self.mission_start_time = rospy.Time.now()
 
         # for handling motion
@@ -136,7 +135,9 @@ class GenericRobot(object):
         self.lock_data = threading.Lock()
 
         env_name = (os.path.splitext(self.map_filename)[0]).split("/")[-1]
-        self.info_filename = '/home/andrea/catkin_ws/src/strategy/log/' + "info_" + str(self.n_robots) + '_' + str(env_name) + '.txt'
+        self.info_filename = '/home/andrea/catkin_ws/src/strategy/log/' + \
+                             "info_" + str(self.n_robots) + '_' + str(env_name) + \
+                             "_" + self.selection_policy + '.txt'
 
         self.robot_dict = dict()
 
@@ -207,24 +208,17 @@ class GenericRobot(object):
     def file_writer(self, file):
         mode = 'a' if os.path.exists(file) else 'w'
         f = open(file, mode)
-        f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " + " ---> " + self.selection_policy + " ---> "
+        f.write(str(self.seed) + " ---> " + self.map_filename + " ---> " + self.selection_policy + " ---> " +
                 (str(self.n_robots) if file == self.errors_filename else str(self.robot_id)) +
                  ((" ---> errors: " + str(self.error_count) + " --- timeout_expired: " + str(self.timeout_expired_count) + '\n')
                   if file == self.info_filename else
                   (" --> too many errors\n" if self.error_count == MAX_NUM_ERRORS else " --> too many timeouts expired\n")))
         f.close()
 
-    def check_duration(self):
-        if (rospy.Time.now() - self.mission_start_time) >= self.duration:
-            rospy.loginfo("Sending shutdown...")
-            os.system("pkill -f ros")
-
     def distance_logger_callback(self, event):
         f = open(self.log_filename, "a")
         f.write('D ' + str((rospy.Time.now() - self.mission_start_time).secs) + ' ' + str(self.traveled_dist) + '\n')
         f.close()
-
-        self.check_duration()
 
     def new_data_writer(self, timestep, x, y, teammate_x, teammate_y, strength, c_alg):
         new_data = SignalData()
@@ -254,8 +248,6 @@ class GenericRobot(object):
                                  self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],
                                  self.robots_pos[robot][0], self.robots_pos[robot][1],
                                  self.comm_module.get_signal_strength(robot, safe = False), False)
-
-        self.check_duration()
 
     def feedback_motion_cb(self, feedback):
         if (self.last_feedback_pose is not None and abs(
@@ -589,7 +581,7 @@ class GenericRobot(object):
 
 class Leader(GenericRobot):
     def __init__(self, seed, robot_id, sim, comm_range, map_filename,
-                 duration, disc_method, disc, log_filename, teammates_id, n_robots, ref_dist,
+                 disc_method, disc, log_filename, teammates_id, n_robots, ref_dist,
                  env_filename, comm_dataset_filename, resize_factor, tiling, errors_filename,
                  communication_model, polling_freq, selection_policy):
 
@@ -606,7 +598,7 @@ class Leader(GenericRobot):
             f.close()
 
         super(Leader, self).__init__(seed, robot_id, True, sim, comm_range, map_filename,
-                                     duration, log_filename, comm_dataset_filename, teammates_id, n_robots,
+                                     log_filename, comm_dataset_filename, teammates_id, n_robots,
                                      ref_dist, resize_factor, errors_filename, polling_freq, selection_policy)
 
         rospy.loginfo(str(self.robot_id) + ' - Created environment variable')
@@ -829,7 +821,7 @@ class Leader(GenericRobot):
 class Follower(GenericRobot):
     _result   = SignalMappingResult()
 
-    def __init__(self, seed, robot_id, sim, comm_range, map_filename, duration,
+    def __init__(self, seed, robot_id, sim, comm_range, map_filename,
                  log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                  resize_factor, errors_filename, polling_freq, selection_policy):
 
@@ -846,7 +838,7 @@ class Follower(GenericRobot):
                 rospy.logerr(str(robot_id) + " - Follower - Environment not loaded yet.")
                 rospy.sleep(1)
 
-        super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename, duration,
+        super(Follower, self).__init__(seed, robot_id, False, sim, comm_range, map_filename,
                                        log_filename, comm_dataset_filename, teammates_id, n_robots, ref_dist,
                                        resize_factor, errors_filename, polling_freq, selection_policy)
 
@@ -893,7 +885,6 @@ if __name__ == '__main__':
     disc = float(rospy.get_param('/disc'))
     comm_range = float(rospy.get_param('/range'))
     disc_method = rospy.get_param('/disc_method')
-    duration = float(rospy.get_param('/duration'))
     env_filename = rospy.get_param('/env_filename')
 
     communication_model = rospy.get_param('/communication_model', "")
@@ -918,30 +909,30 @@ if __name__ == '__main__':
     env = (map_filename.split('/')[-1]).split('.')[0]
     if communication_model is "":
         log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + \
-                       str(n_robots) + '_' + str(int(comm_range)) + '.log'
+                       str(n_robots) + '_' + str(int(comm_range)) + '_' + selection_policy + '.log'
     else:
         log_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + '_' + \
-                       str(n_robots) + '_' + str(int(comm_range)) + '_' + communication_model + '.log'
+                       str(n_robots) + '_' + str(int(comm_range)) + '_' + communication_model + '_' + selection_policy + '.log'
     if communication_model is "":
         comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + \
-                                '_' + str(n_robots) + '_' + str(int(comm_range)) + '.dat'
+                                '_' + str(n_robots) + '_' + str(int(comm_range)) + '_' + selection_policy + '.dat'
     else:
         comm_dataset_filename = log_folder + str(seed) + '_' + env + '_' + str(robot_id) + \
-                                '_' + str(n_robots) + '_' + str(int(comm_range)) + '_' + communication_model + '.dat'
+                                '_' + str(n_robots) + '_' + str(int(comm_range)) + '_' + communication_model + \
+                                '_' + selection_policy +'.dat'
 
-    errors_filename = log_folder + 'errors.log'
+    errors_filename = log_folder + 'errors_' + str(n_robots) + '_' + str(env) + '_' + str(selection_policy) + '.log'
     print "Logging possible errors to: " + errors_filename
 
-
     if is_leader:
-        lead = Leader(seed, robot_id, sim, comm_range, map_filename, duration,
+        lead = Leader(seed, robot_id, sim, comm_range, map_filename,
                       disc_method, disc, log_filename, teammates_id, n_robots, ref_dist, env_filename,
                       comm_dataset_filename, resize_factor, tiling, errors_filename, communication_model,
                       polling_freq, selection_policy)
         lead.execute_plan()
 
     else:
-        foll = Follower(seed, robot_id, sim, comm_range, map_filename, duration, log_filename,
+        foll = Follower(seed, robot_id, sim, comm_range, map_filename, log_filename,
                         comm_dataset_filename, teammates_id, n_robots, ref_dist, env_filename,
                         resize_factor, errors_filename, polling_freq, selection_policy)
         foll.execute_plan()

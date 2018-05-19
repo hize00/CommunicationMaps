@@ -10,18 +10,13 @@ import cv2
 from igraph import *
 from scipy.spatial import Voronoi, voronoi_plot_2d
 
-#from shapely.geometry import LineString, MultiPolygon, MultiPoint, Point
-#from skimage.morphology import medial_axis
-#from skimage import img_as_bool, io, color, morphology
-#from rdp import rdp
-
 from utils import get_graphs_and_image_from_files, eucl_dist
 
 
 gflags.DEFINE_string('exp_name', 'provaC', 'name of the experiment to be written as .exp file')
 gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
 gflags.DEFINE_string('file_path', '../envs/offices.png', 'png file path')
-gflags.DEFINE_string('point_selection_policy', 'grid', 'policy for selecting points in an environment') #click,grid,voronoi
+gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
 
 goal_config = []
 start = True
@@ -63,13 +58,6 @@ def onclick(event):
 
     vertex_id = get_closest_vertex(x, y)
 
-    if env_name == 'offices':
-        wall_dist = 6
-    elif env_name == 'open':
-        wall_dist = 12
-    else:
-        wall_dist = 0  # keeping all the points
-
     if all_free(int(G_E.vs[vertex_id]['y_coord']), int(G_E.vs[vertex_id]['x_coord']), I, J, wall_dist):
         goal_config.append(vertex_id)
         plot_plan(goal_config)
@@ -108,8 +96,6 @@ def all_free(ii, jj, I, J, border=None):
 	return True
 
 def environment_discretization():
-    print 'Creating grid physical graph with a different cell size for points selection ...'
-
     rows = np.size(im_array, 0)
     cols = np.size(im_array, 1)
 
@@ -119,42 +105,39 @@ def environment_discretization():
 
     for i in range(0, rows, sel_grid_size):
         for j in range(0, cols, sel_grid_size):
-            if gflags.FLAGS.point_selection_policy != 'voronoi':
-                if is_grid_cell(im_array, i, j, rows, cols):
-                    graph.add_vertex()
-                    graph.vs[curr_id]['y_coord'] = i + bu
-                    graph.vs[curr_id]['x_coord'] = j + bu
-                    curr_id += 1
-            else:
-                if not is_grid_cell(im_array, i, j, rows, cols):
-                    graph.add_vertex()
-                    graph.vs[curr_id]['y_coord'] = i + bu
-                    graph.vs[curr_id]['x_coord'] = j + bu
-                    curr_id += 1
-
-    print 'Done. Number of vertices: ', len(graph.vs)
+            if not is_grid_cell(im_array, i, j, rows, cols):
+                graph.add_vertex()
+                graph.vs[curr_id]['y_coord'] = i + bu
+                graph.vs[curr_id]['x_coord'] = j + bu
+                curr_id += 1
 
     return graph.vs
+
+def check_vertex_dist_from_obstacle(vertex_id):
+    #fixing the points in 'offices' that are too close to an obstacle, due to the discretization
+    if env_name == 'offices':
+        if not all_free(int(G_E.vs[vertex_id]['y_coord']), int(G_E.vs[vertex_id]['x_coord']), I, J, wall_dist):
+            for vertex in G_E.vs:
+                if vertex == vertex_id: continue
+                x1 = G_E.vs[vertex_id]['x_coord']
+                y1 = G_E.vs[vertex_id]['y_coord']
+                x2 = vertex['x_coord']
+                y2 = vertex['y_coord']
+                if eucl_dist((x1, y1), (x2, y2)) <=  3 * sel_grid_size and all_free(int(y2), int(x2), I, J, wall_dist):
+                    vertex_id = get_closest_vertex(vertex['x_coord'], vertex['y_coord'])
+                    return vertex_id
+
+            return None #if no fixing vertex is found, no vertex will be added in the goal set
+
+    return vertex_id
 
 def grid_points_selection():
     global start
     global goal_config
 
-    graph = environment_discretization()
-
-    if env_name == 'offices':
-        wall_dist = 6
-        coeff = 4
-    elif env_name == 'open':
-        wall_dist = 13
-        coeff = 5
-    else:
-        wall_dist = 0  # keeping all the points
-        coeff = 0
-
     points = []
-    for i in xrange(0, len(graph)):
-        points.append(graph[i]) #creating a list of vertices of the graph (for legibility)
+    for i in xrange(0, len(G_E.vs)):
+        points.append(G_E.vs[i]) #creating a list of vertices of the graph (for legibility)
 
     #removing points that are too close to each other or too close to an obstacle
     too_close = []
@@ -162,7 +145,7 @@ def grid_points_selection():
         if p1 in too_close: continue
         x1 = p1['x_coord']
         y1 = p1['y_coord']
-        if not all_free(y1, x1, I, J, wall_dist):
+        if not all_free(int(y1), int(x1), I, J, wall_dist):
             too_close.append(p1)
         else:
             for p2 in points:
@@ -178,7 +161,8 @@ def grid_points_selection():
         x1 = point['x_coord']
         y1 = point['y_coord']
         vertex_id = get_closest_vertex(x1, y1)
-        if vertex_id not in goal_config:
+        vertex_id = check_vertex_dist_from_obstacle(vertex_id)
+        if vertex_id and vertex_id not in goal_config:
             goal_config.append(vertex_id)
 
     write_exp_file()
@@ -196,17 +180,7 @@ def voronoi_points_selection():
     for vertex in graph:
         x = vertex['x_coord']
         y = vertex['y_coord']
-        graph_points.append((x, y))
-
-    if env_name == 'offices':
-        wall_dist = 7
-        coeff = 3
-    elif env_name == 'open':
-        wall_dist = 13
-        coeff =  2.5 #or 3, according to the number of points I want
-    else:
-        wall_dist = 0  # keeping all the points
-        coeff = 0
+        graph_points.append((x,y))
 
     # calculating Voronoi vertices
     voronoi = Voronoi(graph_points) # , qhull_options='Qbb Qc Qx')
@@ -258,7 +232,8 @@ def voronoi_points_selection():
 
     for point in points:
         vertex_id = get_closest_vertex(point[0], point[1])
-        if vertex_id not in goal_config:
+        vertex_id = check_vertex_dist_from_obstacle(vertex_id)
+        if vertex_id and vertex_id not in goal_config:
             goal_config.append(vertex_id)
 
     write_exp_file()
@@ -272,10 +247,34 @@ if __name__ == "__main__":
     G_E, im_array = get_graphs_and_image_from_files(gflags.FLAGS.phys_graph)
     env_name = (os.path.splitext(gflags.FLAGS.file_path)[0]).split("/")[-1]
 
-    if env_name == 'offices': #sel_grid_size = pixels making 1 grid cell for points selection
-        sel_grid_size = 12
+    if env_name == 'offices': #sel_grid_size = pixels making 1 grid cell (same as cell size in create_graph_from_png.py)
+        sel_grid_size = 11
+
+        if gflags.FLAGS.point_selection_policy == 'click':
+            wall_dist = 6
+        elif gflags.FLAGS.point_selection_policy == 'grid':
+            wall_dist = 10
+            coeff = 4
+        elif gflags.FLAGS.point_selection_policy == 'voronoi':
+            wall_dist = 10
+            coeff = 2.5
+        else:
+            wall_dist = 0
+            coeff = 0
     elif env_name == 'open':
-        sel_grid_size = 10
+        sel_grid_size = 7
+
+        if gflags.FLAGS.point_selection_policy == 'click':
+            wall_dist = 12
+        elif gflags.FLAGS.point_selection_policy == 'grid':
+            wall_dist = 16
+            coeff = 7
+        elif gflags.FLAGS.point_selection_policy == 'voronoi':
+            wall_dist = 16
+            coeff = 6
+        else:
+            wall_dist = 0
+            coeff = 0
     else:
         print "Unknown environment"
 
