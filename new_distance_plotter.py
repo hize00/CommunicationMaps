@@ -7,13 +7,14 @@ from matplotlib.cbook import get_sample_data
 from matplotlib._png import read_png
 from matplotlib import cm
 
-ENVIRONMENT = 'offices'
-NROBOTS = 2
+ENVIRONMENT = 'open'
+SELECTION_POL = 'voronoi'
+NROBOTS = 4
 NUM_RUNS = 5
 RANGE = 50
 
-GRANULARITY = 1549 #secs
-MISSION_DURATION = 15490 #secs
+GRANULARITY = 518 #secs
+MISSION_DURATION = 5180 #secs
 
 plot_format = {'graph': ['b--s', 'Offline']}
 
@@ -42,7 +43,7 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
 
     plt.legend(fontsize=20, loc=2)
     plt.xlim(x_vals[0]-0.5, x_vals[-1] + 0.5)
-    plt.ylim(0,3000)
+    plt.ylim(0,700)
     plt.ylabel(ylabel, fontsize=22)
     plt.tick_params(labelsize=20)
     plt.xlabel("Time (minutes)", fontsize=22)
@@ -75,7 +76,7 @@ def plot(distances):
         distances_yerr.append(np.std(cur_distances_values))
 
     plot_values(x, distances_avg, distances_yerr, "Avg. Distance", os.getcwd() + '/figs/DISTANCE_' +
-                str(NROBOTS) + '_' + ENVIRONMENT + '_' + str(RANGE) + '.pdf')
+                str(NROBOTS) + '_' + ENVIRONMENT + '_' + str(RANGE) + '_' + SELECTION_POL + '.pdf')
 
 def retrieve_closest_dist(data, secs):
     if data[-1][0] <= secs: return data[-1][1]
@@ -101,7 +102,8 @@ if __name__ == '__main__':
 
         for robot in range(NROBOTS):
             log_filename = os.getcwd() + '/log/' + str(run) + '_' \
-                           + ENVIRONMENT + '_' + str(robot) + '_' + str(NROBOTS) + '_' + str(RANGE) + '.log'
+                           + ENVIRONMENT + '_' + str(robot) + '_' \
+                           + str(NROBOTS) + '_' + str(RANGE) + '_' + SELECTION_POL +'.log'
             robot_distances[robot] =  parse_logfile(log_filename)
 
         average_dist[run] = []

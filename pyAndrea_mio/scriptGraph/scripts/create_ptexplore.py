@@ -14,8 +14,8 @@ from utils import get_graphs_and_image_from_files, eucl_dist
 
 
 gflags.DEFINE_string('exp_name', 'provaC', 'name of the experiment to be written as .exp file')
-gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
-gflags.DEFINE_string('file_path', '../envs/offices.png', 'png file path')
+gflags.DEFINE_string('phys_graph', 'open_phys_uniform_grid.graphml', 'file containing the physical graph')
+gflags.DEFINE_string('file_path', '../envs/open.png', 'png file path')
 gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
 
 goal_config = []
@@ -114,20 +114,22 @@ def environment_discretization():
     return graph.vs
 
 def check_vertex_dist_from_obstacle(vertex_id):
-    #fixing the points in 'offices' that are too close to an obstacle, due to the discretization
-    if env_name == 'offices':
-        if not all_free(int(G_E.vs[vertex_id]['y_coord']), int(G_E.vs[vertex_id]['x_coord']), I, J, wall_dist):
-            for vertex in G_E.vs:
-                if vertex == vertex_id: continue
-                x1 = G_E.vs[vertex_id]['x_coord']
-                y1 = G_E.vs[vertex_id]['y_coord']
-                x2 = vertex['x_coord']
-                y2 = vertex['y_coord']
-                if eucl_dist((x1, y1), (x2, y2)) <=  3 * sel_grid_size and all_free(int(y2), int(x2), I, J, wall_dist):
-                    vertex_id = get_closest_vertex(vertex['x_coord'], vertex['y_coord'])
-                    return vertex_id
+    #fixing the vertices that are too close to an obstacle
+    if env_name == 'open' and (G_E.vs[vertex_id]['x_coord'] < 60 or G_E.vs[vertex_id]['x_coord'] > 700):
+        return None #bad discretization of the environment
 
-            return None #if no fixing vertex is found, no vertex will be added in the goal set
+    if not all_free(int(G_E.vs[vertex_id]['y_coord']), int(G_E.vs[vertex_id]['x_coord']), I, J, wall_dist):
+        for vertex in G_E.vs:
+            if vertex == vertex_id: continue
+            x1 = G_E.vs[vertex_id]['x_coord']
+            y1 = G_E.vs[vertex_id]['y_coord']
+            x2 = vertex['x_coord']
+            y2 = vertex['y_coord']
+            if eucl_dist((x1, y1), (x2, y2)) <= sel_grid_size and all_free(int(y2), int(x2), I, J, wall_dist):
+                vertex_id = get_closest_vertex(x2, y2)
+                return vertex_id
+
+        return None #if no fixing vertex is found, no vertex will be added in the goal set
 
     return vertex_id
 
@@ -180,43 +182,44 @@ def voronoi_points_selection():
     for vertex in graph:
         x = vertex['x_coord']
         y = vertex['y_coord']
-        graph_points.append((x,y))
+        graph_points.append((x, y))
 
-    # calculating Voronoi vertices
-    voronoi = Voronoi(graph_points) # , qhull_options='Qbb Qc Qx')
-    #voronoi_plot_2d(voronoi)
+    #voronoi_points = Voronoi(graph_points)
+    #voronoi_plot_2d(voronoi_points)
 
-    voronoi_points = []
-    for vertex in voronoi.vertices:
-        voronoi_points.append((int(vertex[0]), int(vertex[1])))
+    vertices = []
+    for vertex in G_E.vs:
+        x = vertex['x_coord']
+        y = vertex['y_coord']
+        vertices.append((x, y))
 
-    # removing points that are close to an obstacle
-    to_remove = []
-    for point in voronoi_points:
-        if not all_free(point[1], point[0], I, J, wall_dist):
-            to_remove.append(point)
-
-    points = [x for x in voronoi_points if x not in to_remove]
-
-    #keeping max_min distance points from the obstacles
+    #Calculating Voronoi skeleton by keeping max_min distance points from the obstacles
     too_close = []
-    for p1 in points:
+    for p1 in vertices:
         if p1 in too_close: continue
-        min_dist = eucl_dist((p1[0], p1[1]), (to_remove[0][0], to_remove[0][1]))
-        min_coords = to_remove[0]
+        min_dist = eucl_dist((p1[0], p1[1]), (graph_points[0][0], graph_points[0][1]))
+        min_coords = graph_points[0]
 
-        for p2 in to_remove:
+        for p2 in graph_points:
             dist = eucl_dist((p1[0],p1[1]), (p2[0],p2[1]))
             if dist < min_dist:
                 min_dist = dist
                 min_coords = p2
 
-        for p3 in points:
+        for p3 in vertices:
             if p1 == p3 or p3 in too_close: continue
             if eucl_dist((p3[0], p3[1]), (min_coords[0], min_coords[1])) < min_dist:
                 too_close.append(p3)
 
-    points = [x for x in points if x not in too_close]
+    points = [x for x in vertices if x not in too_close]
+
+    # removing points that are too close to an obstacle
+    to_remove = []
+    for point in points:
+        if not all_free(int(point[1]), int(point[0]), I, J, wall_dist):
+            to_remove.append(point)
+
+    points = [x for x in points if x not in to_remove]
 
     # removing points that too close to each other
     cluster = []
@@ -224,7 +227,7 @@ def voronoi_points_selection():
         if p1 in cluster: continue
         for p2 in points:
             if p1 == p2: continue
-            if eucl_dist((p1[0], p1[1]),(p2[0], p2[1])) < coeff * sel_grid_size:
+            if eucl_dist((p1[0], p1[1]), (p2[0], p2[1])) < coeff * sel_grid_size:
                 if p2 not in too_close:
                     cluster.append(p2)
 
@@ -257,24 +260,22 @@ if __name__ == "__main__":
             coeff = 4
         elif gflags.FLAGS.point_selection_policy == 'voronoi':
             wall_dist = 10
-            coeff = 2.5
+            coeff = 3
         else:
-            wall_dist = 0
-            coeff = 0
+            print 'Unknown selection policy'
     elif env_name == 'open':
         sel_grid_size = 7
 
         if gflags.FLAGS.point_selection_policy == 'click':
             wall_dist = 12
         elif gflags.FLAGS.point_selection_policy == 'grid':
-            wall_dist = 16
-            coeff = 7
+            wall_dist = 18
+            coeff = 4
         elif gflags.FLAGS.point_selection_policy == 'voronoi':
-            wall_dist = 16
-            coeff = 6
+            wall_dist = 18
+            coeff = 2
         else:
-            wall_dist = 0
-            coeff = 0
+            print 'Unknown selection policy'
     else:
         print "Unknown environment"
 

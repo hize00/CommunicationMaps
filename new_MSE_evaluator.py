@@ -53,12 +53,12 @@ from GPmodel import GPmodel
 import utils
 
 # Parameters in common, defining environment, number of robots used and number of repetitions.
-gflags.DEFINE_string("environment", "offices",
+gflags.DEFINE_string("environment", "open",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
-gflags.DEFINE_integer("num_robots", 2, "Number of robots used in the experiment.")
-gflags.DEFINE_integer("num_runs", 1, "Number of repetitions for an experiment.")
+gflags.DEFINE_integer("num_robots", 4, "Number of robots used in the experiment.")
+gflags.DEFINE_integer("num_runs", 5, "Number of repetitions for an experiment.")
 gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if robot")
 
 # Parameters for simulation.
@@ -71,8 +71,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 2824, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 28240, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 5180, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 5180, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -83,7 +83,7 @@ gflags.DEFINE_string("task", "evaluate", "Script task {evaluate, plot}.")
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "Root of log folder.")
 
 # Point selection policy
-gflags.DEFINE_string('point_selection_policy', 'grid', 'policy for selecting points in an environment') #click,grid,voronoi
+gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
 
 # Data sets to be plotted
 sets = ["complete", "pre_processing", "filtered"]
@@ -322,7 +322,7 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 
     return X, Y, Z
 
-def plot_values(x_vals, y, yerr, ylabel, filename):
+def plot_values(x_vals, y, yerr, ylabel, no_complete, filename):
     fig, ax = plt.subplots()
 
     # ticks on x axis
@@ -333,6 +333,8 @@ def plot_values(x_vals, y, yerr, ylabel, filename):
     # ax.tick_params(axis='y', which='major', pad= 8)
 
     for key in plot_format.keys():
+        #if key == "complete": continue
+        if no_complete and key == "complete": continue #not plotting "complete" set if it was too heavy
         plt.errorbar(x_vals, y[key], yerr[key], fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
 
     loc_legend = 2 if "TIME" in filename else 1
@@ -376,13 +378,17 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     """
     comm_model = CommModel(comm_model_path)
 
+    sel_pol = gflags.FLAGS.point_selection_policy
+
     f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + \
-             '_' + str(int(comm_model.COMM_RANGE)) + '_' + gflags.FLAGS.point_selection_policy + '.dat', "rb")
+             '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.dat', "rb")
     errors, variances_all, times_all = pickle.load(f)
     f.close()
 
     x = range(granularity, mission_duration + 1, granularity)
     x = map(lambda x: x/60.0, x)
+
+    no_complete = False
 
     mse_avg = {}
     rmse_avg = {}
@@ -400,7 +406,13 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     times_yerr = {}
 
     for set in sets:
-        #print "Set: ", set
+        #if set == "complete": continue
+
+        if set == "complete" and len(errors[set]) == 0: #if "complete" is empty
+            no_complete = True
+            continue
+
+        #print "Set: " + set
         mse_avg[set] = []
         rmse_avg[set] = []
         mse_yerr[set] = []
@@ -470,12 +482,12 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
             times_avg[set].append(cur_times_avg)
             times_yerr[set].append(np.std(cur_times_values))
 
-    plot_values(x, rmse_avg, rmse_yerr, "RMSE", os.getcwd() + '/figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", os.getcwd() + '/figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", os.getcwd() + '/figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, var_avg, var_yerr, "Pred. Variance", os.getcwd() + '/figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
-    plot_values(x, times_avg, times_yerr, "GP Training Time", os.getcwd() + '/figs/TIME_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '.pdf')
+    plot_values(x, rmse_avg, rmse_yerr, "RMSE", no_complete, os.getcwd() + '/figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", no_complete, os.getcwd() + '/figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width",no_complete, os.getcwd() + '/figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, var_avg, var_yerr, "Pred. Variance", no_complete, os.getcwd() + '/figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", no_complete, os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, times_avg, times_yerr, "GP Training Time", no_complete, os.getcwd() + '/figs/TIME_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
 
 def read_environment(environment_yaml_path):
     """Read environment yaml file to get the figure and the resolution.
@@ -533,6 +545,8 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     # Reading environment image.
     environment_yaml_path = os.getcwd() + '/envs/' + environment + '.yaml'
 
+    sel_pol = gflags.FLAGS.point_selection_policy
+
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
     
@@ -555,6 +569,8 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
     times_all = {}
 
     for set in sets:
+        #if set == "complete": continue
+
         print "Set: ", set
 
         if set == "filtered":
@@ -575,12 +591,17 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                 dataset_filename = log_folder + str(run) + '_' + environment + \
                                    '_' + str(robot) + '_' + str(num_robots) + \
                                    '_' + str(int(comm_model.COMM_RANGE)) + \
-                                   '_' + gflags.FLAGS.point_selection_policy + '.dat'
+                                   '_' + sel_pol + '.dat'
                 parsed += parse_dataset(dataset_filename, filter)
 
             all_signal_data = create_dataset(parsed, set)
 
             print "Set length: " + str(len(all_signal_data))
+
+            if not plot_comm_map and \
+                    len(all_signal_data) >= 10000: #with 5 runs and 10k samples for run, 64GB of RAM/swap memory are not enough
+                print "Too many samples: the GP training would be too heavy. Discarding this set."
+                break
 
             errors[set][run] = []
             variances_all[set][run] = []
@@ -624,14 +645,15 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
                                                                               comm_model, resolution, True, cur_signal_data)
                     communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
                                                         '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
-                                                        '_' + str(run) + '_' + str(secs) + extension
+                                                        '_' + str(run) + '_' + str(secs) + '_' + sel_pol + extension
                     communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
                     print "Done."
                     if len(communication_figures) > 1:
                         print "Drawing the Variance map..."
                         communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
                                                             '_'  + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
-                                                            '_' + str(run) + '_' + str(secs) + '_' + 'VAR' + extension
+                                                            '_' + str(run) + '_' + str(secs) + '_' + sel_pol + \
+                                                            '_' + 'VAR' + extension
                         communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
                         print "Done."
 

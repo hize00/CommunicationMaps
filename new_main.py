@@ -41,10 +41,10 @@ MIN_SCAN_ANGLE_RAD_FRONT = -30.0*3.14/180.0
 MAX_SCAN_ANGLE_RAD_FRONT = 30.0*3.14/180.0
 
 MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planner.
-MAX_NUM_ERRORS = 600
-MAX_TIMEOUT_EXPIRED = 10
+MAX_NUM_ERRORS = 300
+MAX_TIMEOUT_EXPIRED = 5
 
-WALL_DIST = 6 #in pixels
+WALL_DIST = 6 #in pixels: offices = 6, open = 14
 PATH_DISC = 1 #m
 
 class GenericRobot(object):
@@ -70,7 +70,6 @@ class GenericRobot(object):
 
         # for handling motion
         self.client_topic = client_topic
-        #self.goal_sent = False
         self.client_motion = actionlib.SimpleActionClient(self.client_topic, MoveBaseAction)
         self.client_motion.wait_for_server()
         rospy.logdebug('initialized action exec')
@@ -338,14 +337,14 @@ class GenericRobot(object):
                                                                 self.comm_module.I,
                                                                 old_pos, pos, resize_factor) == 0:
                 found = True
-            else: #just for extreme cases (never happened during experiments)
+            else:
                 if time.time() >= timeout:
                     fix += 0.5
                     fix_count += 1
                     if fix_count == max_fix_count:
-                        pos = []
                         self.myself['time_expired'] = True
-                        found = True
+                        rospy.loginfo(str(self.robot_id) + ' - WALL_DIST too large: I cannot find a fix position.')
+                        return None
 
         return pos
 
@@ -427,6 +426,8 @@ class GenericRobot(object):
                             if fixing_attempts == max_attempts: #increasing the radius of fixing area
                                 fix += 0.5
                                 fixing_attempts = 0
+                        else:
+                            break
 
                     else:
                         if loop_count == 7:
