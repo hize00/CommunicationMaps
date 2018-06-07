@@ -10,13 +10,15 @@ import cv2
 from igraph import *
 from scipy.spatial import Voronoi, voronoi_plot_2d
 
+from skimage import img_as_bool, io, color, morphology, util
+
 from utils import get_graphs_and_image_from_files, eucl_dist
 
 
 gflags.DEFINE_string('exp_name', 'provaC', 'name of the experiment to be written as .exp file')
-gflags.DEFINE_string('phys_graph', 'open_phys_uniform_grid.graphml', 'file containing the physical graph')
-gflags.DEFINE_string('file_path', '../envs/open.png', 'png file path')
-gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
+gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
+gflags.DEFINE_string('file_path', '../envs/offices.png', 'png file path')
+gflags.DEFINE_string('point_selection_policy', 'grid', 'policy for selecting points in an environment') #click,grid,voronoi
 
 goal_config = []
 start = True
@@ -172,6 +174,42 @@ def grid_points_selection():
 
     print 'Done. Number of points: ' + str(len(goal_config))
 
+def draw_voronoi_from_image():
+    image = img_as_bool(color.rgb2gray(io.imread(gflags.FLAGS.file_path)))
+    out = morphology.medial_axis(image)
+    #out = morphology.skeletonize(image)
+
+    f, (ax0, ax1) = plt.subplots(1,2)
+    ax0.imshow(image, cmap='gray', interpolation='nearest')
+    ax0.set_axis_off()
+
+    #cmap = plt.get_cmap('Reds')
+    ax1.imshow(out,  cmap='binary', interpolation='nearest')
+    ax1.contour(image, [0.5], colors='r')
+    ax1.set_axis_off()
+    plt.subplots_adjust(wspace=0)
+
+    plt.savefig('voronoi_' + env_name, format='eps', dpi=1000, bbox_inches='tight')
+
+def draw_voronoi_from_points(graph_points):
+    voronoi_points = Voronoi(graph_points)
+    voronoi_plot_2d(voronoi_points)
+    plt.axis('off')
+    plt.savefig('voronoi_vertexes_' + env_name, format='eps', dpi=1000, bbox_inches='tight')
+    #plt.close('all')
+
+    points = []
+    for v in voronoi_points.vertices:
+        if all_free(int(v[1]), int(v[0]), I, J, 5):
+            points.append(v)
+
+    vertices = []
+    for point in points:
+        vertex_id = get_closest_vertex(point[0], point[1])
+        vertices.append(vertex_id)
+
+    plot_plan(vertices)
+
 def voronoi_points_selection():
     global start
     global goal_config
@@ -182,10 +220,8 @@ def voronoi_points_selection():
     for vertex in graph:
         x = vertex['x_coord']
         y = vertex['y_coord']
-        graph_points.append((x, y))
+        graph_points.append((x,y))
 
-    #voronoi_points = Voronoi(graph_points)
-    #voronoi_plot_2d(voronoi_points)
 
     vertices = []
     for vertex in G_E.vs:
@@ -244,6 +280,8 @@ def voronoi_points_selection():
 
     print 'Done. Number of points: ' + str(len(goal_config))
 
+    #draw_voronoi_from_image()
+    draw_voronoi_from_points(graph_points)
 
 if __name__ == "__main__":
     argv = gflags.FLAGS(sys.argv)
