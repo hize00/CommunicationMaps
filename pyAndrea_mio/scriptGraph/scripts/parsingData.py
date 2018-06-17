@@ -19,7 +19,7 @@ import time
 
 #CONSTANTS
 gflags.DEFINE_string('exp_name', 'provaC', 'name of the file to be opened')
-gflags.DEFINE_string('phys_graph', 'open_phys_uniform_grid.graphml', 'file containing the physical graph')
+gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
 gflags.DEFINE_integer('n_robots', 4, 'number of robots of the experiment')
 
 gflags.DEFINE_string("communication_model_path", "/home/andrea/catkin_ws/src/strategy/data/comm_model_50.xml",
@@ -27,7 +27,7 @@ gflags.DEFINE_string("communication_model_path", "/home/andrea/catkin_ws/src/str
 
 VELOCITY = 1
 RANGE_DISTANCE = 40
-GRID_DISCRETIZATION = 7 #offices = 11, open = 7
+GRID_DISCRETIZATION = 11 #offices = 11, open = 7
 
 #maximum recursion depth
 sys.setrecursionlimit(100000)

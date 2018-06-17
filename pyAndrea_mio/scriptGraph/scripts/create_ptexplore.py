@@ -281,15 +281,15 @@ def voronoi_points_selection():
     print 'Done. Number of points: ' + str(len(goal_config))
 
     #draw_voronoi_from_image()
-    draw_voronoi_from_points(graph_points)
+    #draw_voronoi_from_points(graph_points)
 
 if __name__ == "__main__":
     argv = gflags.FLAGS(sys.argv)
     G_E, im_array = get_graphs_and_image_from_files(gflags.FLAGS.phys_graph)
     env_name = (os.path.splitext(gflags.FLAGS.file_path)[0]).split("/")[-1]
 
-    if env_name == 'offices': #sel_grid_size = pixels making 1 grid cell (same as cell size in create_graph_from_png.py)
-        sel_grid_size = 11
+    if env_name == 'offices':
+        sel_grid_size = 11 #sel_grid_size = pixels making 1 grid cell (same as cell size in create_graph_from_png.py)
 
         if gflags.FLAGS.point_selection_policy == 'click':
             wall_dist = 6
