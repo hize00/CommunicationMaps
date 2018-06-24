@@ -53,7 +53,7 @@ from GPmodel import GPmodel
 import utils
 
 # Parameters in common, defining environment, number of robots used and number of repetitions.
-gflags.DEFINE_string("environment", "open",
+gflags.DEFINE_string("environment", "offices",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
@@ -71,8 +71,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 5180, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 5180, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 921, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 9210, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -83,14 +83,24 @@ gflags.DEFINE_string("task", "evaluate", "Script task {evaluate, plot}.")
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "Root of log folder.")
 
 # Point selection policy
-gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
+gflags.DEFINE_string('point_selection_policy', 'click', 'policy for selecting points in an environment') #click,grid,voronoi
+
+#Charts type
+gflags.DEFINE_string('charts_type', 'discr', 'policy for selecting points in an environment') #set, discr, num_robs
 
 # Data sets to be plotted
 sets = ["complete", "pre_processing", "filtered"]
 
+strategies = ["click", "grid", "voronoi"]
+
+num_robs = ["2", "4"]
+
 # Plot Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
-plot_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-processing'],
-               'filtered': ['r-^', 'Pairing TSP']}
+plot_set_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-processing'], 'filtered': ['r-^', 'Pairing TSP']}
+
+plot_discr_format = {'click': ['k--s', 'Manual'], 'grid': ['m:o', 'Grid'], 'voronoi': ['c-^', 'Voronoi']}
+
+plot_num_robs_format = {'2': ['k--s', '2 Robots'], '4': ['r:o', '4 Robots']}
 
 FONTSIZE = 16
 
@@ -322,20 +332,26 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 
     return X, Y, Z
 
-def plot_values(x_vals, y, yerr, ylabel, no_complete, filename):
+def plot_values(x_vals, y, yerr, ylabel, no_set, set ,charts_type, filename):
     fig, ax = plt.subplots()
 
-    # ticks on x axis
-    # ax.set_xticks(np.arange(start = 0, stop= gflags.FLAGS.mission_duration,
-    #                        step = gflags.FLAGS.mission_duration/360))
-    # ticks on y axis
-    # plt.locator_params(nbins = 8, axis = 'y')
-    # ax.tick_params(axis='y', which='major', pad= 8)
+    if charts_type == "set":
+        for key in plot_set_format.keys():
+            #if key == "complete": continue
+            if no_set and key == "complete": continue #not plotting "complete" set if it was too heavy
+            plt.errorbar(x_vals, y[key], yerr[key], fmt=plot_set_format[key][0],label=plot_set_format[key][1], markersize=10, elinewidth=2)
+    if charts_type == "discr":
+        for key in plot_discr_format.keys():
+            if no_set and key == "grid": continue #not plotting "complete" grid because it is too heavy
+            plt.errorbar(x_vals, y[key][set], yerr[key][set], fmt=plot_discr_format[key][0],label=plot_discr_format[key][1], markersize=10, elinewidth=2)
+    elif charts_type == "num_robs":
+        env = gflags.FLAGS.environment
+        best_strategy = "voronoi" if env == "offices" else "grid"
 
-    for key in plot_format.keys():
-        #if key == "complete": continue
-        if no_complete and key == "complete": continue #not plotting "complete" set if it was too heavy
-        plt.errorbar(x_vals, y[key], yerr[key], fmt=plot_format[key][0],label=plot_format[key][1], markersize=10, elinewidth=2)
+        for key in plot_num_robs_format.keys():
+            plt.errorbar(x_vals, y[key][best_strategy][set], yerr[key][best_strategy][set], fmt=plot_num_robs_format[key][0],label=plot_num_robs_format[key][1], markersize=10, elinewidth=2)
+    else:
+        print "Error, unknown charts type"
 
     loc_legend = 2 if "TIME" in filename else 1
     plt.legend(fontsize=20,loc=loc_legend)
@@ -365,18 +381,276 @@ def plot_values(x_vals, y, yerr, ylabel, no_complete, filename):
     matplotlib.rcParams['text.usetex'] = True
     fig.savefig(filename, bbox_inches='tight')
 
-def plot(environment, num_robots, comm_model_path,granularity, mission_duration):
-    """Plot graphs about MSE and traveled distance.
+    plt.close('all')
 
-    Args:
-        environment (str): name of environment used for saving data.
-        num_robots (int): number of robots.
-        comm_model_path (str): path to the XML file containing communication 
-            model parameters.
-        granularity (int): second for each epoch to plot data.
-        mission_duration (int): seconds for total mission.
-    """
-    comm_model = CommModel(comm_model_path)
+def plot_num_robots(environment, comm_model, granularity, mission_duration):
+
+    print "Plotting #robots charts..."
+
+    f = open(gflags.FLAGS.log_folder + 'all_robots_' + environment + \
+             '_' + str(int(comm_model.COMM_RANGE)) + '_.dat', "rb")
+
+    errors, variances_all, times_all = pickle.load(f)
+    f.close()
+
+    x = range(granularity, mission_duration + 1, granularity)
+    x = map(lambda x: x / 60.0, x)
+
+    best_strategy = "voronoi" if environment == "offices" else "grid"
+
+    mse_avg = {}
+    rmse_avg = {}
+    mse_yerr = {}
+    rmse_yerr = {}
+
+    var_avg = {}
+    rvar_avg = {}
+    var_yerr = {}
+    rvar_yerr = {}
+    conf_avg = {}
+    conf_yerr = {}
+
+    times_avg = {}
+    times_yerr = {}
+
+    for num_rob in num_robs:
+        mse_avg[num_rob] = {}
+        rmse_avg[num_rob] = {}
+        mse_yerr[num_rob] = {}
+        rmse_yerr[num_rob] = {}
+        var_avg[num_rob] = {}
+        rvar_avg[num_rob] = {}
+        var_yerr[num_rob] = {}
+        rvar_yerr[num_rob] = {}
+        conf_avg[num_rob] = {}
+        conf_yerr[num_rob] = {}
+        times_avg[num_rob] = {}
+        times_yerr[num_rob] = {}
+
+        for strategy in strategies:
+            if strategy != best_strategy: continue
+
+            mse_avg[num_rob][strategy] = {}
+            rmse_avg[num_rob][strategy] = {}
+            mse_yerr[num_rob][strategy] = {}
+            rmse_yerr[num_rob][strategy] = {}
+            var_avg[num_rob][strategy] = {}
+            rvar_avg[num_rob][strategy] = {}
+            var_yerr[num_rob][strategy] = {}
+            rvar_yerr[num_rob][strategy] = {}
+            conf_avg[num_rob][strategy] = {}
+            conf_yerr[num_rob][strategy] = {}
+            times_avg[num_rob][strategy] = {}
+            times_yerr[num_rob][strategy] = {}
+
+            for set in sets:
+                if set == "complete": continue
+
+                mse_avg[num_rob][strategy][set] = []
+                rmse_avg[num_rob][strategy][set] = []
+                mse_yerr[num_rob][strategy][set] = []
+                rmse_yerr[num_rob][strategy][set] = []
+                var_avg[num_rob][strategy][set] = []
+                rvar_avg[num_rob][strategy][set] = []
+                var_yerr[num_rob][strategy][set] = []
+                rvar_yerr[num_rob][strategy][set] = []
+                conf_avg[num_rob][strategy][set] = []
+                conf_yerr[num_rob][strategy][set] = []
+                times_avg[num_rob][strategy][set] = []
+                times_yerr[num_rob][strategy][set] = []
+
+                for stamp in range(len(x)):
+                    cur_mse_avg = 0.0
+                    cur_rmse_avg = 0.0
+                    cur_mse_values = []
+                    cur_rmse_values = []
+
+                    cur_var_avg = 0.0
+                    cur_rvar_avg = 0.0
+                    cur_conf_avg = 0.0
+                    cur_var_values = []
+                    cur_rvar_values = []
+                    cur_conf_values = []
+
+                    cur_times_avg = 0.0
+                    cur_times_values = []
+
+                    for run in errors[num_rob][strategy][set].keys():
+                        cur_mse_avg += errors[num_rob][strategy][set][run][stamp][0]
+                        cur_rmse_avg += errors[num_rob][strategy][set][run][stamp][1]
+                        cur_mse_values.append(errors[num_rob][strategy][set][run][stamp][0])
+                        cur_rmse_values.append(errors[num_rob][strategy][set][run][stamp][1])
+
+                        cur_var_avg += variances_all[num_rob][strategy][set][run][stamp][0]
+                        cur_rvar_avg += variances_all[num_rob][strategy][set][run][stamp][2]
+                        cur_conf_avg += variances_all[num_rob][strategy][set][run][stamp][4]
+                        cur_var_values.append(variances_all[num_rob][strategy][set][run][stamp][0])
+                        cur_rvar_values.append(variances_all[num_rob][strategy][set][run][stamp][2])
+                        cur_conf_values.append(variances_all[num_rob][strategy][set][run][stamp][4])
+
+                        cur_times_avg += times_all[num_rob][strategy][set][run][stamp]
+                        cur_times_values.append(times_all[num_rob][strategy][set][run][stamp])
+
+                    cur_mse_avg = cur_mse_avg / len(errors[num_rob][strategy][set].keys())
+                    cur_rmse_avg = cur_rmse_avg / len(errors[num_rob][strategy][set].keys())
+                    cur_var_avg = cur_var_avg / len(errors[num_rob][strategy][set].keys())
+                    cur_conf_avg = cur_conf_avg / len(errors[num_rob][strategy][set].keys())
+                    cur_rvar_avg = cur_rvar_avg / len(errors[num_rob][strategy][set].keys())
+                    cur_times_avg = cur_times_avg / len(errors[num_rob][strategy][set].keys())
+
+                    mse_avg[num_rob][strategy][set].append(cur_mse_avg)
+                    rmse_avg[num_rob][strategy][set].append(cur_rmse_avg)
+                    mse_yerr[num_rob][strategy][set].append(np.std(cur_mse_values))
+                    rmse_yerr[num_rob][strategy][set].append(np.std(cur_rmse_values))
+
+                    var_avg[num_rob][strategy][set].append(cur_var_avg)
+                    rvar_avg[num_rob][strategy][set].append(cur_rvar_avg)
+                    conf_avg[num_rob][strategy][set].append(cur_conf_avg)
+                    var_yerr[num_rob][strategy][set].append(np.std(cur_var_values))
+                    rvar_yerr[num_rob][strategy][set].append(np.std(cur_rvar_values))
+                    conf_yerr[num_rob][strategy][set].append(np.std(cur_conf_values))
+
+                    times_avg[num_rob][strategy][set].append(cur_times_avg)
+                    times_yerr[num_rob][strategy][set].append(np.std(cur_times_values))
+
+    for set in sets:
+        if set == "complete": continue
+        plot_values(x, rmse_avg, rmse_yerr, "RMSE", False, set, "num_robs",os.getcwd() + '/figs/num_rob_charts/RMSE_' + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '_' + best_strategy + 'BS.pdf')
+        plot_values(x, mse_avg, mse_yerr, "MSE", False, set ,"num_robs", os.getcwd() + '/figs/num_rob_charts/MSE_' + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '_' + best_strategy +'BS.pdf')
+        plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", False, set ,"num_robs", os.getcwd() + '/figs/num_rob_charts/95CONF_' + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '_' + best_strategy +'BS.pdf')
+        plot_values(x, var_avg, var_yerr, "Pred. Variance", False, set ,"num_robs", os.getcwd() + '/figs/num_rob_charts/VAR_' + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '_' + best_strategy +'BS.pdf')
+        plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", False, set ,"num_robs", os.getcwd() + '/figs/num_rob_charts/STDEV_' + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '_' + best_strategy +'BS.pdf')
+        plot_values(x, times_avg, times_yerr, "GP Training Time", False, set ,"num_robs", os.getcwd() + '/figs/num_rob_charts/TIME_' + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '_' + best_strategy +'BS.pdf')
+
+def plot_discr(environment, num_robots, comm_model, granularity, mission_duration):
+
+    print "Plotting discretization methods charts..."
+
+
+    f = open(gflags.FLAGS.log_folder + str(num_robots) + '_' + environment + \
+             '_' + str(int(comm_model.COMM_RANGE)) + '_discr.dat', "rb")
+
+    errors, variances_all, times_all = pickle.load(f)
+    f.close()
+
+    x = range(granularity, mission_duration + 1, granularity)
+    x = map(lambda x: x / 60.0, x)
+
+    no_complete = False
+
+    mse_avg = {}
+    rmse_avg = {}
+    mse_yerr = {}
+    rmse_yerr = {}
+
+    var_avg = {}
+    rvar_avg = {}
+    var_yerr = {}
+    rvar_yerr = {}
+    conf_avg = {}
+    conf_yerr = {}
+
+    times_avg = {}
+    times_yerr = {}
+
+    for strategy in strategies:
+        mse_avg[strategy] = {}
+        rmse_avg[strategy] = {}
+        mse_yerr[strategy] = {}
+        rmse_yerr[strategy] = {}
+        var_avg[strategy] = {}
+        rvar_avg[strategy] = {}
+        var_yerr[strategy] = {}
+        rvar_yerr[strategy] = {}
+        conf_avg[strategy] = {}
+        conf_yerr[strategy] = {}
+        times_avg[strategy] = {}
+        times_yerr[strategy] = {}
+
+        for set in sets:
+            if set == "complete" and len(errors[strategy][set]) == 0:  # if "complete" is empty
+                no_complete = True
+                continue
+
+            mse_avg[strategy][set] = []
+            rmse_avg[strategy][set] = []
+            mse_yerr[strategy][set] = []
+            rmse_yerr[strategy][set] = []
+            var_avg[strategy][set] = []
+            rvar_avg[strategy][set] = []
+            var_yerr[strategy][set] = []
+            rvar_yerr[strategy][set] = []
+            conf_avg[strategy][set] = []
+            conf_yerr[strategy][set] = []
+            times_avg[strategy][set] = []
+            times_yerr[strategy][set] = []
+
+            for stamp in range(len(x)):
+                cur_mse_avg = 0.0
+                cur_rmse_avg = 0.0
+                cur_mse_values = []
+                cur_rmse_values = []
+
+                cur_var_avg = 0.0
+                cur_rvar_avg = 0.0
+                cur_conf_avg = 0.0
+                cur_var_values = []
+                cur_rvar_values = []
+                cur_conf_values = []
+
+                cur_times_avg = 0.0
+                cur_times_values = []
+
+                for run in errors[strategy][set].keys():
+                    cur_mse_avg += errors[strategy][set][run][stamp][0]
+                    cur_rmse_avg += errors[strategy][set][run][stamp][1]
+                    cur_mse_values.append(errors[strategy][set][run][stamp][0])
+                    cur_rmse_values.append(errors[strategy][set][run][stamp][1])
+
+                    cur_var_avg += variances_all[strategy][set][run][stamp][0]
+                    cur_rvar_avg += variances_all[strategy][set][run][stamp][2]
+                    cur_conf_avg += variances_all[strategy][set][run][stamp][4]
+                    cur_var_values.append(variances_all[strategy][set][run][stamp][0])
+                    cur_rvar_values.append(variances_all[strategy][set][run][stamp][2])
+                    cur_conf_values.append(variances_all[strategy][set][run][stamp][4])
+
+                    cur_times_avg += times_all[strategy][set][run][stamp]
+                    cur_times_values.append(times_all[strategy][set][run][stamp])
+
+                cur_mse_avg = cur_mse_avg / len(errors[strategy][set].keys())
+                cur_rmse_avg = cur_rmse_avg / len(errors[strategy][set].keys())
+                cur_var_avg = cur_var_avg / len(errors[strategy][set].keys())
+                cur_conf_avg = cur_conf_avg / len(errors[strategy][set].keys())
+                cur_rvar_avg = cur_rvar_avg / len(errors[strategy][set].keys())
+                cur_times_avg = cur_times_avg / len(errors[strategy][set].keys())
+
+                mse_avg[strategy][set].append(cur_mse_avg)
+                rmse_avg[strategy][set].append(cur_rmse_avg)
+                mse_yerr[strategy][set].append(np.std(cur_mse_values))
+                rmse_yerr[strategy][set].append(np.std(cur_rmse_values))
+
+                var_avg[strategy][set].append(cur_var_avg)
+                rvar_avg[strategy][set].append(cur_rvar_avg)
+                conf_avg[strategy][set].append(cur_conf_avg)
+                var_yerr[strategy][set].append(np.std(cur_var_values))
+                rvar_yerr[strategy][set].append(np.std(cur_rvar_values))
+                conf_yerr[strategy][set].append(np.std(cur_conf_values))
+
+                times_avg[strategy][set].append(cur_times_avg)
+                times_yerr[strategy][set].append(np.std(cur_times_values))
+
+    for set in sets:
+        plot_values(x, rmse_avg, rmse_yerr, "RMSE", no_complete, set, "discr",os.getcwd() + '/figs/discr_charts/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '.pdf')
+        plot_values(x, mse_avg, mse_yerr, "MSE", no_complete, set ,"discr", os.getcwd() + '/figs/discr_charts/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '.pdf')
+        plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", no_complete, set ,"discr", os.getcwd() + '/figs/discr_charts/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '.pdf')
+        plot_values(x, var_avg, var_yerr, "Pred. Variance", no_complete, set ,"discr", os.getcwd() + '/figs/discr_charts/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '.pdf')
+        plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", no_complete, set ,"discr", os.getcwd() + '/figs/discr_charts/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '.pdf')
+        plot_values(x, times_avg, times_yerr, "GP Training Time", no_complete, set ,"discr", os.getcwd() + '/figs/discr_charts/TIME_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + set + '.pdf')
+
+
+def plot_sets(environment, num_robots, comm_model, granularity, mission_duration):
+
+    print "Plotting sets charts..."
 
     sel_pol = gflags.FLAGS.point_selection_policy
 
@@ -386,7 +660,7 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     f.close()
 
     x = range(granularity, mission_duration + 1, granularity)
-    x = map(lambda x: x/60.0, x)
+    x = map(lambda x: x / 60.0, x)
 
     no_complete = False
 
@@ -408,11 +682,11 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
     for set in sets:
         #if set == "complete": continue
 
-        if set == "complete" and len(errors[set]) == 0: #if "complete" is empty
+        if set == "complete" and len(errors[set]) == 0:  # if "complete" is empty
             no_complete = True
             continue
 
-        #print "Set: " + set
+        # print "Set: " + set
         mse_avg[set] = []
         rmse_avg[set] = []
         mse_yerr[set] = []
@@ -482,12 +756,37 @@ def plot(environment, num_robots, comm_model_path,granularity, mission_duration)
             times_avg[set].append(cur_times_avg)
             times_yerr[set].append(np.std(cur_times_values))
 
-    plot_values(x, rmse_avg, rmse_yerr, "RMSE", no_complete, os.getcwd() + '/figs/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", no_complete, os.getcwd() + '/figs/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
-    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width",no_complete, os.getcwd() + '/figs/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
-    plot_values(x, var_avg, var_yerr, "Pred. Variance", no_complete, os.getcwd() + '/figs/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
-    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", no_complete, os.getcwd() + '/figs/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
-    plot_values(x, times_avg, times_yerr, "GP Training Time", no_complete, os.getcwd() + '/figs/TIME_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, rmse_avg, rmse_yerr, "RMSE", no_complete, None , "set",os.getcwd() + '/figs/sets_charts/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", no_complete, None ,"set",os.getcwd() + '/figs/sets_charts/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", no_complete, None ,"set",os.getcwd() + '/figs/sets_charts/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, var_avg, var_yerr, "Pred. Variance", no_complete, None ,"set", os.getcwd() + '/figs/sets_charts/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", no_complete, None ,"set", os.getcwd() + '/figs/sets_charts/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, times_avg, times_yerr, "GP Training Time", no_complete, None ,"set", os.getcwd() + '/figs/sets_charts/TIME_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+
+def plot(environment, num_robots, comm_model_path,granularity, mission_duration):
+    """Plot graphs about MSE and traveled distance.
+
+    Args:
+        environment (str): name of environment used for saving data.
+        num_robots (int): number of robots.
+        comm_model_path (str): path to the XML file containing communication 
+            model parameters.
+        granularity (int): second for each epoch to plot data.
+        mission_duration (int): seconds for total mission.
+    """
+    comm_model = CommModel(comm_model_path)
+
+    charts_type = gflags.FLAGS.charts_type
+
+    if charts_type == "set":
+        plot_sets(environment, num_robots, comm_model, granularity, mission_duration)
+    elif charts_type == "discr":
+        plot_discr(environment, num_robots, comm_model, granularity, mission_duration)
+    elif charts_type == "num_robs":
+        plot_num_robots(environment, comm_model, granularity, mission_duration)
+    else:
+        print "Error, unknown charts type"
+
 
 def read_environment(environment_yaml_path):
     """Read environment yaml file to get the figure and the resolution.
@@ -512,6 +811,297 @@ def read_environment(environment_yaml_path):
         except yaml.YAMLError as exc:
             print(exc)
             return None
+
+def evaluate_num_robots(log_folder, comm_model, runs, environment,
+                        granularity, mission_duration, dimX, dimY, XTest, YTest):
+
+    print "Evaluating for plotting #robots charts..."
+
+    best_strategy = "voronoi" if environment == "offices" else "grid"
+
+    errors = {}
+    variances_all = {}
+    times_all = {}
+
+    for num_rob in num_robs:
+        #if num_rob == "2": continue
+        print "Number of robots: ", num_rob
+
+        errors[num_rob] = {}
+        variances_all[num_rob] = {}
+        times_all[num_rob] = {}
+
+        for strategy in strategies: #strategies = ["manual", "grid", "voronoi"]
+            if strategy != best_strategy: continue
+
+            print "Strategy: ", strategy
+            errors[num_rob][strategy] = {}
+            variances_all[num_rob][strategy] = {}
+            times_all[num_rob][strategy] = {}
+
+            for set in sets: #sets = ["complete", "pre_processing", "filtered"]
+                if set == "complete": continue
+
+                print "Set: ", set
+
+                filter = True if set == "filtered" else False
+
+                errors[num_rob][strategy][set] = {}
+                variances_all[num_rob][strategy][set] = {}
+                times_all[num_rob][strategy][set] = {}
+
+                for run in runs:
+                    #if run != 0: break
+
+                    parsed = []
+                    for robot in range(int(num_rob)):
+                        dataset_filename = log_folder + str(run) + '_' + environment + \
+                                           '_' + str(robot) + '_' + num_rob + \
+                                           '_' + str(int(comm_model.COMM_RANGE)) + \
+                                           '_' + strategy + '.dat'
+                        parsed += parse_dataset(dataset_filename, filter)
+
+                    all_signal_data = create_dataset(parsed, set)
+
+                    print "Set length: " + str(len(all_signal_data))
+
+                    errors[num_rob][strategy][set][run] = []
+                    variances_all[num_rob][strategy][set][run] = []
+                    times_all[num_rob][strategy][set][run] = []
+
+                    all_secs = range(granularity, mission_duration + 1, granularity)
+                    for secs in all_secs:
+                        cur_signal_data = []
+                        for datum in all_signal_data:
+                            if datum.timestep <= secs:
+                                cur_signal_data.append(datum)
+
+                        print "Run: " + str(run) + " - number of data: ", len(cur_signal_data)
+
+                        start = time.time()
+                        comm_map = GPmodel(dimX, dimY, comm_model.COMM_RANGE, False)
+                        comm_map.update_model(cur_signal_data)
+                        end = time.time()
+
+                        predictions_all = comm_map.predict(XTest)
+                        predictions = map(lambda x: x[0], predictions_all)
+                        variances = map(lambda x: x[1], predictions_all)
+                        std_devs = map(lambda x: math.sqrt(x), variances)
+                        conf_95 = map(lambda x: 1.96 * x, std_devs)
+
+                        errors[num_rob][strategy][set][run].append((mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
+                        variances_all[num_rob][strategy][set][run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs),np.mean(conf_95), np.std(conf_95)))
+                        times_all[num_rob][strategy][set][run].append(end - start)
+
+    print '----------------------------------------------------------------------------'
+    print errors
+    print '----------------------------------------------------------------------------'
+    print variances_all
+    print '----------------------------------------------------------------------------'
+    print times_all
+    print '----------------------------------------------------------------------------'
+
+    f = open(log_folder + 'all_robots_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_.dat', "wb")
+    pickle.dump((errors, variances_all, times_all), f)
+    f.close()
+
+def evaluate_discr(log_folder, comm_model, runs, num_robots, environment,
+                        granularity, mission_duration, dimX, dimY, XTest, YTest):
+
+    print "Evaluating for plotting discretization strategies charts..."
+
+    errors = {}
+    variances_all = {}
+    times_all = {}
+
+    for strategy in strategies: #strategies = ["click", "grid", "voronoi"]
+        print "Strategy: ", strategy
+
+        errors[strategy] = {}
+        variances_all[strategy] = {}
+        times_all[strategy] = {}
+
+        for set in sets: #sets = ["complete", "pre_processing", "filtered"]
+            if set != "complete": continue
+            print "Set: ", set
+
+            filter = True if set == "filtered" else False
+
+            errors[strategy][set] = {}
+            variances_all[strategy][set] = {}
+            times_all[strategy][set] = {}
+
+            for run in runs:
+                #if run != 0: break
+
+                parsed = []
+                for robot in range(num_robots):
+                    dataset_filename = log_folder + str(run) + '_' + environment + \
+                                       '_' + str(robot) + '_' + str(num_robots) + \
+                                       '_' + str(int(comm_model.COMM_RANGE)) + \
+                                       '_' + strategy + '.dat'
+                    parsed += parse_dataset(dataset_filename, filter)
+
+                all_signal_data = create_dataset(parsed, set)
+
+                print "Set length: " + str(len(all_signal_data))
+
+                if len(all_signal_data) >= 10000:
+                    print "Too many samples: the GP training would be too heavy. Discarding this set."
+                    break
+
+                errors[strategy][set][run] = []
+                variances_all[strategy][set][run] = []
+                times_all[strategy][set][run] = []
+
+                all_secs = range(granularity, mission_duration + 1, granularity)
+                for secs in all_secs:
+                    cur_signal_data = []
+                    for datum in all_signal_data:
+                        if datum.timestep <= secs:
+                            cur_signal_data.append(datum)
+
+                    print "Run: " + str(run) + " - number of data: ", len(cur_signal_data)
+
+                    start = time.time()
+                    comm_map = GPmodel(dimX, dimY, comm_model.COMM_RANGE, False)
+                    comm_map.update_model(cur_signal_data)
+                    end = time.time()
+
+                    predictions_all = comm_map.predict(XTest)
+                    predictions = map(lambda x: x[0], predictions_all)
+                    variances = map(lambda x: x[1], predictions_all)
+                    std_devs = map(lambda x: math.sqrt(x), variances)
+                    conf_95 = map(lambda x: 1.96 * x, std_devs)
+
+                    errors[strategy][set][run].append((mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
+                    variances_all[strategy][set][run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs),np.mean(conf_95), np.std(conf_95)))
+                    times_all[strategy][set][run].append(end - start)
+
+    print '----------------------------------------------------------------------------'
+    print errors
+    print '----------------------------------------------------------------------------'
+    print variances_all
+    print '----------------------------------------------------------------------------'
+    print times_all
+    print '----------------------------------------------------------------------------'
+
+    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_discr.dat', "wb")
+    pickle.dump((errors, variances_all, times_all), f)
+    f.close()
+
+def evaluate_sets(log_folder, comm_model, runs, num_robots, environment,
+                  plot_comm_map, granularity, mission_duration, dimX, dimY, XTest, YTest, fixed_robot):
+    sel_pol = gflags.FLAGS.point_selection_policy
+
+    print "Evaluating for plotting sets charts and/or communication maps..."
+
+    errors = {}
+    variances_all = {}
+    times_all = {}
+
+    for set in sets:
+        #if set == "complete": continue
+
+        print "Set: ", set
+
+        filter = True if set == "filtered" else False
+
+        errors[set] = {}
+        variances_all[set] = {}
+        times_all[set] = {}
+
+        for run in runs:
+            if run != 0 and plot_comm_map: break
+
+            parsed = []
+            for robot in range(num_robots):
+                dataset_filename = log_folder + str(run) + '_' + environment + \
+                                   '_' + str(robot) + '_' + str(num_robots) + \
+                                   '_' + str(int(comm_model.COMM_RANGE)) + \
+                                   '_' + sel_pol + '.dat'
+
+                parsed += parse_dataset(dataset_filename, filter)
+
+            all_signal_data = create_dataset(parsed, set)
+
+            print "Set length: " + str(len(all_signal_data))
+
+            if not plot_comm_map and \
+                    len(all_signal_data) >= 10000:  # with 5 runs and 10k samples for run, 64GB of RAM/swap memory are not enough
+                print "Too many samples: the GP training would be too heavy. Discarding this set."
+                break
+
+            errors[set][run] = []
+            variances_all[set][run] = []
+            times_all[set][run] = []
+
+            all_secs = range(granularity, mission_duration + 1, granularity)
+            for secs in all_secs:
+                cur_signal_data = []
+                for datum in all_signal_data:
+                    if datum.timestep <= secs:
+                        cur_signal_data.append(datum)
+
+                print "Run: " + str(run) + " - number of data: ", len(cur_signal_data)
+
+                start = time.time()
+                comm_map = GPmodel(dimX, dimY, comm_model.COMM_RANGE, False)
+                comm_map.update_model(cur_signal_data)
+                end = time.time()
+
+                predictions_all = comm_map.predict(XTest)
+                predictions = map(lambda x: x[0], predictions_all)
+                variances = map(lambda x: x[1], predictions_all)
+                std_devs = map(lambda x: math.sqrt(x), variances)
+                conf_95 = map(lambda x: 1.96 * x, std_devs)
+
+                errors[set][run].append(
+                    (mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
+                variances_all[set][run].append((np.mean(variances), np.std(variances), np.mean(std_devs),
+                                                np.std(std_devs), np.mean(conf_95), np.std(conf_95)))
+                times_all[set][run].append(end - start)
+
+                if plot_comm_map:
+                    print "Drawing the Communication map..."
+
+                    if set == "complete":
+                        extension = '.png'
+                    elif set == "pre_processing":
+                        extension = '_P.png'
+                    else:
+                        extension = '_C.png'
+
+                    communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX,
+                                                                              dimY,
+                                                                              comm_model, resolution, True,
+                                                                              cur_signal_data)
+                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
+                                                        '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
+                                                        '_' + str(run) + '_' + str(secs) + '_' + sel_pol + extension
+                    communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
+                    print "Done."
+                    if len(communication_figures) > 1:
+                        print "Drawing the Variance map..."
+                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
+                                                            '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
+                                                            '_' + str(run) + '_' + str(secs) + '_' + sel_pol + \
+                                                            '_' + 'VAR' + extension
+                        communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
+                        print "Done."
+
+    print '----------------------------------------------------------------------------'
+    print errors
+    print '----------------------------------------------------------------------------'
+    print variances_all
+    print '----------------------------------------------------------------------------'
+    print times_all
+    print '----------------------------------------------------------------------------'
+
+    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) +
+             '_' + gflags.FLAGS.point_selection_policy + '.dat', "wb")
+    pickle.dump((errors, variances_all, times_all), f)
+    f.close()
 
 def evaluate(environment, num_robots, num_runs, is_simulation,
     comm_model_path, granularity, mission_duration,
@@ -547,6 +1137,8 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
     sel_pol = gflags.FLAGS.point_selection_policy
 
+    charts_type = gflags.FLAGS.charts_type
+
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
     
@@ -559,108 +1151,18 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
     runs = range(num_runs)
 
-    errors = {}
-    variances_all = {}
-    times_all = {}
+    if charts_type == "set":
+        evaluate_sets(log_folder, comm_model,runs, num_robots, environment, plot_comm_map,
+                      granularity, mission_duration, dimX, dimY, XTest, YTest, fixed_robot)
+    elif charts_type == "discr":
+        evaluate_discr(log_folder, comm_model, runs, num_robots, environment,
+                        granularity, mission_duration, dimX, dimY, XTest, YTest)
+    elif charts_type == "num_robs":
+        evaluate_num_robots(log_folder, comm_model, runs, environment,
+                        granularity, mission_duration, dimX, dimY, XTest, YTest)
+    else:
+        print "Error, unknown charts type"
 
-    for set in sets:
-        #if set == "complete": continue
-
-        print "Set: ", set
-
-        filter = True if set == "filtered" else False
-
-        errors[set] = {}
-        variances_all[set] = {}
-        times_all[set] = {}
-
-        for run in runs:
-            if run != 0 and plot_comm_map: break
-
-            parsed = []
-
-            for robot in range(num_robots):
-                dataset_filename = log_folder + str(run) + '_' + environment + \
-                                   '_' + str(robot) + '_' + str(num_robots) + \
-                                   '_' + str(int(comm_model.COMM_RANGE)) + \
-                                   '_' + sel_pol + '.dat'
-                parsed += parse_dataset(dataset_filename, filter)
-
-            all_signal_data = create_dataset(parsed, set)
-
-            print "Set length: " + str(len(all_signal_data))
-
-            if not plot_comm_map and \
-                    len(all_signal_data) >= 10000: #with 5 runs and 10k samples for run, 64GB of RAM/swap memory are not enough
-                print "Too many samples: the GP training would be too heavy. Discarding this set."
-                break
-
-            errors[set][run] = []
-            variances_all[set][run] = []
-            times_all[set][run] = []
-
-            all_secs = range(granularity, mission_duration + 1, granularity)
-            for secs in all_secs:
-                cur_signal_data = []
-                for datum in all_signal_data:
-                    if datum.timestep <= secs:
-                        cur_signal_data.append(datum)
-
-                print "Run: " + str(run) + " - number of data: ", len(cur_signal_data)
-
-                start = time.time()
-                comm_map = GPmodel(dimX, dimY, comm_model.COMM_RANGE, False)
-                comm_map.update_model(cur_signal_data)
-                end = time.time()
-
-                predictions_all = comm_map.predict(XTest)
-                predictions = map(lambda x: x[0], predictions_all)
-                variances = map(lambda x: x[1], predictions_all)
-                std_devs = map(lambda x: math.sqrt(x), variances)
-                conf_95 = map(lambda x: 1.96 * x, std_devs)
-
-                errors[set][run].append((mean_squared_error(YTest, predictions), math.sqrt(mean_squared_error(YTest, predictions))))
-                variances_all[set][run].append((np.mean(variances), np.std(variances), np.mean(std_devs), np.std(std_devs),np.mean(conf_95), np.std(conf_95)))
-                times_all[set][run].append(end - start)
-
-                if plot_comm_map:
-                    print "Drawing the Communication map..."
-
-                    if set == "complete":
-                        extension = '.png'
-                    elif set == "pre_processing":
-                        extension = '_P.png'
-                    else:
-                        extension = '_C.png'
-
-                    communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY,
-                                                                              comm_model, resolution, True, cur_signal_data)
-                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
-                                                        '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
-                                                        '_' + str(run) + '_' + str(secs) + '_' + sel_pol + extension
-                    communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
-                    print "Done."
-                    if len(communication_figures) > 1:
-                        print "Drawing the Variance map..."
-                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
-                                                            '_'  + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
-                                                            '_' + str(run) + '_' + str(secs) + '_' + sel_pol + \
-                                                            '_' + 'VAR' + extension
-                        communication_figures[1].savefig(communication_map_figure_filename, bbox_inches='tight')
-                        print "Done."
-
-    print '----------------------------------------------------------------------------'
-    print errors
-    print '----------------------------------------------------------------------------'
-    print variances_all
-    print '----------------------------------------------------------------------------'
-    print times_all
-    print '----------------------------------------------------------------------------'
-
-    f = open(log_folder + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) +
-             '_' + gflags.FLAGS.point_selection_policy +'.dat', "wb")
-    pickle.dump((errors, variances_all, times_all), f)
-    f.close()
 
 if __name__ == '__main__':
 

@@ -52,22 +52,17 @@ from strategy.msg import SignalData
 from GPmodel import GPmodel
 import utils
 
-from sklearn import preprocessing
-from sklearn.preprocessing import MinMaxScaler
-
 # Parameters in common, defining environment, number of robots used and number of repetitions.
-gflags.DEFINE_string("environment", "offices",
+gflags.DEFINE_string("environment", "open",
     ("Environment to be loaded "
     "(it opens the yaml file to read resolution and image)."))
 
-gflags.DEFINE_integer("num_robots", 2, "Number of robots used in the experiment.")
+gflags.DEFINE_integer("num_robots", 4, "Number of robots used in the experiment.")
 gflags.DEFINE_integer("num_runs", 5, "Number of repetitions for an experiment.")
 gflags.DEFINE_bool("is_simulation", True, "True if simulation data; False if robot")
 
 # Parameters for simulation.
 gflags.DEFINE_integer("test_set_size", 10000, "Size of test set to check error in simulation.")
-gflags.DEFINE_string("test_type", "normalized", "Test type for creating the test set") #random, discarded_set ,normalized
-
 #gflags.DEFINE_integer("comm_range_exp", 15, "Communication range for creating the test set.")
 
 #MUST BE COHERENT!!!
@@ -76,19 +71,19 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 2335, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 23350, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 5180, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 5180, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
-gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")#56.0
-gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")#24.0
+gflags.DEFINE_float("fixed_robot_x", 33.158, "x-coordinate for source (meter).")
+gflags.DEFINE_float("fixed_robot_y", 17.129, "y-coordinate for source (meter).")
 
 gflags.DEFINE_string("task", "evaluate", "Script task {evaluate, plot}.")
 gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "Root of log folder.")
 
 # Point selection policy
-gflags.DEFINE_string('point_selection_policy', 'grid', 'policy for selecting points in an environment') #click,grid,voronoi
+gflags.DEFINE_string('point_selection_policy', 'voronoi', 'policy for selecting points in an environment') #click,grid,voronoi
 
 # Data sets to be plotted
 sets = ["complete", "pre_processing", "filtered"]
@@ -99,7 +94,7 @@ plot_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-
 
 FONTSIZE = 16
 
-def create_test_set(im_array, comm_model, test_set_size, normalized, resize_factor=0.1):
+def create_test_set(im_array, comm_model, test_set_size, resize_factor=0.1):
     def all_free(ii, jj, I, J, border=None):
         if(im_array[ii][jj] == 0): return False
 
@@ -164,47 +159,16 @@ def create_test_set(im_array, comm_model, test_set_size, normalized, resize_fact
 
         items += 1
 
-    if normalized:
-        print "Normalizing the test set..."
-
-        YTest_norm = []
-        for elem in YTest:
-            YTest_norm.append([elem])
-
-        scaler = MinMaxScaler()
-        YTest_norm = scaler.fit_transform(YTest_norm)
-
-        YTest_new = []
-        for elem in YTest_norm:
-            YTest_new.append(elem[0])
-
-        YTest = YTest_new
-
-
     return dimX, dimY, XTest, YTest
 
-def parse_dataset(filename, filter, normalized):
+def parse_dataset(filename, filter):
     data_list = []
     f = open(filename, "r")
     lines = f.readlines()
-    signals = []
     for line in lines:
         s = line.split()
         if (filter and s[-1] == 'C') or not filter:
             data_list.append(s)
-            if normalized:
-                signals.append(s[5])
-
-    if normalized:
-        signals_norm = []
-        for elem in signals:
-            signals_norm.append([elem])
-
-        scale = MinMaxScaler()
-        signals = scale.fit_transform(signals_norm)
-
-        for i in xrange(0, len(data_list)):
-            data_list[i][5] = signals[i][0]
 
     return data_list
 
@@ -235,30 +199,6 @@ def create_dataset(data_list, set):
         dataset.append(new_data)
 
     return dataset
-
-def create_test(im_array, data_list, resize_factor=0.1):
-    XTest = []
-    YTest = []
-
-    dimX = np.size(im_array, 1) * resize_factor
-    dimY = np.size(im_array, 0) * resize_factor
-
-    test_set = []
-    for d1 in data_list:
-        for d2 in data_list:
-            if d1 != d2 and d1[-1] != 'C' and \
-                    utils.eucl_dist((float(d1[1]), float(d1[2])), (float(d2[1]), float(d2[2]))) <= 2.0 and \
-                    utils.eucl_dist((float(d1[3]), float(d1[4])), (float(d2[3]), float(d2[4]))) <= 2.0:
-                test_set.append(d1)
-                break
-
-    print "Test Set length: " + str(len(test_set))
-
-    for s in test_set:
-        XTest.append((float(s[1]), float(s[2]), float(s[3]), float(s[4])))
-        YTest.append(float(s[5]))
-
-    return dimX, dimY, XTest, YTest
 
 def specular(img):
     for j in xrange(img.shape[1]):
@@ -320,10 +260,10 @@ def plot_prediction_from_xy_center_3d(environment_image, center,comm_map, dimX, 
 
     # plt.tight_layout()
 
-    #if all_signal_data is not None:
-    #    X_points, Y_points, Z_points = get_scatter_plot(all_signal_data, dimX, dimY, center, resize_factor)
-    #    ax_comm.autoscale(enable=False)
-    #    ax_comm.scatter(X_points, Y_points, Z_points)
+    if all_signal_data is not None:
+        X_points, Y_points, Z_points = get_scatter_plot(all_signal_data, dimX, dimY, center, resize_factor)
+        ax_comm.autoscale(enable=False)
+        #ax_comm.scatter(X_points, Y_points, Z_points)
 
 
     if plot_variance:
@@ -609,16 +549,13 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
     im_array, resolution = read_environment(environment_yaml_path)
     im_array = specular(im_array)
-
-    test_type = gflags.FLAGS.test_type
     
     # Generation of test set.
     if is_simulation:
-        if test_type != "discarded_set":
-            random.seed(0)
-            np.random.seed(0)
-            dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model, test_set_size,
-                                                       False if test_type == "random" else True, resolution)
+        # In simulation.
+        random.seed(0)
+        np.random.seed(0)
+        dimX, dimY, XTest, YTest = create_test_set(im_array, comm_model,test_set_size, resolution)
 
     runs = range(num_runs)
 
@@ -641,23 +578,15 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
             if run != 0 and plot_comm_map: break
 
             parsed = []
-            if test_type == "discarded_set" and set == "filtered":
-                parsed_test_set = []
 
             for robot in range(num_robots):
                 dataset_filename = log_folder + str(run) + '_' + environment + \
                                    '_' + str(robot) + '_' + str(num_robots) + \
                                    '_' + str(int(comm_model.COMM_RANGE)) + \
                                    '_' + sel_pol + '.dat'
-                parsed += parse_dataset(dataset_filename, filter, True if test_type == "normalized" else False)
-
-                if test_type == "discarded_set" and set == "filtered":
-                    parsed_test_set += parse_dataset(dataset_filename, False, False)
+                parsed += parse_dataset(dataset_filename, filter)
 
             all_signal_data = create_dataset(parsed, set)
-
-            if test_type == "discarded_set":
-                dimX, dimY, XTest, YTest = create_test(im_array, parsed if set != "filtered" else parsed_test_set, resolution)
 
             print "Set length: " + str(len(all_signal_data))
 
@@ -706,14 +635,14 @@ def evaluate(environment, num_robots, num_runs, is_simulation,
 
                     communication_figures = plot_prediction_from_xy_center_3d(im_array, fixed_robot, comm_map, dimX, dimY,
                                                                               comm_model, resolution, True, cur_signal_data)
-                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP_' + str(num_robots) + \
+                    communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
                                                         '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
                                                         '_' + str(run) + '_' + str(secs) + '_' + sel_pol + extension
                     communication_figures[0].savefig(communication_map_figure_filename, bbox_inches='tight')
                     print "Done."
                     if len(communication_figures) > 1:
                         print "Drawing the Variance map..."
-                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP_' + str(num_robots) + \
+                        communication_map_figure_filename = os.getcwd() + '/figs/COMM_MAP' + str(num_robots) + \
                                                             '_'  + environment + '_' + str(int(comm_model.COMM_RANGE)) + \
                                                             '_' + str(run) + '_' + str(secs) + '_' + sel_pol + \
                                                             '_' + 'VAR' + extension
