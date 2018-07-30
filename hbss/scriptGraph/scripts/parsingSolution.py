@@ -8,7 +8,7 @@ import sys
 import gflags
 
 #CONSTANTS
-gflags.DEFINE_string('exp_name', 'provaC', 'name of the file to be opened')
+gflags.DEFINE_string('exp_name', 'offices_exp', 'name of the file to be opened')
 gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
 gflags.DEFINE_string('output_name', 'output.txt', 'file containing the solution computed by the algorithm')
 gflags.DEFINE_string('point_selection_policy', 'grid', 'policy for selecting points in an environment') #click,grid,voronoi

@@ -44,7 +44,7 @@ MIN_FRONT_RANGE_DIST = 1.5 # TODO It should depend on the settings of the planne
 MAX_NUM_ERRORS = 300
 MAX_TIMEOUT_EXPIRED = 5
 
-WALL_DIST = 6 #in pixels: offices = 6, open = 14
+WALL_DIST = 14 #in pixels: offices = 6, open = 14
 PATH_DISC = 1 #m
 
 class GenericRobot(object):
@@ -153,7 +153,7 @@ class GenericRobot(object):
         self.replan_rate = REPLAN_RATE
 
         # useful topics
-        self.pub_robot_data = rospy.Publisher('robot_data', RobotData, queue_size= 10)
+        self.pub_robot_data = rospy.Publisher('robot_data', RobotData, queue_size=10)
 
         for i in xrange(self.n_robots):
             if i == robot_id: continue
@@ -240,8 +240,6 @@ class GenericRobot(object):
         for robot in range(self.n_robots):
             if robot == self.robot_id: continue
             if not self.comm_module.can_communicate(robot): continue
-            if(utils.eucl_dist((self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1]),
-                               (self.robots_pos[robot][0],self.robots_pos[robot][1])) > self.comm_range): continue
 
             self.new_data_writer(int((rospy.Time.now() - self.mission_start_time).secs),
                                  self.robots_pos[self.robot_id][0], self.robots_pos[self.robot_id][1],

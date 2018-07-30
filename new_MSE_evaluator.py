@@ -71,8 +71,8 @@ gflags.DEFINE_string("communication_model_path", "data/comm_model_50.xml",
     "Path to the XML file containing communication model parameters.")
 
 # Parameters for plotting.
-gflags.DEFINE_integer("granularity", 921, "Granularity of the mission (seconds) to plot every granularity.")
-gflags.DEFINE_integer("mission_duration", 9210, "Mission duration (seconds).")
+gflags.DEFINE_integer("granularity", 635, "Granularity of the mission (seconds) to plot every granularity.")
+gflags.DEFINE_integer("mission_duration", 6350, "Mission duration (seconds).")
 
 # FIXED POINT FROM WHERE TO PLOT THE COMM MAP
 gflags.DEFINE_bool("plot_communication_map", False, "If True, plot and save communication map in figure.")
@@ -86,7 +86,7 @@ gflags.DEFINE_string("log_folder", "/home/andrea/catkin_ws/src/strategy/log/", "
 gflags.DEFINE_string('point_selection_policy', 'click', 'policy for selecting points in an environment') #click,grid,voronoi
 
 #Charts type
-gflags.DEFINE_string('charts_type', 'discr', 'policy for selecting points in an environment') #set, discr, num_robs
+gflags.DEFINE_string('charts_type', 'set', 'policy for selecting points in an environment') #set, discr, num_robs
 
 # Data sets to be plotted
 sets = ["complete", "pre_processing", "filtered"]
@@ -96,7 +96,7 @@ strategies = ["click", "grid", "voronoi"]
 num_robs = ["2", "4"]
 
 # Plot Parameters ('b--s', 'k-.*', 'g:o', 'r-^')
-plot_set_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-processing'], 'filtered': ['r-^', 'Pairing TSP']}
+plot_set_format = {'complete': ['b--s', 'Complete'], 'pre_processing': ['g:o', 'Pre-processing'], 'filtered': ['r-^', 'Pairwise TSP']}
 
 plot_discr_format = {'click': ['k--s', 'Manual'], 'grid': ['m:o', 'Grid'], 'voronoi': ['c-^', 'Voronoi']}
 
@@ -332,7 +332,7 @@ def get_scatter_plot(data, dimX, dimY, center, resize_factor=0.1):
 
     return X, Y, Z
 
-def plot_values(x_vals, y, yerr, ylabel, no_set, set ,charts_type, filename):
+def plot_values(x_vals, y, yerr, ylabel, no_set, set, charts_type, filename):
     fig, ax = plt.subplots()
 
     if charts_type == "set":
@@ -340,7 +340,7 @@ def plot_values(x_vals, y, yerr, ylabel, no_set, set ,charts_type, filename):
             #if key == "complete": continue
             if no_set and key == "complete": continue #not plotting "complete" set if it was too heavy
             plt.errorbar(x_vals, y[key], yerr[key], fmt=plot_set_format[key][0],label=plot_set_format[key][1], markersize=10, elinewidth=2)
-    if charts_type == "discr":
+    elif charts_type == "discr":
         for key in plot_discr_format.keys():
             if no_set and key == "grid": continue #not plotting "complete" grid because it is too heavy
             plt.errorbar(x_vals, y[key][set], yerr[key][set], fmt=plot_discr_format[key][0],label=plot_discr_format[key][1], markersize=10, elinewidth=2)
@@ -359,6 +359,12 @@ def plot_values(x_vals, y, yerr, ylabel, no_set, set ,charts_type, filename):
     plt.ylabel(ylabel, fontsize=22)
     #if(not('Var' in ylabel) and ):
     #plt.ylim(0,50)
+
+    #if "RMSE" in filename:
+    #    plt.ylim(3, 18)
+    #elif"STDEV" in filename:
+    #    plt.ylim(3.5, 9)
+
     plt.tick_params(labelsize=20)
     plt.xlabel("Time (minutes)", fontsize=22)
     """if "TIME" not in filename:
@@ -757,7 +763,7 @@ def plot_sets(environment, num_robots, comm_model, granularity, mission_duration
             times_yerr[set].append(np.std(cur_times_values))
 
     plot_values(x, rmse_avg, rmse_yerr, "RMSE", no_complete, None , "set",os.getcwd() + '/figs/sets_charts/RMSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
-    plot_values(x, mse_avg, mse_yerr, "MSE", no_complete, None ,"set",os.getcwd() + '/figs/sets_charts/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
+    plot_values(x, mse_avg, mse_yerr, "MSE", no_complete, None ,"set", os.getcwd() + '/figs/sets_charts/MSE_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
     plot_values(x, conf_avg, conf_yerr, "95% Confidence Width", no_complete, None ,"set",os.getcwd() + '/figs/sets_charts/95CONF_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
     plot_values(x, var_avg, var_yerr, "Pred. Variance", no_complete, None ,"set", os.getcwd() + '/figs/sets_charts/VAR_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')
     plot_values(x, rvar_avg, rvar_yerr, "Pred. Std. Dev.", no_complete, None ,"set", os.getcwd() + '/figs/sets_charts/STDEV_' + str(num_robots) + '_' + environment + '_' + str(int(comm_model.COMM_RANGE)) + '_' + sel_pol + '.pdf')

@@ -18,7 +18,7 @@ import time
 
 
 #CONSTANTS
-gflags.DEFINE_string('exp_name', 'provaC', 'name of the file to be opened')
+gflags.DEFINE_string('exp_name', 'offices_exp', 'name of the file to be opened')
 gflags.DEFINE_string('phys_graph', 'offices_phys_uniform_grid.graphml', 'file containing the physical graph')
 gflags.DEFINE_integer('n_robots', 4, 'number of robots of the experiment')
 
@@ -78,7 +78,7 @@ if __name__ == '__main__':
 	I = np.size(im_array, 0)
 	J = np.size(im_array, 1)
 
-	os.chdir("/home/andrea/Desktop/pyAndrea_mio/scriptGraph/scripts")
+	os.chdir("/home/andrea/Desktop/hbss/scriptGraph/scripts")
 
 	#PARSE file with points of the graph
 	POINTS = []
